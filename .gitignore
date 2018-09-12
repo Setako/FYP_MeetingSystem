@@ -1,0 +1,14 @@
+# Compiled Files
+/build
+*.class
+
+#Logs
+/logs
+*.log
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+
