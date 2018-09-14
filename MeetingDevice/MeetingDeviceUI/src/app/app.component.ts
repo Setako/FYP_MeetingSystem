@@ -4,7 +4,7 @@ import {MatSnackBar} from '@angular/material';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css', '../css/frame-theme.css']
 })
 export class AppComponent implements OnInit {
   title = 'MeetingDeviceUI';
@@ -13,7 +13,7 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.openSnackBar('Meeting Device UI Start success!');
+    // this.openSnackBar('Meeting Device UI Start success!');
   }
 
   openSnackBar(message: any) {

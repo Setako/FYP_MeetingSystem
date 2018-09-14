@@ -1,0 +1,14 @@
+.popup-frame {
+  padding: 10px;
+  background-color: white;
+}
+
+.popup-frame-half-trans {
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.popup-frame-h-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}

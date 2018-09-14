@@ -1,0 +1,26 @@
+.mode-icon {
+  display: inline;
+  padding-right: 15px;
+  padding-left: 15px;
+  height: 35px;
+  width: 35px;
+}
+
+.mode-icon mat-icon {
+  font-size: 35px;
+  height: 35px;
+  width: 35px;
+}
+
+.mode-icon-actived {
+  height: 65px;
+  width: 65px;
+}
+
+.mode-icon-actived mat-icon {
+  stroke: black ;
+  color: dodgerblue;
+  font-size: 65px;
+  height: 65px;
+  width: 65px;
+}
