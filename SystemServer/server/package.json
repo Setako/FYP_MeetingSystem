@@ -1,0 +1,35 @@
+{
+    "name": "meeting-system-server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "build/app.js",
+    "scripts": {
+        "start": "node build/app.js",
+        "test": "ts-node src/app.ts",
+        "fix": "tslint --fix src/**/*.ts",
+        "build": "npm run fix && rimraf build && tsc",
+        "postinstall":"npm run build"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "body-parser": "^1.18.3",
+        "express": "^4.16.3",
+        "express-mongoose": "^0.1.0",
+        "mongoose": "^5.2.14",
+        "morgan": "^1.9.1",
+        "reflect-metadata": "^0.1.12",
+        "typegoose": "^5.2.1"
+    },
+    "devDependencies": {
+        "@types/express": "^4.16.0",
+        "@types/mongoose": "^5.2.11",
+        "@types/morgan": "^1.7.35",
+        "axios": "^0.18.0",
+        "rimraf": "^2.6.2",
+        "ts-node": "^7.0.1",
+        "tslint": "^5.11.0",
+        "typescript": "^3.0.3"
+    }
+}
