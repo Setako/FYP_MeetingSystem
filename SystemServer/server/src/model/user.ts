@@ -1,4 +1,5 @@
 import { arrayProp, instanceMethod, ModelType, prop, Ref, staticMethod, Typegoose } from "typegoose";
+import { Meeting } from "./meeting";
 
 export class User extends Typegoose {
 
@@ -34,8 +35,21 @@ export class User extends Typegoose {
 
     @arrayProp({
         itemsRef: User,
+        required: true
     })
-    public friend?: Array<Ref<User>>;
+    public recentMeetingUsers: Ref<User>[];
+
+    @arrayProp({
+        itemsRef: User,
+        required: true
+    })
+    public friends: Ref<User>[];
+
+    @arrayProp({
+        itemsRef: Meeting,
+        required: true
+    })
+    public meetingHistories: Ref<Meeting>[]
 
     @instanceMethod
     public async checkPassword(password: string) {

@@ -79,8 +79,9 @@ router
         res.json(req.meeting.attendance);
     })
     .post("/:id/attendance", async (req: IMeetingRequest, res) => {
-        req.meeting.attendance = req.body.attendance;
-        await req.meeting.save();
+        await meetingModel.findByIdAndUpdate(req.meeting.id, {
+            attendance: req.body.attendance,
+        });
         res.end();
     });
 
@@ -105,20 +106,25 @@ router
     })
     .post("/:id/attendance/:userId", async (req: IMeetingRequest, res) => {
         const selected = req.meeting.attendance.find((item) => item.user === req.params.userId);
-        if (!selected.arrivalTime) {
-            await req.meeting.save();
+        if (!selected.status && selected.status !== "attended") {
+            selected.arrivalTime = new Date();
+            selected.status = "attended";
+
+            await meetingModel.findByIdAndUpdate(
+                req.meeting.id,
+                {
+                    attendance: req.meeting.attendance,
+                },
+            );
         }
-        res.end();
+
+        res.json(selected);
     });
 
 router
     .get("/:id/trained-model", async (req: IMeetingRequest, res) => {
-        const file = path.join(__dirname, "data/trained-model", req.params.id);
-        res.download(file, () => {
-            res.status(404).json({
-                error: "Trained model not found",
-            });
-        });
+        const file = path.join(process.cwd(), "data/trained-model", req.params.id + ".clf");
+        res.download(file);
     });
 
 export const meetingRouter = router;

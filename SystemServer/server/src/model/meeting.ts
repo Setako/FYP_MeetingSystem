@@ -1,5 +1,4 @@
-import { ObjectId } from "mongodb";
-import { arrayProp, instanceMethod, InstanceType, prop, Ref, Typegoose } from "typegoose";
+import { arrayProp, prop, Ref, Typegoose } from "typegoose";
 import { MeetingDevice } from "./meeting-device";
 import { User } from "./user";
 
@@ -14,14 +13,39 @@ export class Attendance {
 export class Meeting extends Typegoose {
 
     @prop({
-        required: true,
+        required: true
     })
-    public startTime: Date;
+    public title: string;
 
     @prop({
         required: true,
     })
-    public endTime: Date;
+    // planned, confirmed, started, ended
+    public status: string;
+
+    @prop()
+    public location?: string;
+
+    @prop({
+        required: true
+    })
+    public priority: number
+
+    @prop({
+        required: true,
+    })
+    public plannedStartTime: Date;
+
+    @prop()
+    public realStartTime?: Date;
+
+    @prop({
+        required: true,
+    })
+    public plannedEndTime: Date;
+
+    @prop()
+    public realEndTime?: Date;
 
     @prop({
         ref: MeetingDevice,

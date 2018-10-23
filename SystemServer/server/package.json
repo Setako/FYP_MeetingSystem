@@ -8,7 +8,7 @@
         "test": "ts-node src/app.ts",
         "fix": "tslint --fix src/**/*.ts",
         "build": "npm run fix && rimraf build && tsc",
-        "postinstall":"npm run build"
+        "postinstall": "npm run build"
     },
     "keywords": [],
     "author": "",
