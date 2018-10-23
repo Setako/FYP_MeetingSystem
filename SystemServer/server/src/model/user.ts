@@ -35,21 +35,21 @@ export class User extends Typegoose {
 
     @arrayProp({
         itemsRef: User,
-        required: true
+        required: true,
     })
-    public recentMeetingUsers: Ref<User>[];
+    public recentMeetingUsers: Array<Ref<User>>;
 
     @arrayProp({
         itemsRef: User,
-        required: true
+        required: true,
     })
-    public friends: Ref<User>[];
+    public friends: Array<Ref<User>>;
 
     @arrayProp({
         itemsRef: Meeting,
-        required: true
+        required: true,
     })
-    public meetingHistories: Ref<Meeting>[]
+    public meetingHistories: Array<Ref<Meeting>>;
 
     @instanceMethod
     public async checkPassword(password: string) {

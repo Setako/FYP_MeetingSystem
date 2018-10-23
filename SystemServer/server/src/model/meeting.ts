@@ -13,7 +13,7 @@ export class Attendance {
 export class Meeting extends Typegoose {
 
     @prop({
-        required: true
+        required: true,
     })
     public title: string;
 
@@ -27,9 +27,9 @@ export class Meeting extends Typegoose {
     public location?: string;
 
     @prop({
-        required: true
+        required: true,
     })
-    public priority: number
+    public priority: number;
 
     @prop({
         required: true,
