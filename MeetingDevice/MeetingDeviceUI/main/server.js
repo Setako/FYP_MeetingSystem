@@ -15,7 +15,6 @@ module.exports = (function () {
     console.log("listening on "+port)
     // app.listen(port);
   }
-
   return {
     listen: listen
   }

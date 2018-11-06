@@ -18,36 +18,39 @@ let commandInput = commander.version("0.0.1")
 if (commandInput.url) loadURL = commandInput.url;
 
 
-let browserWindow = null;
+let rendererWindow = null;
 app.disableHardwareAcceleration();
 app.on("ready", () => {
   console.log(loadURL)
-  // server.listen(8555);
+  console.log("OK")
   protocol.unregisterProtocol("", () => {
     const screen = require("electron").screen;
     const display = screen.getPrimaryDisplay();
     const area = display.workArea;
 
-    browserWindow = new BrowserWindow({
+    rendererWindow = new BrowserWindow({
       width: 99999,
       height: 99999,
       frame: false,
-      transparent: true
+      transparent: true,
+      alwaysOnTop: true
     });
-    // browserWindow.setFullScreen(true);
 
 
-    browserWindow.loadURL(loadURL);
+    rendererWindow.loadURL(loadURL);
 
-    browserWindow.setAlwaysOnTop(true);
+    rendererWindow.setAlwaysOnTop(true);
 
-    browserWindow.setVisibleOnAllWorkspaces(true);
-    browserWindow.setFullScreenable(false);
-    browserWindow.setSkipTaskbar(true);
+
+    rendererWindow.setVisibleOnAllWorkspaces(true);
+    rendererWindow.setSkipTaskbar(true);
+    rendererWindow.toggleDevTools();
 
     //Prevent automatic maximize and resize
-    browserWindow.setResizable(false);
-    browserWindow.setMaximizable(false);
-    browserWindow.setIgnoreMouseEvents(true, {forward: true});
+    rendererWindow.setResizable(false);
+    rendererWindow.setMaximizable(false);
+    rendererWindow.setIgnoreMouseEvents(true, {forward: true});
+    module.exports.rendererWindow = rendererWindow;
+    server.listen(8555);
   })
 });

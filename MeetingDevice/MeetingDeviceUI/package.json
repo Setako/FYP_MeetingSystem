@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "electron .",
     "build": "ng build --base-href ./",
+    "devbuild": "ng build --watch --base-href ./",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
