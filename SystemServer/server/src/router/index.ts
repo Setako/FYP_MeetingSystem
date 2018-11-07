@@ -1,5 +1,6 @@
 import { Router } from "express";
 import expressJwt from "express-jwt";
+import { userModel } from "../model";
 import { authRouter } from "./auth";
 import { meetingRouter } from "./meeting";
 import { meetingDeviceRouter } from "./meeting-device";
@@ -11,7 +12,7 @@ router.use("/auth", authRouter);
 
 router
     .use(expressJwt({ secret: process.env.tokenSecret, credentialsRequired: false }))
-    .use((req, res, next) => {
+    .use(async (req, res, next) => {
         if (!!req.user) { return next(); }
 
         res.status(401)
@@ -19,6 +20,15 @@ router
                 error: req.headers.authorization
                     ? "Token is expired or fake"
                     : "No token received",
+            });
+    })
+    .use(async (req, res, next) => {
+        const user = await userModel.findByUsername(req.user.username);
+        if (!!user) { return next(); }
+
+        res.status(401)
+            .json({
+                error: "Owned token users may no longer exist",
             });
     });
 

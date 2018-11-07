@@ -1,13 +1,7 @@
-import { Request, Router } from "express";
-import { ObjectId } from "mongodb";
-import { InstanceType } from "typegoose";
-import { User, userModel } from "../model/user";
+import { Router } from "express";
+import { userModel } from "../model/user";
 
 const router = Router();
-
-declare interface IUserRequest extends Request {
-    user: InstanceType<User>;
-}
 
 router.get("/", async (req, res) => {
     const list = await userModel.find();
@@ -19,50 +13,59 @@ router.get("/", async (req, res) => {
     res.json(result);
 });
 
-router.post("/", async (req, res) => {
-    try {
-        const user = await new userModel(req.body).save();
-        res.json
-        ({
-            _id: user._id,
-        });
-    } catch (err) {
-        res.sendStatus(400);
-    }
-});
-
-router.use("/:id", async (req: IUserRequest, res, next) => {
-    try {
-        const user = await userModel.findById(req.params.id);
-        if (user) {
-            req.user = user;
-            next();
-        } else {
-            throw new Error();
+router
+    .use("/:username", async (req, res, next) => {
+        const user = await userModel.findByUsername(req.params.username);
+        if (!user) {
+            return res.status(404)
+                .json({
+                    error: "No user found",
+                });
         }
-    } catch (err) {
-        res.status(404).json({
-            error: "User not found",
+
+        next();
+    })
+    .get("/:username", async (req, res) => {
+        const user = await userModel.findByUsername(req.params.username);
+        res.json({
+            _id: user._id,
+            username: user.username,
+            displayName: user.displayName,
+            email: user.email,
+            friends: user.friends,
+            recentMeetingUsers: user.recentMeetingUsers,
         });
-    }
-});
+    })
+    .put("/:username", async (req, res) => {
+        const user = await userModel.findByUsername(req.params.username);
+        const {
+            password,
+            displayName,
+            email,
+            friends,
+        } = req.body;
 
-router.get("/:id", async (req: IUserRequest, res) => {
+        if (password) {
+            user.password = userModel.encryptPassword(password, user.salt);
+        }
 
-    const result = req.user.toObject();
-    delete result.passwowrd;
+        if (friends) {
+            user.friends = await Promise.all(
+                (friends as string[])
+                    .map((username) => userModel.findByUsername(username)),
+            );
+        }
 
-    res.json(result);
-});
+        user.displayName = displayName || user.displayName;
+        user.email = email || user.email;
 
-router.post(":/id", async (req: IUserRequest, res) => {
-    await req.user.set(req.body).save();
-    res.end();
-});
-
-router.delete("/:id", async (req: IUserRequest, res) => {
-    await req.user.remove();
-    res.end();
-});
+        user.save();
+        res.end();
+    })
+    .delete("/:username", async (req, res) => {
+        const user = await userModel.findByUsername(req.params.username);
+        await user.remove();
+        res.end();
+    });
 
 export const userRouter = router;
