@@ -1,5 +1,5 @@
+import crypto from "crypto";
 import { arrayProp, instanceMethod, ModelType, prop, Ref, staticMethod, Typegoose } from "typegoose";
-import { Meeting } from "./meeting";
 
 export class User extends Typegoose {
 
@@ -12,7 +12,12 @@ export class User extends Typegoose {
 
     @staticMethod
     public static async isUsernameExist(this: ModelType<User> & typeof User, username: string) {
-        return await this.findByUsername(username);
+        return !!(await this.findByUsername(username));
+    }
+
+    @staticMethod
+    public static encryptPassword(password: string, salt: string) {
+        return crypto.createHash("md5").update(password + salt).digest("hex");
     }
 
     @prop({
@@ -27,6 +32,11 @@ export class User extends Typegoose {
     })
     public password: string;
 
+    @prop({
+        required: true,
+    })
+    public salt: string;
+
     @prop()
     public displayName?: string;
 
@@ -37,17 +47,17 @@ export class User extends Typegoose {
         itemsRef: User,
         required: true,
     })
-    public recentMeetingUsers: Ref<User>[];
+    public recentMeetingUsers: Array<Ref<User>>;
 
     @arrayProp({
         itemsRef: User,
         required: true,
     })
-    public friends: Ref<User>[];
+    public friends: Array<Ref<User>>;
 
     @instanceMethod
-    public async checkPassword(password: string) {
-        return this.password === password;
+    public checkPassword(password: string) {
+        return this.password === User.encryptPassword(password, this.salt);
     }
 }
 

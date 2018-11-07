@@ -1,51 +1,47 @@
 import bodyParser from "body-parser";
+import cors from "cors";
 import express from "express";
 import http from "http";
-import mongoose from "mongoose";
 import logger from "morgan";
-import dbConfig from "./config/dbConfig";
 import { apiRouter } from "./router";
 
 export class Server {
 
     public app: express.Express;
-    public mongodbPath: string = `mongodb://localhost/${dbConfig.dbName}`;
     private server: http.Server;
-    private mongoConnection: mongoose.Connection;
 
     constructor() {
         this.app = express();
         this.app.use(bodyParser.json());
-        this.app.use(logger("dev"));
+
+        if (process.env.NODE_ENV === "development") {
+            this.setDevelopmentEnvironment();
+        }
 
         this.route();
-
-        mongoose.set("useCreateIndex", true);
     }
 
-    public stop() {
-        if (this.mongoConnection) {
-            this.mongoConnection.close();
-        }
+    public start(port = process.env.PORT || 3000) {
+        this.close();
+        this.server = this.app.listen(port, () => console.log(`Express listen on http://localhost:${port}`));
+    }
+
+    public close() {
         if (this.server) {
-            this.server.close();
+            this.server.close(() => {
+                this.server = null;
+                console.log("Express is closed");
+            });
         }
     }
 
-    public start() {
-        this.server = this.app.listen(3000, () => console.log(`Express listen on http://localhost:3000`));
-        this.startMongo();
+    private setDevelopmentEnvironment() {
+        this.app.use(logger("dev"));
+        this.app.use(cors());
     }
 
     private route() {
+        this.app.use(express.static("public"));
         this.app.use("/api", apiRouter);
-    }
-
-    private async startMongo() {
-        this.mongoConnection = (await mongoose.connect(this.mongodbPath, {
-            useNewUrlParser: true,
-        })).connection;
-
-        console.log(`Mongodb starting on ${this.mongodbPath}`);
     }
 }

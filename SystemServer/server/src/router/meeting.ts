@@ -125,6 +125,9 @@ router
     .get("/:id/trained-model", async (req: IMeetingRequest, res) => {
         const file = path.join(process.cwd(), "data/trained-model", req.params.id + ".clf");
         res.download(file);
+    })
+    .post("/:id/trained-model", async (req: IMeetingRequest, res) => {
+
     });
 
 export const meetingRouter = router;
