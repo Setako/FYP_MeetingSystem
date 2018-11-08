@@ -1,0 +1,42 @@
+<div class="d-flex h-100">
+  <div class="mat-elevation-z8 container w-100 my-auto align-self-center" style="max-width: 800px; height: 400px">
+    <div class="row h-100">
+      <div class="col-5 bg-primary"></div>
+      <div class="col-7 h-100 p-3">
+        <mat-tab-group mat-stretch-tabs class="h-100">
+          <mat-tab label="Login" class="h-100">
+            <form class="p-3" (submit)="$event.preventDefault()">
+              <mat-form-field class="w-100">
+                <input matInput placeholder="Username" [(ngModel)]="loginFields.username" name="username">
+              </mat-form-field>
+
+              <mat-form-field class="w-100">
+                <input matInput placeholder="Password" type="password" [(ngModel)]="loginFields.password" name="password">
+              </mat-form-field>
+
+              <button mat-raised-button color="primary" class="float-right" (click)="login()">Login</button>
+            </form>
+          </mat-tab>
+          <mat-tab label="Register">
+            <form class="p-3" (submit)="$event.preventDefault()">
+              <mat-form-field class="w-100">
+                <input matInput placeholder="Username" [(ngModel)]="registerFields.username" name="username">
+              </mat-form-field>
+              <mat-form-field class="w-100">
+                <input matInput placeholder="Email" [(ngModel)]="registerFields.email" name="email">
+              </mat-form-field>
+              <mat-form-field class="w-100">
+                <input matInput placeholder="Password" type="password" [(ngModel)]="registerFields.password" name="password">
+              </mat-form-field>
+              <mat-form-field class="w-100">
+                <input matInput placeholder="Repeat password" type="password" [(ngModel)]="registerFields.passwordRepeat" name="password_repeat">
+              </mat-form-field>
+              <button mat-raised-button color="primary" class="float-right" (click)="register()">Register</button>
+            </form>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </div>
+
+  </div>
+</div>
