@@ -1,0 +1,5 @@
+.auth-frame-loading-spinner{
+  position: absolute;
+  display: inline-block;
+  z-index: 10;
+}

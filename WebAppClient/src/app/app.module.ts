@@ -4,7 +4,6 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import {AppRoutingModule} from './app-routing.module';
 import { LoginComponent } from './pages/login/login.component';
-import { RegisterComponent } from './pages/register/register.component';
 import { DashboardComponent } from './pages/member/dashboard/dashboard.component';
 import { MeetingListComponent } from './pages/member/meeting/meeting-list/meeting-list.component';
 import { MemberComponent } from './pages/member/member.component';
@@ -21,7 +20,6 @@ import {HttpClientModule} from '@angular/common/http';
   declarations: [
     AppComponent,
     LoginComponent,
-    RegisterComponent,
     DashboardComponent,
     MeetingListComponent,
     MemberComponent,

@@ -3,7 +3,15 @@
     <div class="row h-100">
       <div class="col-5 bg-primary"></div>
       <div class="col-7 h-100 p-3">
-        <mat-tab-group mat-stretch-tabs class="h-100">
+        <div class="d-flex h-100 w-100" *ngIf="querying">
+          <div class="d-inline-block align-self-center mx-auto text-center">
+            <div class="d-inline-block p-1">Loggin in...</div>
+
+            <mat-spinner>
+            </mat-spinner>
+          </div>
+        </div>
+        <mat-tab-group mat-stretch-tabs class="h-100" *ngIf="!querying">
           <mat-tab label="Login" class="h-100">
             <form class="p-3" (submit)="$event.preventDefault()">
               <mat-form-field class="w-100">

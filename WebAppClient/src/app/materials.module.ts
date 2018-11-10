@@ -1,10 +1,10 @@
-import { NgModule } from '@angular/core';
+import {NgModule} from '@angular/core';
 import {
   MatBadgeModule,
   MatButtonModule, MatChipsModule,
   MatDividerModule, MatIconModule,
   MatInputModule,
-  MatListModule,
+  MatListModule, MatProgressSpinnerModule,
   MatSidenavModule,
   MatTabsModule,
   MatToolbarModule
@@ -22,8 +22,9 @@ import {
     MatChipsModule,
     MatIconModule,
     MatBadgeModule,
+    MatProgressSpinnerModule,
   ],
-  exports:[
+  exports: [
     MatInputModule,
     MatDividerModule,
     MatTabsModule,
@@ -34,6 +35,8 @@ import {
     MatChipsModule,
     MatIconModule,
     MatBadgeModule,
+    MatProgressSpinnerModule,
   ]
 })
-export class MaterialsModule { }
+export class MaterialsModule {
+}

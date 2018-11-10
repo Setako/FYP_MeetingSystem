@@ -17,6 +17,7 @@ export class LoginComponent implements OnInit {
     password: '',
     passwordRepeat: ''
   };
+  public querying = false;
 
   constructor(private auth: AuthService) {
   }
@@ -25,7 +26,16 @@ export class LoginComponent implements OnInit {
   }
 
   login() {
-    this.auth.login(this.loginFields.username, this.loginFields.password).subscribe((res)=>console.log(res));
+    this.querying = true;
+    this.auth.login(this.loginFields.username, this.loginFields.password).subscribe(
+      (res) => {
+        console.log(res);
+        this.querying = false;
+      },
+      (err) => {
+        console.log(err);
+        this.querying = false;
+      });
   }
 
   register() {
