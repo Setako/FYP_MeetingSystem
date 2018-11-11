@@ -8,10 +8,11 @@ import {MeetingDetailComponent} from './pages/member/meeting/meeting-detail/meet
 import {UserComponent} from './pages/member/user/user.component';
 import {UserInfoComponent} from './pages/member/user/user-info/user-info.component';
 import {UserFriendsComponent} from './pages/member/user/user-friends/user-friends.component';
+import {AuthGuard} from './shared/route-guards/auth.guard';
 
 const routes: Routes = [
   {
-    path: 'member', component: MemberComponent,
+    path: 'member', component: MemberComponent, canActivate: [AuthGuard],
     children: [
       {path: '', redirectTo: 'dashboard', pathMatch: 'full'},
       {path: 'dashboard', component: DashboardComponent},

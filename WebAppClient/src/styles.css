@@ -10,9 +10,28 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 /*Global css*/
 .cc-bg-secondary{
-  background: #34373a;
+  background: #fafafa;
 }
 
-.cc-color-secondary{
+.cc-bg-dark-secondary{
+  background: #e2e2e2;
+}
+
+.cc-text-color-secondary{
   color: #e5e5e5;
+}
+
+.cc-bg-primary{
+  background: #009688;
+}
+.cc-bg-dark-primary{
+  background: #00675b;
+}
+
+.cc-text-color-primary{
+  color: #FFF;
+}
+
+.cc-color-primary{
+
 }

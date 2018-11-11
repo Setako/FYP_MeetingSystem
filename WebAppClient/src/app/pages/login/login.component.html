@@ -11,33 +11,41 @@
             </mat-spinner>
           </div>
         </div>
-        <mat-tab-group mat-stretch-tabs class="h-100" *ngIf="!querying">
-          <mat-tab label="Login" class="h-100">
-            <form class="p-3" (submit)="$event.preventDefault()">
+        <mat-tab-group [dynamicHeight]="true" mat-stretch-tabs *ngIf="!querying">
+          <mat-tab label="Login">
+            <form class="p-3" (submit)="$event.preventDefault();  login();" [formGroup]="loginForm">
               <mat-form-field class="w-100">
-                <input matInput placeholder="Username" [(ngModel)]="loginFields.username" name="username">
+                <input matInput placeholder="Username" formControlName="username" name="username" required>
+                <mat-error *ngIf="loginForm.get('username').invalid">Username is required</mat-error>
               </mat-form-field>
 
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password" type="password" [(ngModel)]="loginFields.password" name="password">
+                <input matInput placeholder="Password" type="password"
+                       formControlName="password" name="password" required>
+                <mat-error *ngIf="loginForm.get('password').invalid">Username is required</mat-error>
               </mat-form-field>
 
-              <button mat-raised-button color="primary" class="float-right" (click)="login()">Login</button>
+              <button mat-raised-button color="primary" class="float-right">Login</button>
             </form>
           </mat-tab>
           <mat-tab label="Register">
-            <form class="p-3" (submit)="$event.preventDefault()">
+            <form class="p-3" (submit)="$event.preventDefault()" [formGroup]="registerForm">
               <mat-form-field class="w-100">
-                <input matInput placeholder="Username" [(ngModel)]="registerFields.username" name="username">
+                <input matInput placeholder="Username" formControlName="username" name="username" required>
+                <mat-error *ngIf="registerForm.get('username').hasError('required')">Username is required</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Email" [(ngModel)]="registerFields.email" name="email">
+                <input matInput placeholder="Email" formControlName="email" name="email" required>
+                <mat-error *ngIf="registerForm.get('email').hasError('required')">Email is required</mat-error>
+                <mat-error *ngIf="registerForm.get('email').hasError('email')">Not a valid Email format</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password" type="password" [(ngModel)]="registerFields.password" name="password">
+                <input matInput placeholder="Password" formControlName="password" name="password" required>
+                <mat-error *ngIf="registerForm.get('password').hasError('required')">Password is required</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Repeat password" type="password" [(ngModel)]="registerFields.passwordRepeat" name="password_repeat">
+                <input matInput placeholder="Password Confirm" formControlName="passwordConfirm" name="passwordConfirm" required>
+                <mat-error *ngIf="registerForm.get('passwordConfirm').hasError('passwordNotMatch')">Password is not match</mat-error>
               </mat-form-field>
               <button mat-raised-button color="primary" class="float-right" (click)="register()">Register</button>
             </form>

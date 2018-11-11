@@ -1,20 +1,46 @@
 <div class="h-100">
-  <!--<div class="mat-elevation-z2">-->
-  <!--</div>-->
-  <mat-toolbar class="cc-bg-secondary cc-color-secondary">
-    <h4>C-Commander</h4>
-    <div class="ml-auto">
-      <button mat-icon-button>
-        <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>
-      </button>
+  <!--Loading Effect-->
+  <div *ngIf="loading" class="d-flex h-100 w-100">
+    <div class="my-auto mx-auto">
+      <mat-spinner class="d-inline-block"></mat-spinner>
     </div>
-  </mat-toolbar>
-  <div class="d-flex flex-row h-100">
-    <div style="width: 250px" class="mat-elevation-z8 p-3">
-    </div>
-    <div class="p-3">
+  </div>
 
-      <router-outlet></router-outlet>
+  <!--Main-->
+  <div class="h-100" *ngIf="!loading">
+
+    <!--Header-->
+    <div style="height: 10px" class="cc-bg-dark-primary"></div>
+    <mat-toolbar class="cc-bg-primary cc-text-color-primary">
+      <h4>C-Commander</h4>
+      <div class="ml-auto">
+        <button mat-icon-button class="p-1">
+          <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+
+    <div class="d-flex flex-row h-100">
+      <!--Side bar-->
+      <div style="width: 400px" class="mat-elevation-z6 user-panel cc-bg-secondary">
+        <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default" >
+          <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
+            <mat-panel-title class="d-flex align-items-center">
+              <img src="https://http.cat/404" class="d-inline-block p-1"
+                   style="height: 80px; width: 80px; border-radius: 50%" alt="">
+              <div class="d-inline-block pl-3" style="font-size: 18px">{{auth.loggedInUser.username}}</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <button mat-button class="w-100" style="padding: 4px 36px; text-align: left" >Profile</button>
+          <button mat-button class="w-100" style="padding: 4px 36px; text-align: left" (click)="logout()">Logout</button>
+        </mat-expansion-panel>
+        <!--<div class="cc-bg-dark-secondary px-3 py-1">-->
+        <!--</div>-->
+      </div>
+      <div class="p-3 w-100">
+
+        <router-outlet></router-outlet>
+      </div>
     </div>
   </div>
 </div>

@@ -3,3 +3,6 @@
   display: inline-block;
   z-index: 10;
 }
+.mat-tab-body-wrapper{
+  height: 100%;
+}
