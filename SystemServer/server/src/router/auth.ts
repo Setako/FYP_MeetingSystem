@@ -9,17 +9,11 @@ router.post("/login", async (req, res) => {
     const { username, password, expiresIn } = req.body;
     const user = await userModel.findByUsername(username);
 
-    if (!user) {
-        return res.status(400)
+    if (!(user && user.checkPassword(password))) {
+        return res.status(401)
             .json({
-                error: "No account fount",
+                error: "Incorrect username or password",
             });
-    }
-
-    if (!user.checkPassword(password)) {
-        return res.json({
-            error: "Incorrect password",
-        });
     }
 
     const playload = {
@@ -55,13 +49,11 @@ router.post("/register", async (req, res) => {
         password: userModel.encryptPassword(password, salt),
         salt,
         email,
-        displayName,
+        displayName: displayName || username,
     });
 
     user.save();
-    res.json({
-        _id: user._id,
-    });
+    res.end();
 });
 
 export const authRouter = router;

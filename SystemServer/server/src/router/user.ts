@@ -1,17 +1,19 @@
 import { Router } from "express";
+import uuidv4 from "uuid/v4";
 import { userModel } from "../model/user";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-    const list = await userModel.find();
-    const result = list.map((item) => ({
-        _id: item._id,
-        username: item.username,
-    }));
+router
+    .get("/", async (req, res) => {
+        const list = await userModel.find();
+        const result = list.map((item) => ({
+            _id: item._id,
+            username: item.username,
+        }));
 
-    res.json(result);
-});
+        res.json(result);
+    });
 
 router
     .use("/:username", async (req, res, next) => {
@@ -19,7 +21,7 @@ router
         if (!user) {
             return res.status(404)
                 .json({
-                    error: "No user found",
+                    error: "User not found",
                 });
         }
 
@@ -27,13 +29,20 @@ router
     })
     .get("/:username", async (req, res) => {
         const user = await userModel.findByUsername(req.params.username);
+
+        const friends = await Promise.all(user.friends
+            .map(async (id) => (await userModel.findById(id)).username));
+
+        const recentMeetingUsers = await Promise.all(user.recentMeetingUsers
+            .map(async (id) => (await userModel.findById(id)).username));
+
         res.json({
             _id: user._id,
             username: user.username,
             displayName: user.displayName,
             email: user.email,
-            friends: user.friends,
-            recentMeetingUsers: user.recentMeetingUsers,
+            friends,
+            recentMeetingUsers,
         });
     })
     .put("/:username", async (req, res) => {

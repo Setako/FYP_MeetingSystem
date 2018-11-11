@@ -1,4 +1,4 @@
-import { arrayProp, prop, Ref, Typegoose } from "typegoose";
+import { arrayProp, instanceMethod, prop, Ref, Typegoose } from "typegoose";
 import { MeetingDevice } from "./meeting-device";
 import { User } from "./user";
 
