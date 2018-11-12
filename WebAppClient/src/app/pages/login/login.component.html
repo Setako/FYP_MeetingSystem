@@ -29,7 +29,7 @@
             </form>
           </mat-tab>
           <mat-tab label="Register">
-            <form class="p-3" (submit)="$event.preventDefault()" [formGroup]="registerForm">
+            <form class="p-3" (submit)="$event.preventDefault(); register()" [formGroup]="registerForm">
               <mat-form-field class="w-100">
                 <input matInput placeholder="Username" formControlName="username" name="username" required>
                 <mat-error *ngIf="registerForm.get('username').hasError('required')">Username is required</mat-error>
@@ -40,14 +40,17 @@
                 <mat-error *ngIf="registerForm.get('email').hasError('email')">Not a valid Email format</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password" formControlName="password" name="password" required>
+                <input matInput placeholder="Password" type="password" formControlName="password" name="password" required>
                 <mat-error *ngIf="registerForm.get('password').hasError('required')">Password is required</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password Confirm" formControlName="passwordConfirm" name="passwordConfirm" required>
-                <mat-error *ngIf="registerForm.get('passwordConfirm').hasError('passwordNotMatch')">Password is not match</mat-error>
+                <input matInput placeholder="Password Confirm" type="password" formControlName="passwordConfirm" name="passwordConfirm"
+                       required>
+                <mat-error *ngIf="registerForm.get('passwordConfirm').hasError('passwordNotMatch')">Password is not
+                  match
+                </mat-error>
               </mat-form-field>
-              <button mat-raised-button color="primary" class="float-right" (click)="register()">Register</button>
+              <button mat-raised-button color="primary" class="float-right">Register</button>
             </form>
           </mat-tab>
         </mat-tab-group>

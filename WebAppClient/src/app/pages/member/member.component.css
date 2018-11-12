@@ -1,8 +1,36 @@
-::ng-deep .mat-expansion-panel-body{
+::ng-deep .mat-expansion-panel-body {
   background: #fafafa;
-  padding: 16px 0!important;
+  padding: 16px 0 !important;
 }
 
-::ng-deep mat-expansion-panel{
+::ng-deep mat-expansion-panel {
   border-radius: 0 !important;
+}
+
+.sidebar-link {
+  color: black;
+  outline: 0;
+}
+
+::ng-deep .user-link.actived button{
+  color: #00675b;
+  background-color: #eeeeee;
+}
+::ng-deep .user-link.actived button:before {
+  content: "";
+  /*min-width: px;*/
+  height: 48px;
+  right: 0px;
+  top: 0px;
+  position: absolute;
+  border-left: solid #52c7b8 5px;
+}
+
+::ng-deep .sidebar-link mat-icon {
+  margin-right: 24px;
+}
+
+.header-title {
+  color: white;
+  text-decoration: none;
 }
