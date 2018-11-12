@@ -1,4 +1,4 @@
-import { arrayProp, instanceMethod, prop, Ref, Typegoose } from "typegoose";
+import { arrayProp, prop, Ref, Typegoose } from "typegoose";
 import { MeetingDevice } from "./meeting-device";
 import { User } from "./user";
 
@@ -10,6 +10,14 @@ export class Attendance {
     public status?: string;
 }
 
+export enum MeetingStatus {
+    Draft = "draft",
+    Planned = "planned",
+    Confirmed = "confirmed",
+    Started = "started",
+    Ended = "ended",
+}
+
 export class Meeting extends Typegoose {
 
     @prop({
@@ -19,8 +27,8 @@ export class Meeting extends Typegoose {
 
     @prop({
         required: true,
+        enum: MeetingStatus,
     })
-    // planned, confirmed, started, ended
     public status: string;
 
     @prop()
@@ -51,6 +59,12 @@ export class Meeting extends Typegoose {
         ref: MeetingDevice,
     })
     public device?: Ref<MeetingDevice>;
+
+    @prop({
+        required: true,
+        default: "en-US",
+    })
+    public language: string;
 
     @prop({
         ref: User,

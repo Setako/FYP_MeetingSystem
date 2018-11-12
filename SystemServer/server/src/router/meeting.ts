@@ -1,7 +1,7 @@
 import { Request, Router } from "express";
 import path from "path";
 import { InstanceType } from "typegoose";
-import { Attendance, Meeting, meetingModel } from "../model/meeting";
+import { Meeting, meetingModel, MeetingStatus } from "../model/meeting";
 import { userModel } from "../model/user";
 
 const router = Router();
@@ -21,11 +21,9 @@ router
         res.json(result);
     })
     .post("/", async (req, res) => {
-        const data = req.body;
-
         const missing = (...key: string[]) => {
             res.status(400).json({
-                error: "Missing " + key.join(" or "),
+                message: "Missing " + key.join(" or "),
             });
         };
 
@@ -34,6 +32,7 @@ router
             location,
             plannedStartTime,
             plannedEndTime,
+            language,
         } = req.body;
 
         let {
@@ -78,7 +77,8 @@ router
             attendance,
             owner,
 
-            status: "planned",
+            language: language || "en-US",
+            status: MeetingStatus.Draft,
             priority: attendance.length,
         }).save();
 
@@ -99,7 +99,7 @@ router
 
         res.status(404)
             .json({
-                error: "Meeting not found",
+                message: "Meeting not found",
             });
     })
     .get("/:id", async (req: IMeetingRequest, res) => {
@@ -125,6 +125,7 @@ router
             plannedEndTime: meeting.plannedEndTime,
             realStartTime: meeting.realStartTime,
             realEndTime: meeting.realEndTime,
+            language: meeting.language,
             device: meeting.device,
             owner: owner.username,
             attendance,
@@ -138,6 +139,7 @@ router
             location,
             plannedStartTime,
             plannedEndTime,
+            language,
             attendance,
         } = req.body;
 
@@ -163,12 +165,13 @@ router
         }
 
         meeting.title = title || meeting.title;
-        meeting.status = ["planned", "confirmed", "started", "ended"]
+        meeting.status = ["draft", "planned", "confirmed", "started", "ended"]
             .includes(status) ? status : meeting.status;
 
         meeting.location = location || meeting.location;
         meeting.plannedStartTime = plannedStartTime || meeting.plannedStartTime;
         meeting.plannedEndTime = plannedEndTime || meeting.plannedEndTime;
+        meeting.language = language || meeting.language;
 
         meeting.save();
 
@@ -201,7 +204,7 @@ router
 
         res.status(404)
             .json({
-                error: "User not found",
+                message: "User not found",
             });
     })
     .get("/:id/attendance/:userId", async (req: IMeetingRequest, res) => {

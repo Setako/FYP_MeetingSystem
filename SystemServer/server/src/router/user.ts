@@ -1,5 +1,4 @@
 import { Router } from "express";
-import uuidv4 from "uuid/v4";
 import { userModel } from "../model/user";
 
 const router = Router();
@@ -21,7 +20,7 @@ router
         if (!user) {
             return res.status(404)
                 .json({
-                    error: "User not found",
+                    message: "User not found",
                 });
         }
 

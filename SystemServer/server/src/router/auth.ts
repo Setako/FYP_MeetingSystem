@@ -6,24 +6,25 @@ import { userModel } from "../model/user";
 const router = Router();
 
 router.post("/login", async (req, res) => {
-    const { username, password, expiresIn } = req.body;
+    const { username, password } = req.body;
     const user = await userModel.findByUsername(username);
 
     if (!(user && user.checkPassword(password))) {
         return res.status(401)
             .json({
-                error: "Incorrect username or password",
+                message: "Incorrect username or password",
             });
     }
 
     const playload = {
         _id: user._id,
         username: user.username,
+        token: user.token,
     };
 
     return res.json({
         token: jwt.sign(playload, process.env.tokenSecret, {
-            expiresIn: expiresIn || "1d",
+            expiresIn: "7d",
         }),
     });
 });
@@ -33,23 +34,38 @@ router.post("/register", async (req, res) => {
         username,
         password,
         email,
-        displayName,
     } = req.body;
+
+    if (!(username && password && email)) {
+        return res.status(400)
+            .json({
+                message: "Some content is missing",
+            });
+    }
+
+    if (!(password.length >= 8 && password.length <= 60)) {
+        return res.status(400)
+            .json({
+                message: "Invalid password length",
+            });
+    }
 
     if (await userModel.isUsernameExist(username)) {
         return res.status(400)
             .json({
-                error: "Username already exist",
+                message: "Username already exist",
             });
     }
 
     const salt = uuidv4();
+    const token = uuidv4();
     const user = await new userModel({
         username,
         password: userModel.encryptPassword(password, salt),
         salt,
+        token,
         email,
-        displayName: displayName || username,
+        displayName: username,
     });
 
     user.save();

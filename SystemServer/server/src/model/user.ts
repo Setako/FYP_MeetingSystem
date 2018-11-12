@@ -29,6 +29,8 @@ export class User extends Typegoose {
 
     @prop({
         required: true,
+        minlength: 8,
+        maxlength: 60,
     })
     public password: string;
 
@@ -37,11 +39,22 @@ export class User extends Typegoose {
     })
     public salt: string;
 
-    @prop()
-    public displayName?: string;
+    @prop({
+        required: true,
+    })
+    public token: string;
 
-    @prop()
-    public email?: string;
+    @prop({
+        required: true,
+        minlength: 2,
+        maxlength: 20,
+    })
+    public displayName: string;
+
+    @prop({
+        required: true,
+    })
+    public email: string;
 
     @arrayProp({
         itemsRef: User,
