@@ -8,6 +8,9 @@ import {AuthService} from '../../../../services/auth.service';
   styleUrls: ['./user-info.component.css']
 })
 export class UserInfoComponent implements OnInit {
+  public googleServiceForm = new FormGroup({
+  });
+
   public userInformationForm = new FormGroup({
     displayName: new FormControl(this.auth.loggedInUser.displayName,
       [Validators.required, Validators.minLength(2), Validators.maxLength(20)]),
@@ -16,9 +19,6 @@ export class UserInfoComponent implements OnInit {
     newPassword: new FormControl('', [Validators.minLength(8), Validators.maxLength(60)]),
     newPasswordConfirm: new FormControl('', [Validators.minLength(8), Validators.maxLength(60)]),
     currentPassword: new FormControl('', [Validators.required]),
-  });
-
-  public googleServiceSettingForm = new FormGroup({
   });
 
   constructor(private auth: AuthService) {

@@ -2,47 +2,50 @@
   <mat-tab-group [dynamicHeight]="true" *ngIf="!querying">
 
     <mat-tab label="Information">
-      <form class="p-3" (submit)="$event.preventDefault();  editInformation();" [formGroup]="googleServiceSettingForm">
-        <mat-form-field class="w-100">
-          <input matInput placeholder="Display Name" formControlName="displayName" required>
-          <mat-error *ngIf="googleServiceSettingForm.get('displayName').invalid">
-            Display name is required and between 2~20 characters.
-          </mat-error>
-        </mat-form-field>
-
-        <mat-form-field class="w-100">
-          <input matInput placeholder="Email" formControlName="email" required>
-          <mat-error *ngIf="googleServiceSettingForm.get('email').hasError('required')"> Email is required.</mat-error>
-          <mat-error *ngIf="googleServiceSettingForm.get('email').hasError('email')"> Format is incorret.</mat-error>
-        </mat-form-field>
-
-        <mat-checkbox formControlName="changePassword">Change password</mat-checkbox>
-
-        <div *ngIf="googleServiceSettingForm.value.changePassword">
+      <form class="p-3" (submit)="$event.preventDefault();  editInformation();" [formGroup]="userInformationForm">
+        <mat-card class="mb-3">
           <mat-form-field class="w-100">
-            <input matInput placeholder="New password (Leave it blank to keep it unchange)" formControlName="newPassword"
-                   type="password">
-            <mat-error *ngIf="googleServiceSettingForm.get('newPassword').invalid">
-              Password must between 8 ~ 60 chracters.
+            <input matInput placeholder="Display Name" formControlName="displayName" required>
+            <mat-error *ngIf="userInformationForm.get('displayName').invalid">
+              Display name is required and between 2~20 characters.
             </mat-error>
           </mat-form-field>
 
           <mat-form-field class="w-100">
-            <input matInput placeholder="New password confirm" formControlName="newPasswordConfirm"
-                   type="password">
-            <mat-error *ngIf="googleServiceSettingForm.get('newPasswordConfirm').invalid">
-              Password not match
-            </mat-error>
+            <input matInput placeholder="Email" formControlName="email" required>
+            <mat-error *ngIf="userInformationForm.get('email').hasError('required')"> Email is required.</mat-error>
+            <mat-error *ngIf="userInformationForm.get('email').hasError('email')"> Format is incorret.</mat-error>
           </mat-form-field>
+        </mat-card>
 
-          <mat-form-field class="w-100">
-            <input matInput placeholder="Current Password" formControlName="currentPassword"
-                   type="password">
-            <mat-error *ngIf="googleServiceSettingForm.get('currentPassword').invalid">
-              Current Password is required
-            </mat-error>
-          </mat-form-field>
-        </div>
+        <mat-card class="mb-3">
+          <mat-checkbox formControlName="changePassword">Change password</mat-checkbox>
+          <div *ngIf="userInformationForm.value.changePassword">
+            <mat-form-field class="w-100">
+              <input matInput placeholder="New password" formControlName="newPassword"
+                     type="password">
+              <mat-error *ngIf="userInformationForm.get('newPassword').invalid">
+                Password must between 8 ~ 60 chracters.
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="w-100">
+              <input matInput placeholder="New password confirm" formControlName="newPasswordConfirm"
+                     type="password">
+              <mat-error *ngIf="userInformationForm.get('newPasswordConfirm').invalid">
+                Password not match
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field class="w-100">
+              <input matInput placeholder="Current Password" formControlName="currentPassword"
+                     type="password">
+              <mat-error *ngIf="userInformationForm.get('currentPassword').invalid">
+                Current Password is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+        </mat-card>
         <button mat-raised-button color="primary" class="float-right">Edit</button>
       </form>
     </mat-tab>

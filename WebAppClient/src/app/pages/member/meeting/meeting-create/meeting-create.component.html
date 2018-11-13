@@ -1,0 +1,49 @@
+<mat-card>
+  <mat-card-title>
+    Create Meeting Draft
+  </mat-card-title>
+  <mat-card-content>
+    <form>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label>Meeting Title</mat-label>
+        <input matInput placeholder="Title"/>
+      </mat-form-field>
+      <div class="d-flex">
+        <mat-form-field class="flex-fill pr-3">
+          <mat-label><mat-icon>av_timer</mat-icon>Length</mat-label>
+          <input matInput type="number" step="0.5" placeholder="Length"/>
+          <span matSuffix>Hours</span>
+        </mat-form-field>
+        <mat-form-field class="flex-fill pr-3">
+          <mat-label><mat-icon>priority_high</mat-icon>Priority</mat-label>
+          <mat-select placeholder="Priority">
+            <mat-option value="1">Low</mat-option>
+            <mat-option value="2">Medium</mat-option>
+            <mat-option value="3">High</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="flex-fill">
+          <mat-select placeholder="Model Type">
+            <mat-option value="speech">Speech</mat-option>
+            <mat-option value="group_discussion">Group Discussion</mat-option>
+            <mat-option value="presentation">Presentation</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <mat-form-field class="w-100">
+        <mat-label><mat-icon>location_on</mat-icon>Location</mat-label>
+        <input matInput placeholder="Location"/>
+      </mat-form-field>
+      <mat-form-field class="w-100">
+        <textarea matInput placeholder="Description" rows="8"></textarea>
+      </mat-form-field>
+    </form>
+  </mat-card-content>
+  <mat-card-actions>
+    <div class="d-flex justify-content-end">
+      <button mat-flat-button class="mr-2">Cancel</button>
+      <button mat-flat-button color="primary">Create</button>
+    </div>
+  </mat-card-actions>
+</mat-card>
+

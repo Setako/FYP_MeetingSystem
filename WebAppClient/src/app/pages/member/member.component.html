@@ -16,15 +16,18 @@
         <h4>C-Commander</h4>
       </a>
       <div class="ml-auto">
-        <button mat-icon-button class="p-1">
+        <button mat-icon-button class="ml-2">
           <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>
+        </button>
+        <button mat-icon-button class="ml-2">
+          <mat-icon matBadgeColor="warn">chat</mat-icon>
         </button>
       </div>
     </mat-toolbar>
 
     <div class="d-flex flex-row h-100">
       <!--Side bar-->
-      <div style="width: 400px" class="mat-elevation-z6 user-panel cc-bg-secondary">
+      <div style="width: 400px; z-index: 10" class="mat-elevation-z6 user-panel cc-bg-secondary">
         <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default">
           <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
             <mat-panel-title class="d-flex align-items-center">
@@ -60,8 +63,7 @@
           </a>
         </div>
       </div>
-      <div class="p-3 w-100">
-
+      <div class="w-100" style="padding: 50px; padding-top: 25px; background: #fafafa">
         <router-outlet></router-outlet>
       </div>
     </div>

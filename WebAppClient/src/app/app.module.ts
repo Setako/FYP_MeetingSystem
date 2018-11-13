@@ -18,6 +18,12 @@ import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {HttpCommonErrorHandlerService} from './services/http-common-error-handler.service';
 import {HttpTokenInjectorService} from './services/http-token-injector.service';
 import {AuthGuard} from './shared/route-guards/auth.guard';
+import { SettingsComponent } from './pages/member/settings/settings.component';
+import { CalendarComponent } from './pages/member/calendar/calendar.component';
+import { MeetingCreateComponent } from './pages/member/meeting/meeting-create/meeting-create.component';
+import { MeetingEditComponent } from './pages/member/meeting/meeting-edit/meeting-edit.component';
+import {CalendarModule, DateAdapter} from 'angular-calendar';
+import {adapterFactory} from '../../node_modules/angular-calendar/date-adapters/date-fns';
 
 @NgModule({
   declarations: [
@@ -29,7 +35,11 @@ import {AuthGuard} from './shared/route-guards/auth.guard';
     UserInfoComponent,
     UserFriendsComponent,
     MeetingDetailComponent,
-    UserComponent
+    UserComponent,
+    SettingsComponent,
+    CalendarComponent,
+    MeetingCreateComponent,
+    MeetingEditComponent
   ],
   imports: [
     BrowserModule,
@@ -39,6 +49,10 @@ import {AuthGuard} from './shared/route-guards/auth.guard';
     FormsModule,
     HttpClientModule,
     ReactiveFormsModule,
+    CalendarModule.forRoot({
+      provide: DateAdapter,
+      useFactory: adapterFactory
+    })
   ],
   providers: [
     {

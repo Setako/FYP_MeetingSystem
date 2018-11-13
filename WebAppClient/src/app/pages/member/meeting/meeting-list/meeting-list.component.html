@@ -1,3 +1,154 @@
-<p>
-  meeting-list works!
-</p>
+<div>
+  <div class="d-flex align-items-center">
+    <a routerLink="/member/meeting/create">
+      <button mat-stroked-button class="tool-bar-button mr-3" color="primary">
+        <mat-icon class="mr-1">add</mat-icon>
+        <span>Create</span>
+      </button>
+    </a>
+
+    <mat-checkbox class="mr-3" [checked]="true">Hosted by me</mat-checkbox>
+    <mat-checkbox class="mr-3" [checked]="true">Hosted by other</mat-checkbox>
+  </div>
+
+
+  <mat-divider class="mt-3 mb-3"></mat-divider>
+
+  <mat-tab-group [dynamicHeight]="true">
+    <mat-tab label="Confirmed">
+      <div class="p-2">
+        <mat-card class="my-3">
+          <mat-card-title>Project progress report
+            <mat-chip-list style="float: right">
+              <mat-chip color="primary" selected>Confirmed</mat-chip>
+            </mat-chip-list>
+          </mat-card-title>
+          <mat-card-subtitle>
+            <div class="d-flex justify-content-between">
+              <div class="d-inline-flex align-items-center">
+                <mat-icon>flag</mat-icon>
+                Host by <span class="ml-1">Tommy.Chan</span>
+              </div>
+              <div class="d-inline-flex align-items-center">
+                <mat-icon> priority_high</mat-icon>
+                <span>Priority: Medium</span>
+              </div>
+            </div>
+          </mat-card-subtitle>
+          <mat-card-content>
+            <div class="mt-2 mb-3">
+              <div class="d-flex py-1">
+                <div class="d-flex align-items-center pr-2">
+                  <mat-icon> location_on</mat-icon>
+                  <span>Location: AAA's Cafe</span>
+                </div>
+              </div>
+              <div class="d-flex py-1">
+                <div class="d-flex align-items-center pr-2">
+                  <mat-icon>date_range</mat-icon>
+                  <span>Date: 05/12/2018 08:30</span>
+                </div>
+                <div class="d-flex align-items-center pr-2">
+                  <mat-icon>av_timer</mat-icon>
+                  <span>Length: 1.5 hours</span>
+                </div>
+              </div>
+            </div>
+            <mat-divider class="mt-2"></mat-divider>
+            <div class="mt-5 mb-4 pl-3">
+              To report the progress of the "E-Green Environment System" project to the leader of department. <br>
+              Please remember to bring the related model back.
+            </div>
+            <mat-chip-list>
+              <mat-chip-list class="d-flex">
+                <mat-chip class="d-flex align-items-center mr-2">
+                  <mat-icon color="primary">attach_file</mat-icon>
+                  File shared
+                </mat-chip>
+                <mat-chip class="d-flex align-items-center mr-2">
+                  <mat-icon color="primary">list_alt</mat-icon>
+                  Agenda shared
+                </mat-chip>
+              </mat-chip-list>
+            </mat-chip-list>
+          </mat-card-content>
+          <mat-card-actions>
+            <div class="d-flex justify-content-end">
+              <button mat-flat-button class="">Details...</button>
+            </div>
+          </mat-card-actions>
+        </mat-card>
+
+
+        <mat-card class="my-3">
+          <mat-card-title>Group discussion (EGE Project Team)
+            <mat-chip-list style="float: right">
+              <mat-chip color="primary" selected>Confirmed</mat-chip>
+            </mat-chip-list>
+          </mat-card-title>
+          <mat-card-subtitle>
+            <div class="d-flex justify-content-between">
+              <div class="d-inline-flex align-items-center">
+                <mat-icon>flag</mat-icon>
+                Host by <span style="color: orangered" class="ml-1"> You</span>
+              </div>
+              <div class="d-inline-flex align-items-center">
+                <mat-icon> priority_high</mat-icon>
+                <span>Priority: Low</span>
+              </div>
+            </div>
+          </mat-card-subtitle>
+          <mat-card-content>
+            <div class="mt-2 mb-3">
+              <div class="d-flex py-1">
+                <div class="d-flex align-items-center pr-2">
+                  <mat-icon> location_on</mat-icon>
+                  <span>Location: AAA's Cafe</span>
+                </div>
+              </div>
+              <div class="d-flex py-1">
+                <div class="d-flex align-items-center pr-2">
+                  <mat-icon>date_range</mat-icon>
+                  <span>Date: 07/12/2018 14:30</span>
+                </div>
+                <div class="d-flex align-items-center pr-2">
+                  <mat-icon>av_timer</mat-icon>
+                  <span>Length: 2 hours</span>
+                </div>
+              </div>
+            </div>
+            <mat-divider class="mt-2"></mat-divider>
+            <div class="mt-5 mb-4 pl-3">
+              To discuss the design of our current project. <br>
+              Including: <br>
+              1. UI Design
+              2. Database Design
+              3. Architecture
+            </div>
+            <mat-chip-list>
+              <mat-chip-list class="d-flex">
+                <mat-chip class="d-flex align-items-center mr-2">
+                  <mat-icon color="primary">attach_file</mat-icon>
+                  File shared
+                </mat-chip>
+                <mat-chip class="d-flex align-items-center mr-2">
+                  <mat-icon color="warn">list_alt</mat-icon>
+                  No Agenda share
+                </mat-chip>
+              </mat-chip-list>
+            </mat-chip-list>
+          </mat-card-content>
+          <mat-card-actions>
+            <div class="d-flex justify-content-end">
+              <button mat-flat-button class="">Details...</button>
+            </div>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </mat-tab>
+    <mat-tab label="Planned"></mat-tab>
+    <mat-tab label="Draft"></mat-tab>
+    <mat-tab label="History"></mat-tab>
+    <mat-tab label="Cancelled"></mat-tab>
+  </mat-tab-group>
+</div>

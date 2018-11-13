@@ -9,6 +9,10 @@ import {UserComponent} from './pages/member/user/user.component';
 import {UserInfoComponent} from './pages/member/user/user-info/user-info.component';
 import {UserFriendsComponent} from './pages/member/user/user-friends/user-friends.component';
 import {AuthGuard} from './shared/route-guards/auth.guard';
+import {SettingsComponent} from './pages/member/settings/settings.component';
+import {CalendarComponent} from './pages/member/calendar/calendar.component';
+import {MeetingCreateComponent} from './pages/member/meeting/meeting-create/meeting-create.component';
+import {MeetingEditComponent} from './pages/member/meeting/meeting-edit/meeting-edit.component';
 
 const routes: Routes = [
   {
@@ -16,8 +20,12 @@ const routes: Routes = [
     children: [
       {path: '', redirectTo: 'dashboard', pathMatch: 'full'},
       {path: 'dashboard', component: DashboardComponent},
+      {path: 'calendar', component: CalendarComponent, pathMatch: 'full'},
+      {path: 'settings', component: SettingsComponent, pathMatch: 'full'},
       {path: 'meeting', component: MeetingListComponent, pathMatch: 'full'},
+      {path: 'meeting/create', component: MeetingCreateComponent, pathMatch: 'full'},
       {path: 'meeting/:id', component: MeetingDetailComponent, pathMatch: 'full'},
+      {path: 'meeting/:id/edit', component: MeetingEditComponent, pathMatch: 'full'},
       {
         path: 'user', component: UserComponent,
         children: [

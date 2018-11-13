@@ -15,6 +15,7 @@ export class MemberComponent implements OnInit {
   ];
   public links = [
     {title: 'Meetings', icon: 'assignment', link: '/member/meeting'},
+    {title: 'Calendar', icon: 'calendar_today', link: '/member/calendar'},
     {title: 'Settings', icon: 'settings', link: '/member/settings'},
   ];
 
