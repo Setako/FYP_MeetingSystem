@@ -1,11 +1,11 @@
 import {NgModule} from '@angular/core';
 import {
   MatBadgeModule,
-  MatButtonModule, MatChipsModule,
+  MatButtonModule, MatCheckboxModule, MatChipsModule,
   MatDividerModule, MatExpansionModule, MatIconModule,
   MatInputModule,
   MatListModule,
-  MatProgressSpinnerModule,
+  MatProgressSpinnerModule, MatRadioModule,
   MatSidenavModule,
   MatSnackBarModule,
   MatTabsModule,
@@ -27,6 +27,8 @@ import {
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatExpansionModule,
+    MatCheckboxModule,
+    MatRadioModule,
   ],
   exports: [
     MatInputModule,
@@ -42,6 +44,8 @@ import {
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatExpansionModule,
+    MatCheckboxModule,
+    MatRadioModule,
   ]
 })
 export class MaterialsModule { }

@@ -2,48 +2,52 @@
   <mat-tab-group [dynamicHeight]="true" *ngIf="!querying">
 
     <mat-tab label="Information">
-      <form class="p-3" (submit)="$event.preventDefault();  editInformation();" [formGroup]="userInformationForm">
+      <form class="p-3" (submit)="$event.preventDefault();  editInformation();" [formGroup]="googleServiceSettingForm">
         <mat-form-field class="w-100">
-          <input matInput placeholder="Display Name" formControlName="displayName" name="displayName" required>
-          <mat-error *ngIf="userInformationForm.get('displayName').invalid">
+          <input matInput placeholder="Display Name" formControlName="displayName" required>
+          <mat-error *ngIf="googleServiceSettingForm.get('displayName').invalid">
             Display name is required and between 2~20 characters.
           </mat-error>
         </mat-form-field>
 
         <mat-form-field class="w-100">
-          <input matInput placeholder="Email" formControlName="email" name="email" required>
-          <mat-error *ngIf="userInformationForm.get('email').invalid">
-            Email is required.
-          </mat-error>
+          <input matInput placeholder="Email" formControlName="email" required>
+          <mat-error *ngIf="googleServiceSettingForm.get('email').hasError('required')"> Email is required.</mat-error>
+          <mat-error *ngIf="googleServiceSettingForm.get('email').hasError('email')"> Format is incorret.</mat-error>
         </mat-form-field>
 
+        <mat-checkbox formControlName="changePassword">Change password</mat-checkbox>
+
+        <div *ngIf="googleServiceSettingForm.value.changePassword">
+          <mat-form-field class="w-100">
+            <input matInput placeholder="New password (Leave it blank to keep it unchange)" formControlName="newPassword"
+                   type="password">
+            <mat-error *ngIf="googleServiceSettingForm.get('newPassword').invalid">
+              Password must between 8 ~ 60 chracters.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field class="w-100">
+            <input matInput placeholder="New password confirm" formControlName="newPasswordConfirm"
+                   type="password">
+            <mat-error *ngIf="googleServiceSettingForm.get('newPasswordConfirm').invalid">
+              Password not match
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field class="w-100">
+            <input matInput placeholder="Current Password" formControlName="currentPassword"
+                   type="password">
+            <mat-error *ngIf="googleServiceSettingForm.get('currentPassword').invalid">
+              Current Password is required
+            </mat-error>
+          </mat-form-field>
+        </div>
         <button mat-raised-button color="primary" class="float-right">Edit</button>
       </form>
     </mat-tab>
 
     <mat-tab label="Google Service">
-      <!--<form class="p-3" (submit)="$event.preventDefault()" [formGroup]="registerForm">-->
-        <!--<mat-form-field class="w-100">-->
-          <!--<input matInput placeholder="Username" formControlName="username" name="username" required>-->
-          <!--<mat-error *ngIf="registerForm.get('username').hasError('required')">Username is required</mat-error>-->
-        <!--</mat-form-field>-->
-        <!--<mat-form-field class="w-100">-->
-          <!--<input matInput placeholder="Email" formControlName="email" name="email" required>-->
-          <!--<mat-error *ngIf="registerForm.get('email').hasError('required')">Email is required</mat-error>-->
-          <!--<mat-error *ngIf="registerForm.get('email').hasError('email')">Not a valid Email format</mat-error>-->
-        <!--</mat-form-field>-->
-        <!--<mat-form-field class="w-100">-->
-          <!--<input matInput placeholder="Password" formControlName="password" name="password" required>-->
-          <!--<mat-error *ngIf="registerForm.get('password').hasError('required')">Password is required</mat-error>-->
-        <!--</mat-form-field>-->
-        <!--<mat-form-field class="w-100">-->
-          <!--<input matInput placeholder="Password Confirm" formControlName="passwordConfirm" name="passwordConfirm"-->
-                 <!--required>-->
-          <!--<mat-error *ngIf="registerForm.get('passwordConfirm').hasError('passwordNotMatch')">Password is not match-->
-          <!--</mat-error>-->
-        <!--</mat-form-field>-->
-        <!--<button mat-raised-button color="primary" class="float-right">Register</button>-->
-      <!--</form>-->
     </mat-tab>
   </mat-tab-group>
 </div>

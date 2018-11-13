@@ -44,7 +44,7 @@
                 <mat-error *ngIf="registerForm.get('password').hasError('required')">Password is required</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password Confirm" type="password" formControlName="passwordConfirm" name="passwordConfirm"
+                <input matInput placeholder="Password confirm" type="password" formControlName="passwordConfirm" name="passwordConfirm"
                        required>
                 <mat-error *ngIf="registerForm.get('passwordConfirm').hasError('passwordNotMatch')">Password is not
                   match

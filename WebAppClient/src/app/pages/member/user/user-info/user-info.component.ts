@@ -10,8 +10,15 @@ import {AuthService} from '../../../../services/auth.service';
 export class UserInfoComponent implements OnInit {
   public userInformationForm = new FormGroup({
     displayName: new FormControl(this.auth.loggedInUser.displayName,
-      [Validators.required, Validators.minLength(4), Validators.maxLength(20)]),
+      [Validators.required, Validators.minLength(2), Validators.maxLength(20)]),
     email: new FormControl(this.auth.loggedInUser.email, [Validators.required, Validators.email]),
+    changePassword: new FormControl(false),
+    newPassword: new FormControl('', [Validators.minLength(8), Validators.maxLength(60)]),
+    newPasswordConfirm: new FormControl('', [Validators.minLength(8), Validators.maxLength(60)]),
+    currentPassword: new FormControl('', [Validators.required]),
+  });
+
+  public googleServiceSettingForm = new FormGroup({
   });
 
   constructor(private auth: AuthService) {
