@@ -1,11 +1,12 @@
 import {NgModule} from '@angular/core';
 import {
+  MatAutocompleteModule,
   MatBadgeModule,
-  MatButtonModule, MatCardModule, MatCheckboxModule, MatChipsModule,
+  MatButtonModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule,
   MatDividerModule, MatExpansionModule, MatIconModule,
   MatInputModule,
-  MatListModule,
-  MatProgressSpinnerModule, MatRadioModule, MatSelectModule,
+  MatListModule, MatNativeDateModule,
+  MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule,
   MatSidenavModule,
   MatSnackBarModule, MatStepperModule,
   MatTabsModule,
@@ -32,6 +33,10 @@ import {
     MatCardModule,
     MatSelectModule,
     MatStepperModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatAutocompleteModule,
+    MatRippleModule,
   ],
   exports: [
     MatInputModule,
@@ -52,6 +57,10 @@ import {
     MatCardModule,
     MatSelectModule,
     MatStepperModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatAutocompleteModule,
+    MatRippleModule,
 
   ]
 })

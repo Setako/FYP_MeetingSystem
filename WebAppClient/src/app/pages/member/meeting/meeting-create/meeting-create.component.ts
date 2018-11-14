@@ -6,7 +6,6 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./meeting-create.component.css']
 })
 export class MeetingCreateComponent implements OnInit {
-
   constructor() { }
 
   ngOnInit() {

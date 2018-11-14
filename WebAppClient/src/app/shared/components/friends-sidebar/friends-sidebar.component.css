@@ -4,6 +4,6 @@
   height: 50px;
   object-fit: cover;
 }
-.friend-item{
+::ng-deep .friend-item{
   height: 60px !important;
 }

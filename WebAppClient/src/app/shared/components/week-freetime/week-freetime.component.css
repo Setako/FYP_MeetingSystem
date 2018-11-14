@@ -1,0 +1,15 @@
+::ng-deep .not-free-time .cal-event {
+  background: repeating-linear-gradient(-45deg, rgba(255,193,198,0.5), rgba(255,193,198,0.5) 25px, #ff6161 25px, #ff6161 30px);
+  background-color: transparent !important;
+}
+::ng-deep .not-free-time .cal-event-title {
+  display: none !important;
+}
+
+::ng-deep .not-free-time{
+  opacity: 50%;
+}
+
+::ng-deep .cal-event{
+  border-radius: 0px !important;
+}

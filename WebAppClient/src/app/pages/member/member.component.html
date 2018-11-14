@@ -7,27 +7,30 @@
   </div>
 
   <!--Main-->
-  <div class="h-100" *ngIf="!loading">
+  <div class="h-100 d-flex flex-column" *ngIf="!loading">
 
     <!--Header-->
-    <div style="height: 10px" class="cc-bg-dark-primary"></div>
-    <mat-toolbar class="cc-bg-primary cc-text-color-primary">
-      <a routerLink="/member" class="header-title">
-        <h4>C-Commander</h4>
-      </a>
-      <div class="ml-auto">
-        <button mat-icon-button class="ml-2">
-          <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>
-        </button>
-        <button mat-icon-button class="ml-2">
-          <mat-icon matBadgeColor="warn">chat</mat-icon>
-        </button>
-      </div>
-    </mat-toolbar>
+    <div style="z-index: 500">
+      <div style="height: 10px" class="cc-bg-dark-primary"></div>
+      <mat-toolbar class="cc-bg-primary cc-text-color-primary">
+        <a routerLink="/member" class="header-title">
+          <h4>C-Commander</h4>
+        </a>
+        <div class="ml-auto">
+          <button mat-icon-button class="ml-3">
+            <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>
+          </button>
+          <button mat-icon-button class="ml-3" [style.background-color]="toggleFriendsList?'#93d7c4':''"
+                  (click)="toggleFriendsList = !toggleFriendsList">
+            <mat-icon matBadgeColor="warn">chat</mat-icon>
+          </button>
+        </div>
+      </mat-toolbar>
+    </div>
 
-    <div class="d-flex flex-row h-100">
+    <div class="flex-grow-1 flex-shrink-1 d-flex " style="position: relative; overflow: hidden">
       <!--Side bar-->
-      <div style="width: 400px; z-index: 10" class="mat-elevation-z6 user-panel cc-bg-secondary">
+      <div style="width: 250px; z-index: 100" class="mat-elevation-z6 user-panel cc-bg-secondary">
         <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default">
           <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
             <mat-panel-title class="d-flex align-items-center">
@@ -45,10 +48,11 @@
               </div>
             </button>
           </a>
-          <button mat-button class="w-100 sidebar-link" style="padding: 4px 36px; height: 48px; text-align: left" (click)="logout()">
+          <button mat-button class="w-100 sidebar-link" style="padding: 4px 36px; height: 48px; text-align: left"
+                  (click)="logout()">
             <div class="d-flex">
-            <mat-icon style="font-size: 32px">exit_to_app</mat-icon>
-            Logout
+              <mat-icon style="font-size: 32px">exit_to_app</mat-icon>
+              Logout
             </div>
           </button>
         </mat-expansion-panel>
@@ -63,9 +67,15 @@
           </a>
         </div>
       </div>
-      <div class="w-100" style="padding: 50px; padding-top: 25px; background: #fafafa">
-        <router-outlet></router-outlet>
+      <div class="flex-grow-1 flex-shrink-1 h-100 justify-content-center" style="overflow-x: hidden; overflow-y: auto">
+        <div>
+          <div class="w-100 px-0 px-md-2 px-xl-5  py-4" style="background: #fafafa">
+            <router-outlet></router-outlet>
+          </div>
+        </div>
       </div>
+      <app-friends-sidebar style="position: absolute; width: 275px; right: 0; top: 0; bottom: 0; z-index: 20;"
+                           class="mat-elevation-z6" *ngIf="toggleFriendsList"></app-friends-sidebar>
     </div>
   </div>
 </div>

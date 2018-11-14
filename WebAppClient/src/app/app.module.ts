@@ -24,6 +24,8 @@ import { MeetingCreateComponent } from './pages/member/meeting/meeting-create/me
 import { MeetingEditComponent } from './pages/member/meeting/meeting-edit/meeting-edit.component';
 import {CalendarModule, DateAdapter} from 'angular-calendar';
 import {adapterFactory} from '../../node_modules/angular-calendar/date-adapters/date-fns';
+import { WeekFreetimeComponent } from './shared/components/week-freetime/week-freetime.component';
+import { FriendsSidebarComponent } from './shared/components/friends-sidebar/friends-sidebar.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +41,9 @@ import {adapterFactory} from '../../node_modules/angular-calendar/date-adapters/
     SettingsComponent,
     CalendarComponent,
     MeetingCreateComponent,
-    MeetingEditComponent
+    MeetingEditComponent,
+    WeekFreetimeComponent,
+    FriendsSidebarComponent
   ],
   imports: [
     BrowserModule,

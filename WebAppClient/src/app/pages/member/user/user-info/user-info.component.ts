@@ -1,6 +1,8 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {AuthService} from '../../../../services/auth.service';
+
+declare const gapi: any;
 
 @Component({
   selector: 'app-user-info',
@@ -8,8 +10,7 @@ import {AuthService} from '../../../../services/auth.service';
   styleUrls: ['./user-info.component.css']
 })
 export class UserInfoComponent implements OnInit {
-  public googleServiceForm = new FormGroup({
-  });
+  public googleServiceForm = new FormGroup({});
 
   public userInformationForm = new FormGroup({
     displayName: new FormControl(this.auth.loggedInUser.displayName,
@@ -21,10 +22,31 @@ export class UserInfoComponent implements OnInit {
     currentPassword: new FormControl('', [Validators.required]),
   });
 
+  private permissions = [
+    'profile',
+    'email',
+  ].join(' ');
+
+  @ViewChild('googleAuthBtn') googleAuthBtnEl: ElementRef;
+
+  private googleOAuth2: any;
+
   constructor(private auth: AuthService) {
   }
 
   ngOnInit() {
+    gapi.load('auth2', function () {
+      gapi.auth2.init();
+    });
+  }
+
+  googleLogin() {
+    let googleAuth = gapi.auth2.getAuthInstance();
+    googleAuth.then(() => {
+      googleAuth.signIn({scope: 'profile email'}).then(googleUser => {
+        console.log(googleUser.getBasicProfile());
+      });
+    });
   }
 
   editInformation() {
@@ -36,4 +58,7 @@ export class UserInfoComponent implements OnInit {
   }
 
 
+  authGoogle() {
+
+  }
 }
