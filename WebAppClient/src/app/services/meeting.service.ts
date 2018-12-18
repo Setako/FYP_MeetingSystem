@@ -40,8 +40,8 @@ export class MeetingService {
     filter.status.forEach(includingStatus => queryUrl.searchParams.append('status', includingStatus));
     queryUrl.searchParams.append('hostedByMe', filter.hostedByMe + '');
     queryUrl.searchParams.append('hostedByOther', filter.hostedByOther + '');
-    queryUrl.searchParams.append('resultAmount', resultAmount + '');
-    queryUrl.searchParams.append('resultPage', resultPage + '');
+    queryUrl.searchParams.append('resultPageSize', resultAmount + '');
+    queryUrl.searchParams.append('resultPageNum', resultPage + '');
     return this.http.get<ListResponse<Meeting>>(queryUrl.toString());
   }
 }
