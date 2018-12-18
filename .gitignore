@@ -6,6 +6,10 @@ build/
 /logs
 *.log
 
+# IDEA
+.idea/
+
+
 # Node
 node_modules/
 
