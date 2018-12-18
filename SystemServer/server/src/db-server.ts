@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 export class MongodbServer {
-
     private mongoConnection: mongoose.Connection;
 
     constructor() {
@@ -11,9 +10,12 @@ export class MongodbServer {
     public async start(url = process.env.dbUrl) {
         this.close();
 
-        this.mongoConnection = (await mongoose.connect(url, {
-            useNewUrlParser: true,
-        })).connection;
+        this.mongoConnection = (await mongoose.connect(
+            url,
+            {
+                useNewUrlParser: true,
+            },
+        )).connection;
 
         console.log(`Mongodb starting on ${url}`);
     }

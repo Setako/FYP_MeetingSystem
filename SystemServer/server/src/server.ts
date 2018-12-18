@@ -6,7 +6,6 @@ import logger from "morgan";
 import { apiRouter } from "./router";
 
 export class Server {
-
     public app: express.Express;
     private server: http.Server;
 
@@ -23,7 +22,9 @@ export class Server {
 
     public start(port = process.env.PORT || 3000) {
         this.close();
-        this.server = this.app.listen(port, () => console.log(`Express listen on http://localhost:${port}`));
+        this.server = this.app.listen(port, () =>
+            console.log(`Express listen on http://localhost:${port}`),
+        );
     }
 
     public close() {

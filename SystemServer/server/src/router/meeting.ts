@@ -1,7 +1,19 @@
 import { Request, Router } from "express";
+import { DocumentQuery, Types } from "mongoose";
 import path from "path";
 import { InstanceType } from "typegoose";
-import { Meeting, meetingModel, MeetingStatus } from "../model/meeting";
+import uuidv4 from "uuid/v4";
+import {
+    AccessPostMeetingPermission,
+    Attendance,
+    AttendanceStatus,
+    Invitation,
+    InvitationStatus,
+    Meeting,
+    meetingModel,
+    MeetingStatus,
+    MeetingType,
+} from "../model/meeting";
 import { userModel } from "../model/user";
 
 const router = Router();
@@ -10,15 +22,84 @@ declare interface IMeetingRequest extends Request {
     meeting: InstanceType<Meeting>;
 }
 
+function sortCursorByReq(
+    cursor: DocumentQuery<Array<InstanceType<Meeting>>, InstanceType<Meeting>>,
+    req: Request,
+) {
+    const value = req.body.sortOrder === "desc" ? -1 : 1;
+    const field = req.body.sortField;
+    return field != null ? cursor.sort({ field: value }) : cursor;
+}
+
+function cursorPaginationByReq(
+    cursor: DocumentQuery<Array<InstanceType<Meeting>>, InstanceType<Meeting>>,
+    req: Request,
+) {
+    const { resultPageSize, resultPageNum } = req.body;
+    if (resultPageSize) {
+        // const {
+        //     resultPageSize,
+        //     resultPageNum,
+        // } = req.query;
+        return cursor
+            .skip(resultPageSize * (resultPageNum - 1))
+            .limit(resultPageSize);
+    }
+    return cursor;
+}
+
+async function extractFilterQueryFromReq(req: Request) {
+    const query = {} as any;
+
+    const { status, hostedByMe, hostedByOther } = req.query;
+
+    if (status) {
+        query.status = status;
+    }
+
+    if (hostedByMe && hostedByOther) {
+        query.$or = [
+            {
+                owner: { $eq: Types.ObjectId(req.user._id) },
+            },
+            {
+                "attendance.user": { $eq: Types.ObjectId(req.user._id) },
+            },
+        ];
+    } else if (!hostedByMe) {
+        query.owner = {
+            $not: {
+                $eq: Types.ObjectId(req.user._id),
+            },
+        };
+    } else if (hostedByOther) {
+        query["attendance.user"] = { $eq: Types.ObjectId(req.user._id) };
+    }
+
+    return query;
+}
+
 router
     .get("/", async (req, res) => {
-        const list = await meetingModel.find();
-        const result = list.map((item) => ({
-            _id: item._id,
+        const { resultPageNum } = req.body;
+
+        let cursor = meetingModel.find(await extractFilterQueryFromReq(req));
+        const length = await cursor.countDocuments().exec();
+        cursor = sortCursorByReq(cursor, req);
+        cursor = cursorPaginationByReq(cursor, req);
+
+        const list = await cursor.find().exec();
+
+        const items = list.map((item) => ({
+            id: item._id,
             title: item.title,
         }));
 
-        res.json(result);
+        res.json({
+            items,
+            resultPageNum: resultPageNum || 1,
+            length,
+        });
     })
     .post("/", async (req, res) => {
         const missing = (...key: string[]) => {
@@ -28,68 +109,138 @@ router
         };
 
         const {
+            type,
             title,
+            description,
+            length,
             location,
-            plannedStartTime,
-            plannedEndTime,
-            language,
+            language = "en-US",
+            priority = 1,
+            generalPermission,
         } = req.body;
 
-        let {
-            attendance,
-        } = req.body;
+        let { attendance } = req.body;
 
         if (!(title && title.trim())) {
             return missing("title");
         }
 
-        if (!plannedStartTime || !plannedEndTime) {
-            return missing("plannedStartTime", "plannedEndTime");
+        if (!Object.values(MeetingType).includes(type)) {
+            return res.status(400).json({
+                message: "Incorrect meeting type",
+            });
         }
 
         const owner = await userModel.findByUsername(req.user.username);
 
         attendance = attendance || [];
         attendance = (await Promise.all(
-            (attendance as any[])
-                .map(async (item) => {
-                    item.user = await userModel.findByUsername(item.user);
-                    return item;
-                }),
-        )).filter((item) => item.user);
+            (attendance as any[]).map(async (item) => {
+                item.user = await userModel.findByUsername(item.user);
+                return item;
+            }),
+        )).filter((item) => item.user && item.user.username !== owner.username);
 
-        const isOwnerExist = (attendance as any[])
-            .some((item) => item.user === owner);
+        // const isOwnerExist = (attendance as any[]).some(
+        //     item => item.user === owner,
+        // );
 
-        if (!isOwnerExist) {
-            (attendance as any[]).push({
-                user: owner,
-            });
-        }
+        // if (!isOwnerExist) {
+        //     (attendance as any[]).push({
+        //         user: owner,
+        //     });
+        // }
 
         // TODO: send email in here?
 
         const meeting = await new meetingModel({
+            type,
             title,
             location,
-            plannedStartTime,
-            plannedEndTime,
             attendance,
             owner,
+            priority,
+            length,
+            description,
 
-            language: language || "en-US",
+            language,
             status: MeetingStatus.Draft,
-            priority: attendance.length,
+            generalPermission:
+                generalPermission ||
+                new AccessPostMeetingPermission(
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                    true,
+                ),
         }).save();
 
         res.json({
-            _id: meeting._id,
+            id: meeting._id,
             title: meeting.title,
-            priority: meeting.priority,
         });
     });
 
 router
+    .get("/:ids", async (req: IMeetingRequest, res) => {
+        const ids = req.params.ids
+            .split(";")
+            .map((ele: string) => {
+                try {
+                    return new Types.ObjectId(ele);
+                } catch {
+                    return null;
+                }
+            })
+            .filter(Boolean);
+
+        const query = {} as any;
+        query._id = { $in: ids };
+
+        const { resultPageNum = 1 } = req.body;
+
+        let cursor = meetingModel.find(query);
+        const length = await cursor.countDocuments().exec();
+
+        cursor = sortCursorByReq(cursor, req);
+        cursor = cursorPaginationByReq(cursor, req);
+
+        const list = await cursor.find().exec();
+
+        const items = await Promise.all(
+            list.map(async (item) => ({
+                id: item._id,
+                type: item.type,
+                title: item.type,
+                status: item.status,
+                description: item.description,
+                location: item.location,
+                plannedStartTime: item.plannedStartTime,
+                plannedEndTime: item.plannedEndTime,
+                realStartTime: item.realStartTime,
+                realEndTime: item.realEndTime,
+                language: item.language,
+                priority: item.priority,
+                device: item.device,
+                owner: await userModel.findById(item.owner),
+                attendance: await Promise.all(
+                    item.attendance.map(async (att) => ({
+                        ...att,
+                        user: (await userModel.findById(att.user)).username,
+                    })),
+                ),
+                generalPermission: item.generalPermission,
+            })),
+        );
+
+        res.json({
+            items,
+            resultPageNum,
+            length,
+        });
+    })
     .use("/:id", async (req: IMeetingRequest, res, next) => {
         const meeting = await meetingModel.findById(req.params.id);
         if (meeting) {
@@ -97,93 +248,139 @@ router
             return next();
         }
 
-        res.status(404)
-            .json({
-                message: "Meeting not found",
-            });
-    })
-    .get("/:id", async (req: IMeetingRequest, res) => {
-        const meeting = req.meeting;
-        const attendance = await Promise.all(
-            req.meeting.attendance.map(async (item) => {
-                const user = await userModel.findById(item.user);
-                return {
-                    ...item,
-                    user: user.username,
-                };
-            }),
-        );
-        const owner = await userModel.findById(meeting.owner);
-
-        res.json({
-            _id: meeting._id,
-            title: meeting.title,
-            status: meeting.status,
-            priority: meeting.priority,
-            location: meeting.location,
-            plannedStartTime: meeting.plannedStartTime,
-            plannedEndTime: meeting.plannedEndTime,
-            realStartTime: meeting.realStartTime,
-            realEndTime: meeting.realEndTime,
-            language: meeting.language,
-            device: meeting.device,
-            owner: owner.username,
-            attendance,
+        res.status(404).json({
+            message: "Meeting not found",
         });
     })
     .put("/:id", async (req: IMeetingRequest, res) => {
         const meeting = req.meeting;
+
         const {
+            type,
             title,
-            status,
+            description,
+            length,
             location,
+            status,
             plannedStartTime,
             plannedEndTime,
+            realStartTime,
+            realEndTime,
+            priority,
             language,
             attendance,
+            generalPermission,
         } = req.body;
 
+        const owner = await userModel.findByUsername(req.user.username);
+
         if (attendance) {
-            meeting.attendance = await Promise.all(
-                (attendance as any[])
-                    .map(async (item) => ({
-                        ...item,
-                        user: await userModel.findByUsername(item.user),
-                    })),
+            meeting.attendance = (await Promise.all(
+                (attendance as any[]).map(async (item) => ({
+                    ...item,
+                    user: await userModel.findByUsername(item.user),
+                })),
+            )).filter(
+                (item) => item.user && item.user.username !== owner.username,
             );
 
-            const isOwnerExist = meeting.attendance
-                .some((item) => item.user === meeting.owner);
+            // const isOwnerExist = meeting.attendance.some(
+            //     item => item.user === meeting.owner,
+            // );
 
-            if (!isOwnerExist) {
-                meeting.attendance.push({
-                    user: meeting.owner,
-                });
-            }
+            // if (!isOwnerExist) {
+            //     meeting.attendance.push({
+            //         user: meeting.owner,
+            //         proiority: 1,
+            //         permission: new AccessPostMeetingPermission(
+            //             true,
+            //             true,
+            //             true,
+            //             true,
+            //             true,
+            //             true,
+            //         ),
+            //     });
+            // }
 
-            meeting.priority = meeting.attendance.length;
+            // meeting.priority = meeting.attendance.length;
+        }
+
+        if (type && !Object.values(MeetingType).includes(type)) {
+            return res.status(400).json({
+                message: "Incorrect meeting type",
+            });
+        }
+
+        if (status && !Object.values(MeetingStatus).includes(status)) {
+            return res.status(400).json({
+                message: "Incorrect meeting statue",
+            });
         }
 
         meeting.title = title || meeting.title;
-        meeting.status = ["draft", "planned", "confirmed", "started", "ended"]
-            .includes(status) ? status : meeting.status;
-
+        meeting.status = status || meeting.status;
+        meeting.description = description || description;
+        meeting.length = length || length;
         meeting.location = location || meeting.location;
         meeting.plannedStartTime = plannedStartTime || meeting.plannedStartTime;
         meeting.plannedEndTime = plannedEndTime || meeting.plannedEndTime;
         meeting.language = language || meeting.language;
+        meeting.priority = priority || meeting.priority;
+        meeting.generalPermission =
+            generalPermission || meeting.generalPermission;
+        meeting.realStartTime = realStartTime || meeting.realStartTime;
+        meeting.realEndTime = realEndTime || meeting.realEndTime;
 
         meeting.save();
 
         res.json({
-            _id: meeting._id,
+            id: meeting._id,
             title: meeting.title,
-            priority: meeting.priority,
         });
     })
     .delete("/:id", async (req: IMeetingRequest, res) => {
-        await req.meeting.remove();
+        const meeting = req.meeting;
+
+        await meeting.remove();
         res.end();
+    });
+
+router
+    .get("/:id/participant", async (req: IMeetingRequest, res) => {
+
+        console.log("");
+
+        res.json({
+            items: req.meeting.invitations,
+            length: req.meeting.invitations.length,
+        });
+    })
+    .put("/:id/participant", async (req: IMeetingRequest, res) => {
+        const { friends = [], emails = [] } = req.body;
+
+        const meeting = req.meeting;
+
+        meeting.invitations = meeting.invitations.concat(((await Promise.all(
+            friends.map(async (friend: string) => ({
+                id: uuidv4(),
+                user: await userModel.findByUsername(friend),
+                status: InvitationStatus.Waiting,
+            })),
+        )) as unknown) as Invitation[]);
+
+        meeting.invitations = meeting.invitations.concat(
+            emails.map((email: string) => ({
+                id: uuidv4(),
+                email,
+                status: InvitationStatus.Waiting,
+            })),
+        );
+
+        meeting.save();
+        res.json({
+            invitations: meeting.invitations,
+        });
     });
 
 router
@@ -200,37 +397,44 @@ router
 router
     .use("/:id/attendance/:userId", async (req: IMeetingRequest, res, next) => {
         const user = await userModel.findById(req.params.userId);
-        if (user) { return next(); }
+        if (user) {
+            return next();
+        }
 
-        res.status(404)
-            .json({
-                message: "User not found",
-            });
+        res.status(404).json({
+            message: "User not found",
+        });
     })
     .get("/:id/attendance/:userId", async (req: IMeetingRequest, res) => {
-        res.json(req.meeting.attendance.find((itme) => itme.user === req.params.userId));
+        res.json(
+            req.meeting.attendance.find(
+                (itme) => itme.user === req.params.userId,
+            ),
+        );
     })
     .post("/:id/attendance/:userId", async (req: IMeetingRequest, res) => {
-        const selected = req.meeting.attendance.find((item) => item.user === req.params.userId);
-        if (!selected.status && selected.status !== "attended") {
+        const selected = req.meeting.attendance.find(
+            (item) => item.user === req.params.userId,
+        );
+        if (!selected.status && selected.status !== AttendanceStatus.Absent) {
             selected.arrivalTime = new Date();
-            selected.status = "attended";
+            selected.status = AttendanceStatus.Absent;
 
-            await meetingModel.findByIdAndUpdate(
-                req.meeting.id,
-                {
-                    attendance: req.meeting.attendance,
-                },
-            );
+            await meetingModel.findByIdAndUpdate(req.meeting.id, {
+                attendance: req.meeting.attendance,
+            });
         }
 
         res.json(selected);
     });
 
-router
-    .get("/:id/trained-model", async (req: IMeetingRequest, res) => {
-        const file = path.join(process.cwd(), "data/trained-model", req.params.id + ".clf");
-        res.download(file);
-    });
+router.get("/:id/trained-model", async (req: IMeetingRequest, res) => {
+    const file = path.join(
+        process.cwd(),
+        "data/trained-model",
+        req.params.id + ".clf",
+    );
+    res.download(file);
+});
 
 export const meetingRouter = router;

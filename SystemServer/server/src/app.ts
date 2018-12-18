@@ -8,9 +8,8 @@ const server = new Server();
 const dbServer = new MongodbServer();
 
 server.start();
-dbServer.start()
-    .catch(() => {
-        console.log("Since Mongodb cannot be connected, server will be closed.");
-        dbServer.close();
-        server.close();
-    });
+dbServer.start().catch(() => {
+    console.log("Since Mongodb cannot be connected, server will be closed.");
+    dbServer.close();
+    server.close();
+});

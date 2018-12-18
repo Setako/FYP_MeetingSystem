@@ -13,10 +13,16 @@ const router = Router();
 router.use("/auth", authRouter);
 
 router
-    .use(expressJwt({ secret: process.env.tokenSecret, credentialsRequired: false }))
+    .use(
+        expressJwt({
+            secret: process.env.tokenSecret,
+            credentialsRequired: false,
+        }),
+    )
     .use((err: any, req: Request, res: Response, next: NextFunction) => {
         if (err.name === "UnauthorizedError") {
-            return res.status(401)
+            return res
+                .status(401)
                 .json({ message: "Token is expired or fake" });
         }
 
@@ -24,41 +30,44 @@ router
     })
     .use((req, res, next) => {
         if (!req.user) {
-            return res.status(401)
-                .json({ message: "No token received" });
+            return res.status(401).json({ message: "No token received" });
         }
 
         return next();
     })
     .use(async (req, res, next) => {
         const user = await userModel.findByUsername(req.user.username);
-        if (!!user && user.token === req.user.token) { return next(); }
-
-        if (!user) {
-            return res.status(401)
-                .json({
-                    message: "Owned token user may no longer exist",
-                });
+        if (!!user && user.tokenVerificationCode === req.user.token) {
+            return next();
         }
 
-        res.status(401)
-            .json({
-                message: "Token is expired or fake",
+        if (!user) {
+            return res.status(401).json({
+                message: "Owned token user may no longer exist",
             });
+        }
+
+        res.status(401).json({
+            message: "Token is expired or fake",
+        });
     });
 
 router
     .post("/auth/refresh", async (req, res) => {
         res.json({
-            token: jwt.sign({
-                _id: req.user._id,
-                username: req.user.username,
-            }, process.env.tokenSecret, { expiresIn: "7d" }),
+            token: jwt.sign(
+                {
+                    _id: req.user._id,
+                    username: req.user.username,
+                },
+                process.env.tokenSecret,
+                { expiresIn: "7d" },
+            ),
         });
     })
     .post("/auth/logout", async (req, res) => {
         const user = await userModel.findByUsername(req.user.username);
-        user.token = uuidv4();
+        user.tokenVerificationCode = uuidv4();
         user.save();
         res.end();
     });
