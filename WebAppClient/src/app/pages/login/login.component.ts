@@ -4,6 +4,7 @@ import {MatSnackBar} from '@angular/material';
 import {finalize} from 'rxjs/operators';
 import {Router} from '@angular/router';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {User} from '../../shared/models/user';
 
 @Component({
   selector: 'app-login',
@@ -53,7 +54,11 @@ export class LoginComponent implements OnInit {
   register() {
     if (this.registerForm.valid) {
       this.querying = true;
-      this.auth.register(this.registerForm.value.username, this.registerForm.value.email, this.registerForm.value.password)
+      this.auth.register({
+        username: this.registerForm.value.username,
+        email: this.registerForm.value.email,
+        password: this.registerForm.value.password
+      } as User)
         .pipe(finalize(() => this.querying = false))
         .subscribe(
           (res) => {

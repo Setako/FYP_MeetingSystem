@@ -1,4 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
+import {PageEvent} from '@angular/material';
+import {Meeting, MeetingStatus} from '../../../../shared/models/meeting';
+import {MeetingService} from '../../../../services/meeting.service';
+import {ql} from '@angular/core/src/render3';
+import {Observable, Subscription} from 'rxjs';
+import {ListResponse} from '../../../../utils/ListResponse';
 
 @Component({
   selector: 'app-meeting-list',
@@ -6,10 +12,48 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./meeting-list.component.css']
 })
 export class MeetingListComponent implements OnInit {
+  public pageSizeOptions: number[] = [2, 5, 10, 20];
+  public pageIndex = 0;
+  public pageSize = 5;
+  public meetingsLength = 0;
+  public meetingList: Meeting[];
+  public meetingListQuerySubscription: Subscription = null;
 
-  constructor() { }
+  public availableStatus = ['draft', 'planned', 'confirmed', 'cancelled', 'started', 'ended', 'deleted'];
 
-  ngOnInit() {
+  public hostedByMe = true;
+  public hostedByOther = true;
+  public status: MeetingStatus = 'draft';
+
+  constructor(public meetingService: MeetingService) {
   }
 
+  ngOnInit() {
+    this.updateList();
+  }
+
+  updatePageNum(event: PageEvent) {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.updateList();
+  }
+
+  public updateList() {
+    if (this.meetingListQuerySubscription != null) {
+      this.meetingListQuerySubscription.unsubscribe();
+      this.meetingListQuerySubscription = null;
+    }
+    this.meetingListQuerySubscription = this.meetingService.findMeetings({
+      hostedByMe: this.hostedByMe,
+      hostedByOther: this.hostedByOther,
+      status: [this.status]
+    }, this.pageSize, this.pageIndex + 1).subscribe(
+      res => {
+        this.meetingList = res.items;
+        this.meetingsLength = res.length;
+        this.meetingListQuerySubscription = null;
+      },
+      err => this.meetingListQuerySubscription = null
+    );
+  }
 }

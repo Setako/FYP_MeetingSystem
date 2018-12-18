@@ -5,7 +5,7 @@ import {
   MatButtonModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule,
   MatDividerModule, MatExpansionModule, MatIconModule,
   MatInputModule,
-  MatListModule, MatNativeDateModule,
+  MatListModule, MatNativeDateModule, MatPaginatorModule,
   MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule,
   MatSidenavModule,
   MatSnackBarModule, MatStepperModule,
@@ -37,6 +37,7 @@ import {
     MatNativeDateModule,
     MatAutocompleteModule,
     MatRippleModule,
+    MatPaginatorModule,
   ],
   exports: [
     MatInputModule,
@@ -61,7 +62,8 @@ import {
     MatNativeDateModule,
     MatAutocompleteModule,
     MatRippleModule,
-
+    MatPaginatorModule,
   ]
 })
-export class MaterialsModule { }
+export class MaterialsModule {
+}

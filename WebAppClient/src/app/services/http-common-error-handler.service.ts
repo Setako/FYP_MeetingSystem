@@ -15,7 +15,6 @@ export class HttpCommonErrorHandlerService implements HttpInterceptor {
 
   public intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return new Observable((observer) => {
-      console.log(req);
       next.handle(req).subscribe(
         res => {
           observer.next(res);

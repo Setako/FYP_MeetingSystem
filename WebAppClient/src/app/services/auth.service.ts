@@ -70,11 +70,8 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
-  public register(username: string, email: string, password: string): Observable<Object> {
-    return this.http.post(`${AppConfig.API_PATH}/auth/register`, {
-      username: username,
-      password: password,
-      email: email
-    }).pipe(mergeMap(() => this.login(username, password)));
+  public register(user: User): Observable<Object> {
+    return this.http.post(`${AppConfig.API_PATH}/auth/register`, user)
+      .pipe(mergeMap(() => this.login(user.username, user.password)));
   }
 }
