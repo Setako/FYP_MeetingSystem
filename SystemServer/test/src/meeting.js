@@ -27,7 +27,7 @@ module.exports = function (environment) {
                         language: "en-US",
                         priority: 1,
                         length: MS.MIN * 30,
-                        modelType: "group_discussion"
+                        type: "group_discussion"
                     })
                     .expect(200)
                     .end((err, res) => {
@@ -113,7 +113,7 @@ module.exports = function (environment) {
                         language: "en-US",
                         priority: 2,
                         length: MS.MIN * 60,
-                        modelType: "group_discussion"
+                        type: "group_discussion"
                     })
                     .expect(200)
                     .end((err, res) => {

@@ -1,8 +1,7 @@
 const authTest = require("./src/auth");
 const meetingTest = require("./src/meeting");
-const axios = require('axios');
 const environment = {
-    api: 'https://conference-commander.herokuapp.com/api',
+    api: 'http://localhost:3000/api',
     token: null
 };
 
