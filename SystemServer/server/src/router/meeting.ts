@@ -5,7 +5,6 @@ import { InstanceType } from "typegoose";
 import uuidv4 from "uuid/v4";
 import {
     AccessPostMeetingPermission,
-    Attendance,
     AttendanceStatus,
     Invitation,
     InvitationStatus,
@@ -26,8 +25,8 @@ function sortCursorByReq(
     cursor: DocumentQuery<Array<InstanceType<Meeting>>, InstanceType<Meeting>>,
     req: Request,
 ) {
-    const value = req.body.sortOrder === "desc" ? -1 : 1;
-    const field = req.body.sortField;
+    const value = req.query.sortOrder === "desc" ? -1 : 1;
+    const field = req.query.sortField;
     return field != null ? cursor.sort({ field: value }) : cursor;
 }
 
@@ -35,7 +34,7 @@ function cursorPaginationByReq(
     cursor: DocumentQuery<Array<InstanceType<Meeting>>, InstanceType<Meeting>>,
     req: Request,
 ) {
-    const { resultPageSize, resultPageNum } = req.body;
+    const { resultPageSize, resultPageNum } = req.query;
     if (resultPageSize) {
         // const {
         //     resultPageSize,
@@ -81,7 +80,7 @@ async function extractFilterQueryFromReq(req: Request) {
 
 router
     .get("/", async (req, res) => {
-        const { resultPageNum } = req.body;
+        const { resultPageNum = 1 } = req.query;
 
         let cursor = meetingModel.find(await extractFilterQueryFromReq(req));
         const length = await cursor.countDocuments().exec();
@@ -90,14 +89,35 @@ router
 
         const list = await cursor.find().exec();
 
-        const items = list.map((item) => ({
-            id: item._id,
-            title: item.title,
-        }));
+        const items = await Promise.all(
+            list.map(async (item) => ({
+                id: item._id,
+                type: item.type,
+                title: item.title,
+                status: item.status,
+                description: item.description,
+                location: item.location,
+                plannedStartTime: item.plannedStartTime,
+                plannedEndTime: item.plannedEndTime,
+                realStartTime: item.realStartTime,
+                realEndTime: item.realEndTime,
+                language: item.language,
+                priority: item.priority,
+                device: item.device,
+                owner: await userModel.findById(item.owner),
+                attendance: await Promise.all(
+                    item.attendance.map(async (att) => ({
+                        ...att,
+                        user: (await userModel.findById(att.user)).username,
+                    })),
+                ),
+                generalPermission: item.generalPermission,
+            })),
+        );
 
         res.json({
             items,
-            resultPageNum: resultPageNum || 1,
+            resultPageNum,
             length,
         });
     })
@@ -213,7 +233,7 @@ router
             list.map(async (item) => ({
                 id: item._id,
                 type: item.type,
-                title: item.type,
+                title: item.title,
                 status: item.status,
                 description: item.description,
                 location: item.location,
@@ -318,6 +338,7 @@ router
             });
         }
 
+        meeting.type = type || meeting.type;
         meeting.title = title || meeting.title;
         meeting.status = status || meeting.status;
         meeting.description = description || description;
@@ -336,7 +357,26 @@ router
 
         res.json({
             id: meeting._id,
-            title: meeting.title,
+            type: meeting.type,
+            title: meeting.type,
+            status: meeting.status,
+            description: meeting.description,
+            location: meeting.location,
+            plannedStartTime: meeting.plannedStartTime,
+            plannedEndTime: meeting.plannedEndTime,
+            realStartTime: meeting.realStartTime,
+            realEndTime: meeting.realEndTime,
+            language: meeting.language,
+            priority: meeting.priority,
+            device: meeting.device,
+            owner: await userModel.findById(meeting.owner),
+            attendance: await Promise.all(
+                meeting.attendance.map(async (att) => ({
+                    ...att,
+                    user: (await userModel.findById(att.user)).username,
+                })),
+            ),
+            generalPermission: meeting.generalPermission,
         });
     })
     .delete("/:id", async (req: IMeetingRequest, res) => {
@@ -348,7 +388,6 @@ router
 
 router
     .get("/:id/participant", async (req: IMeetingRequest, res) => {
-
         console.log("");
 
         res.json({
@@ -379,7 +418,8 @@ router
 
         meeting.save();
         res.json({
-            invitations: meeting.invitations,
+            items: meeting.invitations,
+            length: meeting.invitations.length,
         });
     });
 

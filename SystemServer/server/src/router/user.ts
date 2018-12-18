@@ -1,6 +1,6 @@
 import { Request, Router } from "express";
 import { DocumentQuery } from "mongoose";
-import { Friend, User, userModel } from "../model/user";
+import { Friend, userModel } from "../model/user";
 
 const router = Router();
 
@@ -17,10 +17,8 @@ function cursorPaginationByReq(
     cursor: DocumentQuery<Array<InstanceType<any>>, InstanceType<any>>,
     req: Request,
 ) {
-    const { resultPageSize, resultPageNum } = req.body;
+    const { resultPageSize, resultPageNum } = req.query;
     if (resultPageSize) {
-        // const resultPageSize = req.query.resultPageSize;
-        // const  = req.query.resultPageNum;
         return cursor
             .skip(resultPageSize * (resultPageNum - 1))
             .limit(resultPageSize);
@@ -29,25 +27,38 @@ function cursorPaginationByReq(
 }
 
 router.get("/", async (req, res) => {
-    const list = await userModel.find();
-    const result = list.map((item) => ({
+
+    let cursor = userModel.find();
+    const length = await cursor.countDocuments().exec();
+
+    const { resultPageNum = 1 } = req.query;
+
+    cursor = sortCursorByReq(cursor, req);
+    cursor = cursorPaginationByReq(cursor, req);
+
+    const list = await cursor.find().exec();
+    const items = list.map((item) => ({
         id: item._id,
         username: item.username,
     }));
 
-    res.json(result);
+    res.json({
+        items,
+        resultPageNum,
+        length,
+    });
 });
 
 router
     .get("/:usernames", async (req, res) => {
-        const usernames = req.params.usernames.split(",");
+        const usernames = req.params.usernames.split(";");
         const query = {
             username: {
                 $in: usernames,
             },
         };
 
-        const { resultPageNum = 1 } = req.body;
+        const { resultPageNum = 1 } = req.query;
 
         let cursor = userModel.find(query);
         const length = await cursor.countDocuments().exec();
