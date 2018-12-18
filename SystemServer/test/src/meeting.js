@@ -144,5 +144,33 @@ module.exports = function (environment) {
                     });
             });
         });
+
+        describe('[GET] /meeting/:id/participant', () => {
+            it('should be able to get participants', (done) => {
+                request.get(`/meeting/${createdMeetingId}/participant`)
+                    .set({
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${environment.token}`
+                    })
+                    .send({
+                        friends: [],
+                        email: ['thisisaemail123123aa@gmail.com', 'thisisanotheremail12312546756@gmail.com'],
+                    })
+                    .expect(200)
+                    .end((err, res) => {
+                        if (err) done(err);
+                        else {
+                            expect(res.body.length).to.equal(2);
+                            expect(res.body).to.have.property("items");
+                            expect(res.body.items.length).to.equal(2);
+                            expect(res.body.items[0].username).to.be.null;
+                            expect(res.body.items[0].email).to.be.oneOf(['thisisaemail123123aa@gmail.com', 'thisisanotheremail12312546756@gmail.com']);
+                            expect(res.body.items[0].status).to.equal("waiting");
+                            done();
+                        }
+                    });
+            });
+        });
+
     });
 };
