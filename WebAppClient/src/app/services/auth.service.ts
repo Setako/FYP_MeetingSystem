@@ -5,6 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {AppConfig} from '../app-config';
 import {mergeMap, tap} from 'rxjs/operators';
 import {Router} from '@angular/router';
+import {ListResponse} from '../utils/ListResponse';
 
 @Injectable({
   providedIn: 'root'
@@ -51,9 +52,9 @@ export class AuthService {
       return EMPTY;
     } else {
       const username = this.tokenObject.username;
-      return this.http.get<User>(`${AppConfig.API_PATH}/user/${username}`)
+      return this.http.get<ListResponse<User>>(`${AppConfig.API_PATH}/user/${username}`)
         .pipe(tap((res) => {
-          this._loggedInUser = res;
+          this._loggedInUser = res.items[0];
         }));
     }
   }

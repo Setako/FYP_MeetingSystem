@@ -39,14 +39,14 @@
         <mat-card class="my-3" *ngFor="let meeting of meetingList">
           <mat-card-title>{{meeting.title}}
             <mat-chip-list style="float: right">
-              <mat-chip color="primary" selected>Confirmed</mat-chip>
+              <mat-chip color="primary" selected>{{meeting.status}}</mat-chip>
             </mat-chip-list>
           </mat-card-title>
           <mat-card-subtitle>
             <div class="d-flex justify-content-between">
               <div class="d-inline-flex align-items-center">
                 <mat-icon>flag</mat-icon>
-                Host by <span class="ml-1">{{meeting.ownerUsername}}</span>
+                Host by <span class="ml-1">{{meeting.owner.username}}</span>
               </div>
               <div class="d-inline-flex align-items-center">
                 <mat-icon> priority_high</mat-icon>
@@ -97,7 +97,7 @@
                 <mat-icon>event</mat-icon>
                 Add to calendar
               </button>
-              <a style="color: black" routerLink="/member/meeting/4">
+              <a style="color: black" [routerLink]="'/member/meeting/'+meeting.id">
                 <button mat-stroked-button class="">Detail</button>
               </a>
             </div>

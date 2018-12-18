@@ -1,11 +1,16 @@
+import {User} from './user';
+
 export type MeetingStatus = 'draft' | 'planned' | 'confirmed' | 'cancelled' | 'started' | 'ended' | 'deleted';
 export type MeetingAttendanceStatus = 'absent' | 'present';
 
 export interface Meeting {
+  id: string;
   type: string;
   title: string;
   status: MeetingStatus; // Enum: [draft, planned, confirmed, cancelled, started, ended, deleted]
   location?: string;
+  length: number;
+  description: string;
   priority: number;
   plannedStartTime: string;
   realStartTime?: string;
@@ -15,6 +20,8 @@ export interface Meeting {
   deviceId: string;
   ownerUsername: string;
   attendance: MeetingAttendance[];
+  // optional: ownername
+  owner?: User;
 }
 
 export interface MeetingAttendance {

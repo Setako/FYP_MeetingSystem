@@ -66,7 +66,7 @@ export class LoginComponent implements OnInit {
             this.snackBar.open('Register Success', 'Dismiss', {duration: 4000});
           },
           (err) => {
-            this.snackBar.open('Register failed, ' + err.error.message, 'Dismiss', {duration: 5000});
+            this.snackBar.open('Register failed, ' + err.error.message, 'Dismiss', {duration: 4000});
           }
         );
     }
