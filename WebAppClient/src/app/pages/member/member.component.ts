@@ -1,7 +1,8 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {AuthService} from '../../services/auth.service';
 import {MatSnackBar} from '@angular/material';
 import {animate, state, style, transition, trigger} from '@angular/animations';
+import {MediaMatcher} from '@angular/cdk/layout';
 
 @Component({
   selector: 'app-member',
@@ -21,6 +22,8 @@ import {animate, state, style, transition, trigger} from '@angular/animations';
 })
 
 export class MemberComponent implements OnInit {
+  showNav = false;
+  mobileQuery: MediaQueryList;
   loading = true;
   toggleFriendsList = false;
   userLinks = [
@@ -29,11 +32,13 @@ export class MemberComponent implements OnInit {
   ];
   links = [
     {title: 'Meetings', icon: 'assignment', link: '/member/meeting'},
-    {title: 'Calendar', icon: 'calendar_today', link: '/member/calendar'},
-    {title: 'Settings', icon: 'settings', link: '/member/settings'},
+    {title: 'Calendar', icon: 'calendar_today', link: '/member/calendar'}
   ];
 
-  constructor(public auth: AuthService, private snackBar: MatSnackBar) {
+  constructor(public auth: AuthService, private snackBar: MatSnackBar,
+              private  changeDetectorRef: ChangeDetectorRef, private mediaMatcher: MediaMatcher) {
+    this.mobileQuery = mediaMatcher.matchMedia('(max-width: 600px)');
+    this.mobileQuery.addListener(() => changeDetectorRef.detectChanges());
   }
 
   ngOnInit() {

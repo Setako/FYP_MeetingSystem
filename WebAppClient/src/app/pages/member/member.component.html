@@ -1,4 +1,4 @@
-<div class="h-100">
+<div style="position: absolute; top: 0; bottom: 0; left: 0; right: 0" >
   <!--Loading Effect-->
   <div *ngIf="loading" class="d-flex h-100 w-100">
     <div class="my-auto mx-auto">
@@ -7,12 +7,19 @@
   </div>
 
   <!--Main-->
-  <div class="h-100 d-flex flex-column" *ngIf="!loading">
+  <div *ngIf="!loading" style="position: absolute; top: 0; bottom: 0; left: 0; right: 0"
+       class="d-flex flex-column" >
 
     <!--Header-->
-    <div style="z-index: 500">
+    <mat-toolbar style="z-index: 500; padding: 0;" class="nav-bar">
       <div style="height: 10px" class="cc-bg-dark-primary"></div>
       <mat-toolbar class="cc-bg-primary cc-text-color-primary">
+
+        <!--Sidebar toggle-->
+        <button mat-icon-button (click)="showNav = !showNav" [ngStyle]="{display:mobileQuery.matches?'block':'none'}">
+          <mat-icon>menu</mat-icon>
+        </button>
+
         <a routerLink="/member" class="header-title">
           <h4>C-Commander</h4>
         </a>
@@ -26,56 +33,85 @@
           </button>
         </div>
       </mat-toolbar>
-    </div>
+    </mat-toolbar>
 
-    <div class="flex-grow-1 flex-shrink-1 d-flex " style="position: relative; overflow: hidden">
-      <!--Side bar-->
-      <div style="width: 250px; z-index: 100" class="mat-elevation-z6 user-panel cc-bg-secondary">
-        <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default">
-          <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
-            <mat-panel-title class="d-flex align-items-center">
-              <img src="https://http.cat/404" class="d-inline-block p-1"
-                   style="height: 80px; width: 80px; border-radius: 50%" alt="">
-              <div class="d-inline-block pl-3" style="font-size: 20px">{{auth.loggedInUser.username}}</div>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <!--User options-->
-          <a [routerLink]="link.link" *ngFor="let link of userLinks" routerLinkActive="actived" class="user-link">
-            <button mat-button class="w-100 sidebar-link" style="padding: 4px 36px; height: 48px; text-align: left">
-              <div class="d-flex">
-                <mat-icon style="font-size: 32px">{{link.icon}}</mat-icon>
-                {{link.title}}
-              </div>
-            </button>
-          </a>
-          <button mat-button class="w-100 sidebar-link" style="padding: 4px 36px; height: 48px; text-align: left"
-                  (click)="logout()">
-            <div class="d-flex">
-              <mat-icon style="font-size: 32px">exit_to_app</mat-icon>
-              Logout
+    <mat-sidenav-container class="example-sidenav-container h-100"
+                           [style.marginTop.px]="mobileQuery.matches ? 56 : 0">
+
+      <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" [(opened)]="!mobileQuery.matches||showNav"
+                   [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+
+        <div style="width: 250px;position: relative; z-index: 100;"
+             class="mat-elevation-z6 user-panel cc-bg-secondary d-flex h-100 flex-column">
+          <div style="overflow-y: auto;"
+               class="flex-shrink-1 flex-grow-1">
+            <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default">
+              <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
+                <mat-panel-title class="d-flex align-items-center">
+                  <img src="https://http.cat/404" class="d-inline-block p-1"
+                       style="height: 80px; width: 80px; border-radius: 50%" alt="">
+                  <div class="d-inline-block pl-3" style="font-size: 20px">{{auth.loggedInUser.username}}</div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <!--User options-->
+              <a [routerLink]="link.link" *ngFor="let link of userLinks" routerLinkActive="actived"
+                 class="user-link w-100 sidebar-link"
+                 mat-button style="padding: 4px 36px; height: 48px; text-align: left">
+                <div class="d-flex">
+                  <mat-icon style="font-size: 32px">{{link.icon}}</mat-icon>
+                  {{link.title}}
+                </div>
+              </a>
+            </mat-expansion-panel>
+            <div class="pt-4">
+              <a [routerLink]="link.link" *ngFor="let link of links" routerLinkActive="actived"
+                 class="user-link w-100 sidebar-link"
+                 mat-button style="padding: 4px 36px; height: 48px; text-align: left">
+                <div class="d-flex">
+                  <mat-icon style="font-size: 32px; width: 32px; height: 32px">{{link.icon}}</mat-icon>
+                  {{link.title}}
+                </div>
+              </a>
             </div>
-          </button>
-        </mat-expansion-panel>
-        <div class="pt-4">
-          <a [routerLink]="link.link" *ngFor="let link of links" routerLinkActive="actived" class="user-link">
-            <button mat-button class="w-100 sidebar-link" style="padding: 4px 36px; height: 48px; text-align: left">
+          </div>
+
+          <!--Bottom setting bar-->
+          <div class="w-100 d-flex mat-elevation-z8 flex-grow-0 flex-shrink-0"
+               style=" height: 48px; text-align: left; background: white;">
+            <button mat-button (click)="logout()" class="flex-grow-1 flex-shrink-1 sidebar-link"
+                    style="padding: 4px 36px; color: red">
               <div class="d-flex">
-                <mat-icon style="font-size: 32px">{{link.icon}}</mat-icon>
-                {{link.title}}
+                <mat-icon style="font-size: 32px">exit_to_app</mat-icon>
+                Logout
               </div>
             </button>
-          </a>
+            <button mat-button routerLink="/member/settings" routerLinkActive="actived"
+                    class="flex-grow-0 flex-shrink-0 sidebar-link user-link setting-link" style="width: 48px">
+              <div class="d-flex">
+                <mat-icon style="font-size: 32px;width: 32px;height: 32px">settings</mat-icon>
+              </div>
+            </button>
+          </div>
+
+
         </div>
-      </div>
-      <div class="flex-grow-1 flex-shrink-1 h-100 justify-content-center" style="overflow-x: hidden; overflow-y: auto">
-        <div class="h-100">
-          <div class="w-100 px-0 px-md-2 px-xl-5 h-100 py-4" style="background: #fafafa">
-            <router-outlet></router-outlet>
+
+      </mat-sidenav>
+
+      <mat-sidenav-content>
+
+        <div class="flex-grow-1 flex-shrink-1 h-100 justify-content-center"
+             style="overflow-x: hidden; overflow-y: auto">
+          <div class="h-100">
+            <div class="w-100 px-0 px-md-2 px-xl-5 h-100 py-4" style="background: #fafafa">
+              <router-outlet></router-outlet>
+            </div>
           </div>
         </div>
-      </div>
-      <app-friends-sidebar style="position: absolute; width: 275px; right: 0; top: 0; bottom: 0; z-index: 20;"
-                           class="mat-elevation-z6" *ngIf="toggleFriendsList" [@slide]></app-friends-sidebar>
-    </div>
+        <app-friends-sidebar style="position: absolute; width: 275px; right: 0; top: 0; bottom: 0; z-index: 20;"
+                             class="mat-elevation-z6" *ngIf="toggleFriendsList" [@slide]></app-friends-sidebar>
+
+      </mat-sidenav-content>
+    </mat-sidenav-container>
   </div>
 </div>

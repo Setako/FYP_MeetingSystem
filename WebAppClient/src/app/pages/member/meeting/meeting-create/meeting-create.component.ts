@@ -36,7 +36,7 @@ export class MeetingCreateComponent implements OnInit {
         title: this.basicForm.value.title,
         length: this.basicForm.value.length * Millisecond.Hour,
         type: this.basicForm.value.type,
-        priority: this.basicForm.value.priority,
+        priority: parseInt(this.basicForm.value.priority, 10),
         location: this.basicForm.value.location,
         description: this.basicForm.value.description
       } as Meeting).subscribe(

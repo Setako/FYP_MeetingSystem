@@ -1,9 +1,9 @@
 import {Injectable} from '@angular/core';
-import {Meeting, MeetingSearchingFilter} from '../shared/models/meeting';
+import {Meeting, MeetingAttendance, MeetingSearchingFilter} from '../shared/models/meeting';
 import {HttpClient} from '@angular/common/http';
 import {AppConfig} from '../app-config';
 import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
+import {map, tap} from 'rxjs/operators';
 import {ListResponse} from '../utils/ListResponse';
 
 @Injectable({
@@ -32,8 +32,17 @@ export class MeetingService {
 
 
   public getMeetings(ids: string[]): Observable<ListResponse<Meeting>> {
-    return this.http.get<ListResponse<Meeting>>(`${AppConfig.API_PATH}/meeting/${ids.join(';')}`);
+    return this.http.get<ListResponse<any>>(`${AppConfig.API_PATH}/meeting/${ids.join(';')}`)
+      .pipe(map((res) => {
+        res.items.map(meeting => {
+          const attendanceMap = new Map<String, MeetingAttendance>();
+          meeting.attendance.forEach((attendance: MeetingAttendance) => attendanceMap.set(attendance.username, attendance));
+          meeting.attendance = attendanceMap;
+        });
+        return res as ListResponse<Meeting>;
+      }));
   }
+
 
   public findMeetings(filter: MeetingSearchingFilter, resultAmount: number, resultPage: number): Observable<ListResponse<Meeting>> {
     const queryUrl = new URL(`${AppConfig.API_PATH}/meeting`);

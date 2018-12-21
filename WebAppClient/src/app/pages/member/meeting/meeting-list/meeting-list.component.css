@@ -6,3 +6,8 @@
   /*height: 80px;*/
   /*width: 80px;*/
 /*}*/
+
+::ng-deep .no-content-tab .mat-tab-body-wrapper{
+  height: 0!important;
+  transition: none!important;
+}

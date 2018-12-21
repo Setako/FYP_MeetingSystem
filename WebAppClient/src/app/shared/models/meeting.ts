@@ -19,7 +19,7 @@ export interface Meeting {
   language: string;
   deviceId: string;
   ownerUsername: string;
-  attendance: MeetingAttendance[];
+  attendance: Map<String, MeetingAttendance>;
   // optional: ownername
   owner?: User;
 }

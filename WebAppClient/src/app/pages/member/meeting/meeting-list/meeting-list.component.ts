@@ -5,6 +5,7 @@ import {MeetingService} from '../../../../services/meeting.service';
 import {ql} from '@angular/core/src/render3';
 import {Observable, Subscription} from 'rxjs';
 import {ListResponse} from '../../../../utils/ListResponse';
+import {AuthService} from '../../../../services/auth.service';
 
 @Component({
   selector: 'app-meeting-list',
@@ -23,12 +24,23 @@ export class MeetingListComponent implements OnInit {
 
   public hostedByMe = true;
   public hostedByOther = true;
-  public status: MeetingStatus = 'draft';
+  public status: MeetingStatus[] = ['draft'];
 
-  constructor(public meetingService: MeetingService) {
+  constructor(public meetingService: MeetingService, public authService: AuthService) {
   }
 
   ngOnInit() {
+    this.updateList();
+  }
+
+  public changeStatus(status: string) {
+    switch (status) {
+      case 'all':
+        this.status = this.availableStatus as MeetingStatus[];
+        break;
+      default:
+        this.status = [status] as MeetingStatus[];
+    }
     this.updateList();
   }
 
@@ -46,7 +58,7 @@ export class MeetingListComponent implements OnInit {
     this.meetingListQuerySubscription = this.meetingService.findMeetings({
       hostedByMe: this.hostedByMe,
       hostedByOther: this.hostedByOther,
-      status: [this.status]
+      status: this.status
     }, this.pageSize, this.pageIndex + 1).subscribe(
       res => {
         this.meetingList = res.items;

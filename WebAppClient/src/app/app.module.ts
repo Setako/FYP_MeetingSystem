@@ -26,6 +26,7 @@ import {CalendarModule, DateAdapter} from 'angular-calendar';
 import {adapterFactory} from '../../node_modules/angular-calendar/date-adapters/date-fns';
 import { WeekFreetimeComponent } from './shared/components/week-freetime/week-freetime.component';
 import { FriendsSidebarComponent } from './shared/components/friends-sidebar/friends-sidebar.component';
+import { MeetingOperationsBottomSheetsComponent } from './shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { FriendsSidebarComponent } from './shared/components/friends-sidebar/fri
     MeetingCreateComponent,
     MeetingEditComponent,
     WeekFreetimeComponent,
-    FriendsSidebarComponent
+    FriendsSidebarComponent,
+    MeetingOperationsBottomSheetsComponent
   ],
   imports: [
     BrowserModule,
