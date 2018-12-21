@@ -1,5 +1,6 @@
 # Compiled Files
 build/
+dist/
 *.class
 
 #Logs

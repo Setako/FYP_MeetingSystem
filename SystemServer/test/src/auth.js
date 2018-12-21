@@ -16,7 +16,7 @@ module.exports = function(environment, username, password) {
                         password: password,
                         email: `${username}@gmail.com`,
                     })
-                    .expect(200)
+                    .expect(201)
                     .end((err, res) => {
                         done(err);
                     });
