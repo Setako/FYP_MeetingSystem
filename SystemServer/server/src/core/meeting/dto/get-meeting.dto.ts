@@ -1,0 +1,69 @@
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { ObjectId } from 'bson';
+import { User } from '../../user/user.model';
+import { AccessPostMeetingPermission } from '../meeting.model';
+import { AttendanceDto } from './attendance.dto';
+
+export class GetMeetingDto {
+    type: string;
+
+    title: string;
+
+    status: string;
+
+    length: number;
+
+    description?: string;
+
+    plannedStartTime?: Date;
+
+    plannedEndTime?: Date;
+
+    realStartTime?: Date;
+
+    realEndTime?: Date;
+
+    language: string;
+
+    priority: number;
+
+    @Type(() => ObjectId)
+    @Transform((val: ObjectId) => val.toHexString())
+    device?: string;
+
+    @Type(() => User)
+    @Transform((val: User) => val.username)
+    owner: string;
+
+    @Type(() => AttendanceDto)
+    @Transform(arr => {
+        return arr.map((attendance: { user: { username: any } }) => ({
+            ...attendance,
+            user: attendance.user.username,
+        }));
+    })
+    attendance: AttendanceDto[];
+
+    invitations: [];
+
+    generalPermission: AccessPostMeetingPermission;
+
+    @Expose()
+    get id(): string {
+        return this._id.toHexString();
+    }
+
+    @Exclude()
+    _id: ObjectId;
+
+    @Exclude()
+    __v: number;
+
+    constructor(partial: Partial<GetMeetingDto>) {
+        Object.assign(this, partial);
+    }
+
+    static of(partial: Partial<GetMeetingDto>) {
+        return new GetMeetingDto(partial);
+    }
+}

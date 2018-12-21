@@ -1,0 +1,8 @@
+import { PipeTransform, ArgumentMetadata, Injectable } from '@nestjs/common';
+
+@Injectable()
+export class SplitSemicolonPipe implements PipeTransform<string> {
+    async transform(value: string, metadata: ArgumentMetadata) {
+        return value.split(';');
+    }
+}
