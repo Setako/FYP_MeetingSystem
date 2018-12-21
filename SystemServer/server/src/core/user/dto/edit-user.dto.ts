@@ -6,7 +6,7 @@ import {
     IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UpdateFriendDto } from './update-friend.dto';
+import { EditFriendDto } from './edit-friend.dto';
 
 export class EditUserDto {
     @IsOptional()
@@ -24,14 +24,15 @@ export class EditUserDto {
     @Length(2, 20)
     readonly displayName?: string;
 
-    @Type(() => UpdateFriendDto)
+    @Type(() => EditFriendDto)
     @IsOptional()
     @ValidateNested()
-    readonly friends?: UpdateFriendDto[];
+    readonly friends?: EditFriendDto[];
 
     @IsOptional()
-    readonly userMeetingRelation?: [];
+    readonly userMeetingRelation?: any[];
 
     @IsOptional()
-    googleAccessToken?: string;
+    @IsString()
+    readonly googleAccessToken?: string;
 }

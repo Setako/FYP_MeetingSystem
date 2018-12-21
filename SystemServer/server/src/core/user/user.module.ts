@@ -1,4 +1,4 @@
-import { Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { User } from './user.model';
 import { TypegooseModule } from 'nestjs-typegoose';
 import { UsersController } from './user.controller';

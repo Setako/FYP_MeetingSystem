@@ -12,6 +12,8 @@ export class Attendance {
     public status?: AttendanceStatus;
 
     public permission: AccessPostMeetingPermission;
+
+    public googleCalendarEventId?: string;
 }
 
 export class Invitation extends Typegoose {
@@ -35,6 +37,7 @@ export enum InvitationStatus {
 export enum AttendanceStatus {
     Absent = 'absent',
     Present = 'present',
+    Exit = 'exit',
 }
 
 export enum MeetingStatus {

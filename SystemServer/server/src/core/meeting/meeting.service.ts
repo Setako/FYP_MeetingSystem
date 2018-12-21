@@ -149,16 +149,14 @@ export class MeetingService {
                         edited.attendance = (await Promise.all(
                             editMeetingDto.attendance.map(async item => ({
                                 ...item,
+                                arrivalTime: new Date(item.arrivalTime),
                                 user: await this.userService.getByUsername(
                                     item.user,
                                 ),
                                 permission:
                                     item.permission || edited.generalPermission,
                             })),
-                        )).filter(
-                            item => item.user && item.user.id !== edited.owner,
-                        );
-
+                        )).filter(item => item.user);
                         return;
                     }
 
@@ -171,10 +169,34 @@ export class MeetingService {
                         return;
                     }
 
+                    if (
+                        [
+                            'plannedStartTime',
+                            'plannedEndTime',
+                            'realStartTime',
+                            'realEndTime',
+                        ].some(val => val === key)
+                    ) {
+                        edited[key] = new Date(editMeetingDto[key]);
+                        return;
+                    }
+
                     edited[key] = editMeetingDto[key];
                 }
             }),
         );
+
+        // Todo: when the meeting change to planned, add host to attendance
+        if (
+            edited.status !== MeetingStatus.Draft &&
+            edited.attendance.some(att => att.user === edited.owner)
+        ) {
+            edited.attendance.push({
+                user: edited.owner,
+                proiority: 1,
+                permission: edited.generalPermission,
+            });
+        }
 
         return edited.save();
     }

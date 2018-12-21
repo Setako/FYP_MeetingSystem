@@ -11,7 +11,11 @@ async function bootstrap() {
 
     app.setGlobalPrefix('/api')
         .useStaticAssets('public')
-        .useGlobalPipes(new ValidationPipe());
+        .useGlobalPipes(
+            new ValidationPipe({
+                transform: true,
+            }),
+        );
 
     if (process.env.NODE_ENV === 'development') {
         app.use(logger('dev')).enableCors();

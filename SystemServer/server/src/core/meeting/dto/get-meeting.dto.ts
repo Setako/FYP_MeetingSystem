@@ -1,8 +1,8 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ObjectId } from 'bson';
-import { User } from '../../user/user.model';
 import { AccessPostMeetingPermission } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
+import { GetOwnerDto } from './owner.dto';
 
 export class GetMeetingDto {
     type: string;
@@ -31,9 +31,7 @@ export class GetMeetingDto {
     @Transform((val: ObjectId) => val.toHexString())
     device?: string;
 
-    @Type(() => User)
-    @Transform((val: User) => val.username)
-    owner: string;
+    owner: GetOwnerDto;
 
     @Type(() => AttendanceDto)
     @Transform(arr => {
@@ -44,7 +42,7 @@ export class GetMeetingDto {
     })
     attendance: AttendanceDto[];
 
-    invitations: [];
+    invitations: any[];
 
     generalPermission: AccessPostMeetingPermission;
 

@@ -1,6 +1,6 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ObjectId } from 'bson';
-import { UpdateFriendDto } from './update-friend.dto';
+import { EditFriendDto } from './edit-friend.dto';
 
 export class GetUserDto {
     username: string;
@@ -9,14 +9,17 @@ export class GetUserDto {
 
     userMeetingRelation: [];
 
-    @Type(() => UpdateFriendDto)
-    @Transform(arr => {
-        return arr.map((friend: { friend: { username: any } }) => ({
-            ...friend,
-            friend: friend.friend.username,
-        }));
-    })
-    friends: UpdateFriendDto[];
+    @Type(() => EditFriendDto)
+    @Transform(
+        arr => {
+            return arr.map((friend: { friend: { username: any } }) => ({
+                ...friend,
+                friend: friend.friend.username,
+            }));
+        },
+        { toPlainOnly: true },
+    )
+    friends: EditFriendDto[];
 
     @Expose()
     get id(): string {
@@ -43,9 +46,5 @@ export class GetUserDto {
 
     constructor(partial: Partial<GetUserDto>) {
         Object.assign(this, partial);
-    }
-
-    static of(partial: Partial<GetUserDto>) {
-        return new GetUserDto(partial);
     }
 }

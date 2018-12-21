@@ -3,32 +3,36 @@ import {
     IsString,
     IsOptional,
     IsISO8601,
-    IsPositive,
     IsEnum,
     IsInt,
+    Length,
+    IsIn,
+    ValidateNested,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
 import { AttendanceStatus } from '../meeting.model';
 
 export class AttendanceDto {
     @IsString()
+    @Length(2, 20)
     readonly user: string;
 
     @IsInt()
-    @IsPositive()
+    @IsIn([1, 2, 3])
     readonly proiority: number;
 
     @IsOptional()
     @IsISO8601()
-    @Transform(val => new Date(val))
-    readonly arrivalTime?: Date;
+    readonly arrivalTime?: string;
 
     @IsOptional()
-    @IsString()
     @IsEnum(AttendanceStatus)
     readonly status?: AttendanceStatus;
 
     @IsOptional()
-    @IsString()
+    @ValidateNested()
     readonly permission?: PermissionDto;
+
+    @IsOptional()
+    @IsString()
+    readonly googleCalendarEventId?: string;
 }

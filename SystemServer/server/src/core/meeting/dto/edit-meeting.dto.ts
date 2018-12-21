@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { MeetingType, MeetingStatus } from '../meeting.model';
 import { PermissionDto } from './permission.dto';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { AttendanceDto } from './attendance.dto';
 import { InvitationsDto } from './invitations.dto';
 
@@ -56,23 +56,19 @@ export class EditMeetingDto {
 
     @IsOptional()
     @IsISO8601()
-    @Transform(val => new Date(val))
-    readonly plannedStartTime?: Date;
+    readonly plannedStartTime?: string;
 
     @IsOptional()
     @IsISO8601()
-    @Transform(val => new Date(val))
-    readonly plannedEndTime?: Date;
+    readonly plannedEndTime?: string;
 
     @IsOptional()
     @IsISO8601()
-    @Transform(val => new Date(val))
-    readonly realStartTime?: Date;
+    readonly realStartTime?: string;
 
     @IsOptional()
     @IsISO8601()
-    @Transform(val => new Date(val))
-    readonly realEndTime?: Date;
+    readonly realEndTime?: string;
 
     @Type(() => AttendanceDto)
     @IsOptional()

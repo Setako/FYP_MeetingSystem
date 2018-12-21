@@ -5,6 +5,12 @@ import { ValidationException } from '../exception/validation.exception';
 
 @Injectable()
 export class ValidationPipe implements PipeTransform<any> {
+    private isTransform: boolean;
+
+    constructor({ transform = false }) {
+        this.isTransform = transform;
+    }
+
     async transform(value, metadata: ArgumentMetadata) {
         const { metatype } = metadata;
 
@@ -17,7 +23,8 @@ export class ValidationPipe implements PipeTransform<any> {
         if (errors.length > 0) {
             this.throwError(errors);
         }
-        return value;
+
+        return this.isTransform ? object : value;
     }
 
     private toValidate({ metatype, type }: ArgumentMetadata): boolean {

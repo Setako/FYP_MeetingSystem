@@ -26,6 +26,8 @@ import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingGuard } from '../../guard/meeting.guard';
 import { FilterNotObjectIdStringPipe } from '../../pipe/filter-not-object-id-string.pipe';
 import { GetAllQueryDto } from './dto/get-all-query.dto';
+import { GetUserDto } from '../user/dto/get-user.dto';
+import { GetOwnerDto } from './dto/owner.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -53,8 +55,11 @@ export class MeetingController {
         items = await Promise.all(
             items.filter(Boolean).map(async val => ({
                 ...val.toObject(),
-                owner: await this.userService.getById(
-                    (val.owner as ObjectId).toHexString(),
+                owner: ObjectUtils.DocumentToPlain(
+                    await this.userService.getById(
+                        (val.owner as ObjectId).toHexString(),
+                    ),
+                    GetOwnerDto,
                 ),
             })),
         );
@@ -93,8 +98,11 @@ export class MeetingController {
         items = await Promise.all(
             items.filter(Boolean).map(async val => ({
                 ...val.toObject(),
-                owner: await this.userService.getById(
-                    (val.owner as ObjectId).toHexString(),
+                owner: ObjectUtils.DocumentToPlain(
+                    await this.userService.getById(
+                        (val.owner as ObjectId).toHexString(),
+                    ),
+                    GetOwnerDto,
                 ),
             })),
         );
