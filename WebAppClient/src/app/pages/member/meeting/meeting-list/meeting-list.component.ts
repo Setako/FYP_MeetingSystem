@@ -1,11 +1,14 @@
 import {Component, OnInit} from '@angular/core';
-import {PageEvent} from '@angular/material';
+import {MatBottomSheet, PageEvent} from '@angular/material';
 import {Meeting, MeetingStatus} from '../../../../shared/models/meeting';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ql} from '@angular/core/src/render3';
 import {Observable, Subscription} from 'rxjs';
-import {ListResponse} from '../../../../utils/ListResponse';
+import {ListResponse} from '../../../../utils/list-response';
 import {AuthService} from '../../../../services/auth.service';
+import {
+  MeetingOperationsBottomSheetsComponent
+} from '../../../../shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
 
 @Component({
   selector: 'app-meeting-list',
@@ -20,13 +23,13 @@ export class MeetingListComponent implements OnInit {
   public meetingList: Meeting[];
   public meetingListQuerySubscription: Subscription = null;
 
-  public availableStatus = ['draft', 'planned', 'confirmed', 'cancelled', 'started', 'ended', 'deleted'];
+  public availableStatus = ['draft', 'planned', 'confirmed', 'cancelled', 'started', 'ended'];
 
   public hostedByMe = true;
   public hostedByOther = true;
   public status: MeetingStatus[] = ['draft'];
 
-  constructor(public meetingService: MeetingService, public authService: AuthService) {
+  constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet) {
   }
 
   ngOnInit() {
@@ -67,5 +70,15 @@ export class MeetingListComponent implements OnInit {
       },
       err => this.meetingListQuerySubscription = null
     );
+  }
+
+  moreOperation(meeting: Meeting) {
+    this.bottomSheet.open(MeetingOperationsBottomSheetsComponent, {
+      data: {
+        meeting: meeting,
+        deletedCallback: () => this.updateList(),
+        refreshCallback: () => this.updateList(),
+      }
+    });
   }
 }

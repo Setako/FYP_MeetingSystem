@@ -5,7 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {AppConfig} from '../app-config';
 import {mergeMap, tap} from 'rxjs/operators';
 import {Router} from '@angular/router';
-import {ListResponse} from '../utils/ListResponse';
+import {ListResponse} from '../utils/list-response';
 
 @Injectable({
   providedIn: 'root'

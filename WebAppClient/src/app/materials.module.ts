@@ -1,44 +1,20 @@
 import {NgModule} from '@angular/core';
 import {
   MatAutocompleteModule,
-  MatBadgeModule,
-  MatButtonModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule,
+  MatBadgeModule, MatBottomSheetModule,
+  MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule,
   MatDividerModule, MatExpansionModule, MatIconModule,
   MatInputModule,
-  MatListModule, MatNativeDateModule, MatPaginatorModule,
+  MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule,
   MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule,
   MatSidenavModule,
   MatSnackBarModule, MatStepperModule,
   MatTabsModule,
   MatToolbarModule
 } from '@angular/material';
+import {NgcFloatButtonModule} from 'ngc-float-button';
 
 @NgModule({
-  imports: [
-    MatInputModule,
-    MatDividerModule,
-    MatTabsModule,
-    MatButtonModule,
-    MatSidenavModule,
-    MatToolbarModule,
-    MatListModule,
-    MatChipsModule,
-    MatIconModule,
-    MatBadgeModule,
-    MatSnackBarModule,
-    MatProgressSpinnerModule,
-    MatExpansionModule,
-    MatCheckboxModule,
-    MatRadioModule,
-    MatCardModule,
-    MatSelectModule,
-    MatStepperModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatAutocompleteModule,
-    MatRippleModule,
-    MatPaginatorModule,
-  ],
   exports: [
     MatInputModule,
     MatDividerModule,
@@ -63,6 +39,10 @@ import {
     MatAutocompleteModule,
     MatRippleModule,
     MatPaginatorModule,
+    MatBottomSheetModule,
+    MatMenuModule,
+    MatButtonToggleModule,
+    NgcFloatButtonModule,
   ]
 })
 export class MaterialsModule {

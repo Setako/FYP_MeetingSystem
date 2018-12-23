@@ -1,0 +1,15 @@
+<h2 mat-dialog-title>Sending friend request</h2>
+<form [formGroup]="friendRequestForm" (ngSubmit)="sendRequest()">
+  <div mat-dialog-content>
+    <app-querying-content-hider queryingAction="Sending request" [querying]="querying">
+      <mat-form-field class="w-100">
+        <mat-label>Username</mat-label>
+        <input matInput formControlName="username" placeholder="Username"/>
+      </mat-form-field>
+    </app-querying-content-hider>
+  </div>
+  <div mat-dialog-actions *ngIf="!querying">
+    <a href="#" mat-button (click)="$event.preventDefault();dialogRef.close()">Cancel</a>
+    <button mat-button type="submit">Send</button>
+  </div>
+</form>

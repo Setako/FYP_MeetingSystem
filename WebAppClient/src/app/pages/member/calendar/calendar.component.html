@@ -1,3 +1,49 @@
-<p>
-  calendar works!
-</p>
+<div class="d-flex justify-content-between flex-row align-items-center flex-sm-wrap">
+  <div class="d-flex align-items-center justify-content-between " style="max-width: 400px; width: 100%;">
+
+
+    <button mat-icon-button mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate"
+            (viewDateChange)="update()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <h3 style="display: inline-block;">{{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}</h3>
+
+
+    <div>
+      <button mat-icon-button mwlCalendarNextView [view]="view" [(viewDate)]="viewDate"
+              (viewDateChange)="update()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button mat-button mwlCalendarToday [(viewDate)]="viewDate"
+              (viewDateChange)="update()">
+        <mat-icon>today</mat-icon>
+        Today
+      </button>
+
+    </div>
+
+
+  </div>
+  <!--<mat-button-toggle-group [(ngModel)]="view">-->
+    <!--<mat-button-toggle [value]="CalendarView.Month" ngDefaultControl>Month</mat-button-toggle>-->
+    <!--<mat-button-toggle [value]="CalendarView.Week" ngDefaultControl>Week</mat-button-toggle>-->
+    <!--<mat-button-toggle [value]="CalendarView.Day" ngDefaultControl>Day</mat-button-toggle>-->
+  <!--</mat-button-toggle-group>-->
+</div>
+<mwl-calendar-month-view
+  *ngIf="view == CalendarView.Month"
+  [viewDate]="viewDate"
+  [events]="events"
+  [activeDayIsOpen]="false">
+</mwl-calendar-month-view>
+<mwl-calendar-week-view
+  *ngIf="view == CalendarView.Week"
+  [viewDate]="viewDate"
+  [events]="events">
+</mwl-calendar-week-view>
+<mwl-calendar-day-view
+  *ngIf="view == CalendarView.Day"
+  [viewDate]="viewDate"
+  [events]="events">
+</mwl-calendar-day-view>

@@ -1,0 +1,14 @@
+.notification-item {
+  text-align: left;
+  height: auto !important;
+
+}
+
+
+::ng-deep .notification-item:focus .notification-item:active .notification-item:hover {
+  outline: none !important;
+}
+
+::ng-deep .notification-item .mat-list-item-content {
+  width: 100%;
+}

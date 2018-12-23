@@ -1,26 +1,22 @@
 <div style="height: 100%">
   <div class="d-flex align-items-center">
-    <a routerLink="/member/meeting/create">
-      <button mat-stroked-button class="tool-bar-button mr-3" color="primary">
-        <mat-icon class="mr-1">add</mat-icon>
-        <span>Create</span>
-      </button>
-    </a>
 
     <mat-checkbox class="mr-3" [checked]="true">Hosted by me</mat-checkbox>
     <mat-checkbox class="mr-3" [checked]="true">Hosted by other</mat-checkbox>
   </div>
 
+  <app-meeting-list-fab></app-meeting-list-fab>
+
 
   <mat-divider class="mt-3 mb-3"></mat-divider>
 
   <mat-tab-group mat-stretch-tabs class="no-content-tab" (selectedTabChange)="changeStatus($event.tab.textLabel)">
-    <mat-tab  label="all"></mat-tab>
+    <mat-tab label="all"></mat-tab>
     <mat-tab *ngFor="let statusLink of availableStatus" [label]="statusLink">
     </mat-tab>
   </mat-tab-group>
 
-  <div class="p-2 mt-1" style="background: white">
+  <div class="p-2 mt-1" style="background: white; padding-bottom: 80px!important;">
     <mat-paginator [length]="meetingsLength"
                    [pageIndex]="pageIndex"
                    [pageSize]="pageSize"
@@ -28,14 +24,7 @@
                    (page)="updatePageNum($event)">
     </mat-paginator>
     <div>
-      <div class="d-flex h-100 w-100" *ngIf="meetingListQuerySubscription!=null">
-        <div class="d-inline-block align-self-center mx-auto text-center">
-          <div class="d-inline-block p-1">Loading...</div>
-          <mat-spinner>
-          </mat-spinner>
-        </div>
-      </div>
-      <div *ngIf="meetingListQuerySubscription==null">
+      <app-querying-content-hider [querying]="meetingListQuerySubscription!=null">
         <mat-card class="my-3" *ngFor="let meeting of meetingList">
           <mat-card-title>{{meeting.title}}
             <mat-chip-list style="float: right">
@@ -95,29 +84,12 @@
           <mat-card-actions>
             <div class="d-flex justify-content-end">
 
-              <button mat-stroked-button class="mr-2">
-                <mat-icon>event</mat-icon>
-                Add to calendar
+              <button mat-flat-button class="mr-2" (click)="moreOperation(meeting)">
+                <mat-icon>more_horiz</mat-icon>
               </button>
 
-              <a *ngIf="meeting.owner.username == authService.loggedInUser.username"
-                 class="mr-2"
-                 style="color: black" [routerLink]="'/member/meeting/'+meeting.id+'/edit'">
-                <button mat-stroked-button class="">Edit</button>
-              </a>
-
-              <button *ngIf="meeting.owner.username == authService.loggedInUser.username && meeting.status == 'draft'">
-                <mat-icon>delete</mat-icon>
-                Delete
-              </button>
-              <button
-                class="mr-2"
-                style="color: black" [routerLink]="'/member/meeting/'+meeting.id+'/edit'">
-                <button mat-stroked-button class="">Delete</button>
-              </button>
-
-              <a style="color: black" [routerLink]="'/member/meeting/'+meeting.id">
-                <button mat-stroked-button class="">Detail</button>
+              <a mat-flat-button color="primary" [routerLink]="'/member/meeting/'+meeting.id">
+                Details
               </a>
 
 
@@ -126,7 +98,7 @@
 
 
         </mat-card>
-      </div>
+      </app-querying-content-hider>
     </div>
   </div>
 </div>

@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {MeetingService} from '../../../../services/meeting.service';
-import {Millisecond} from '../../../../utils/TimeUnit';
+import {Millisecond} from '../../../../utils/time-unit';
 import {Meeting} from '../../../../shared/models/meeting';
 import {MatSnackBar} from '@angular/material';
 import {Router} from '@angular/router';

@@ -45,3 +45,28 @@ body {
 .cc-color-primary {
 
 }
+
+.right-bottom-fab {
+  position: fixed !important;
+  bottom: 25px;
+  right: 25px;
+  z-index: 20;
+}
+
+mwl-calendar-month-cell,
+mwl-calendar-day-view-hour-segment,
+mwl-calendar-week-view-hour-segment {
+  touch-action: auto !important;
+}
+
+
+/*Calendar*/
+
+.cal-header, .cal-header:hover {
+  background: #009688 !important;
+  color: white;
+}
+
+.cal-header .cal-cell:hover {
+  background: #52c7b8 !important;
+}

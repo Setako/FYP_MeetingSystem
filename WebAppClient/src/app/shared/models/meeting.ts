@@ -1,7 +1,7 @@
 import {User} from './user';
 
 export type MeetingStatus = 'draft' | 'planned' | 'confirmed' | 'cancelled' | 'started' | 'ended' | 'deleted';
-export type MeetingAttendanceStatus = 'absent' | 'present';
+export type MeetingAttendanceStatus = 'absent' | 'present' | 'exit';
 
 export interface Meeting {
   id: string;
@@ -26,9 +26,20 @@ export interface Meeting {
 
 export interface MeetingAttendance {
   username: string;
-  priority: number;
-  arrivalTime?: string;
+  proiority: number;
+  arrivalTime?: Date;
   status?: MeetingAttendanceStatus;
+  permission: AccessPostMeetingPermission;
+  googleCalendarEventId?: string;
+}
+
+export class AccessPostMeetingPermission {
+  public accessShareResources: boolean;
+  public accessRecordedVoice: boolean;
+  public accessTextRecordOfSpeech: boolean;
+  public accessAttendanceRecord: boolean;
+  public makeMeetingMinute: boolean;
+  public reviewMeetingMinute: boolean;
 }
 
 export interface MeetingSearchingFilter {

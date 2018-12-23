@@ -42,3 +42,7 @@
     position: fixed;
   }
 }
+
+::ng-deep .notification-panel{
+  max-width: 400px!important;
+}

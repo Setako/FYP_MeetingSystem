@@ -1,5 +1,5 @@
 <div>
-  <mat-tab-group [dynamicHeight]="true" *ngIf="!querying">
+  <mat-tab-group [dynamicHeight]="true">
 
     <mat-tab label="Information">
       <form class="p-3" (submit)="$event.preventDefault();  editInformation();" [formGroup]="userInformationForm">
