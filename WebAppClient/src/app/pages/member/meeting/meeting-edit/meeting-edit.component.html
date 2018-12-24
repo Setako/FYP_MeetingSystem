@@ -5,7 +5,7 @@
   <mat-card-content>
 
     <app-querying-content-hider [querying]="queryingAction!=null" [queryingAction]="queryingAction">
-      <mat-vertical-stepper #stepper (selectionChange)="saveStepState($event)">
+      <mat-vertical-stepper #stepper (selectionChange)="saveStepState($event,Step.Basic)">
         <mat-step>
           <ng-template matStepLabel>Basic information</ng-template>
 

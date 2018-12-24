@@ -8,8 +8,8 @@
       </mat-form-field>
     </app-querying-content-hider>
   </div>
-  <div mat-dialog-actions *ngIf="!querying">
-    <a href="#" mat-button (click)="$event.preventDefault();dialogRef.close()">Cancel</a>
-    <button mat-button type="submit">Send</button>
+  <div mat-dialog-actions *ngIf="!querying" class="float-right">
+    <a href="#" mat-button (click)="$event.preventDefault();dialogRef.close()">CANCEL</a>
+    <button mat-button type="submit">SEND</button>
   </div>
 </form>

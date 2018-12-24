@@ -7,12 +7,13 @@ import {
   MatInputModule,
   MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule,
   MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule,
-  MatSidenavModule,
-  MatSnackBarModule, MatStepperModule,
+  MatSidenavModule, MatSliderModule, MatSlideToggleModule,
+  MatSnackBarModule, MatStepperModule, MatTableModule,
   MatTabsModule,
   MatToolbarModule
 } from '@angular/material';
 import {NgcFloatButtonModule} from 'ngc-float-button';
+import {CdkTableModule} from '@angular/cdk/table';
 
 @NgModule({
   exports: [
@@ -42,6 +43,9 @@ import {NgcFloatButtonModule} from 'ngc-float-button';
     MatBottomSheetModule,
     MatMenuModule,
     MatButtonToggleModule,
+    MatSlideToggleModule,
+    MatTableModule,
+    CdkTableModule,
     NgcFloatButtonModule,
   ]
 })

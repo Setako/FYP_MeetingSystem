@@ -5,6 +5,8 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {MatSnackBar, MatStepper} from '@angular/material';
 import {StepperSelectionEvent} from '@angular/cdk/stepper';
 import {Meeting} from '../../../../shared/models/meeting';
+import {Millisecond} from '../../../../utils/time-unit';
+import {ObjectFilter} from '../../../../utils/object-filter';
 
 @Component({
   selector: 'app-meeting-edit',
@@ -12,6 +14,12 @@ import {Meeting} from '../../../../shared/models/meeting';
   styleUrls: ['./meeting-edit.component.css']
 })
 export class MeetingEditComponent implements OnInit {
+  public Step = {
+    Basic: {
+      filter: ObjectFilter.include(['title', 'length', 'type', 'priority', 'location', 'description', 'id'])
+    }
+  };
+
   today: Date = new Date();
   queryingAction = null;
   @ViewChild('stepper') stepper: MatStepper;
@@ -43,7 +51,7 @@ export class MeetingEditComponent implements OnInit {
     });
   }
 
-  saveStepState(event: StepperSelectionEvent) {
+  saveStepState(event: StepperSelectionEvent, step: any) {
     console.log(event);
     switch (event.previouslySelectedIndex) {
       case 0:
@@ -52,14 +60,14 @@ export class MeetingEditComponent implements OnInit {
         } else {
 
           this.meeting.title = this.basicForm.value.title;
-          this.meeting.length = this.basicForm.value.length;
+          this.meeting.length = this.basicForm.value.length * Millisecond.Hour;
           this.meeting.type = this.basicForm.value.type;
           this.meeting.priority = parseInt(this.basicForm.value.title, 10);
           this.meeting.location = this.basicForm.value.location;
           this.meeting.description = this.basicForm.value.description;
 
           this.queryingAction = 'Updating basic information';
-          this.meetingService.saveMeeting(this.meeting).subscribe(
+          this.meetingService.saveMeeting(step.filter.filter(this.meeting)).subscribe(
             () => {
               this.queryingAction = null;
               this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
@@ -77,7 +85,7 @@ export class MeetingEditComponent implements OnInit {
       meeting => {
         this.basicForm.patchValue({
           title: meeting.title,
-          length: meeting.length,
+          length: meeting.length / Millisecond.Hour,
           type: meeting.type,
           priority: meeting.priority + '',
           location: meeting.location,

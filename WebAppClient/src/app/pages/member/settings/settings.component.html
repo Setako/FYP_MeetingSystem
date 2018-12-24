@@ -1,3 +1,22 @@
-<p>
-  settings works!
-</p>
+<h2>Setting</h2>
+<div class="mat-elevation-z4">
+  <mat-tab-group [dynamicHeight]="true">
+
+    <mat-tab label="Notifications">
+      <app-notifications-setting></app-notifications-setting>
+    </mat-tab>
+
+    <mat-tab label="Privacy">
+      <app-privacy-setting></app-privacy-setting>
+    </mat-tab>
+
+    <mat-tab label="Google Service">
+      <app-google-service-setting></app-google-service-setting>
+    </mat-tab>
+
+    <mat-tab label="Calendar">
+      <app-calendar-setting></app-calendar-setting>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+

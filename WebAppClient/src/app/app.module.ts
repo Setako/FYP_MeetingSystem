@@ -34,6 +34,12 @@ import { QueryingContentHiderComponent } from './shared/components/querying-cont
 import { FriendListFabComponent } from './shared/components/floating-action-buttons/friend-list-fab/friend-list-fab.component';
 import { AddFriendDialogComponent } from './shared/components/dialogs/add-friend-dialog/add-friend-dialog.component';
 import { NotificationsComponent } from './shared/components/notifications/notifications.component';
+import { ChatingBoxComponent } from './shared/components/chating-box/chating-box.component';
+import { NotificationsSettingComponent } from './pages/member/settings/notifications-setting/notifications-setting.component';
+import { GoogleServiceSettingComponent } from './pages/member/settings/google-service-setting/google-service-setting.component';
+import { CalendarSettingComponent } from './pages/member/settings/calendar-setting/calendar-setting.component';
+import { PrivacySettingComponent } from './pages/member/settings/privacy-setting/privacy-setting.component';
+import { UserAvatarUploadDialogComponent } from './shared/components/dialogs/user-avatar-upload-dialog/user-avatar-upload-dialog.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +63,13 @@ import { NotificationsComponent } from './shared/components/notifications/notifi
     QueryingContentHiderComponent,
     FriendListFabComponent,
     AddFriendDialogComponent,
-    NotificationsComponent
+    NotificationsComponent,
+    ChatingBoxComponent,
+    NotificationsSettingComponent,
+    GoogleServiceSettingComponent,
+    CalendarSettingComponent,
+    PrivacySettingComponent,
+    UserAvatarUploadDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -86,7 +98,8 @@ import { NotificationsComponent } from './shared/components/notifications/notifi
   ],
   entryComponents: [
     MeetingOperationsBottomSheetsComponent,
-    AddFriendDialogComponent
+    AddFriendDialogComponent,
+    UserAvatarUploadDialogComponent
   ],
   bootstrap: [AppComponent]
 })

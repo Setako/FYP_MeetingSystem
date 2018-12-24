@@ -11,9 +11,9 @@
        class="d-flex flex-column">
 
     <!--Header-->
-    <mat-toolbar style="z-index: 500; padding: 0;" class="nav-bar">
+    <mat-toolbar style="z-index: 500; padding: 0;" class="nav-bar" color="primary">
       <div style="height: 10px" class="cc-bg-dark-primary"></div>
-      <mat-toolbar class="cc-bg-primary cc-text-color-primary">
+      <mat-toolbar class="cc-bg-primary cc-text-color-primary" color="primary">
 
         <!--Sidebar toggle-->
         <button mat-icon-button (click)="showNav = !showNav" [ngStyle]="{display:mobileQuery.matches?'block':'none'}">
@@ -24,7 +24,6 @@
           <h4>C-Commander</h4>
         </a>
         <div class="ml-auto">
-
 
           <button mat-icon-button class="ml-3" [mat-menu-trigger-for]="notifications">
             <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>

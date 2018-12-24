@@ -6,7 +6,6 @@ export interface User {
   displayName: string;
   email: string;
   userMeetingRelation: string[];
-  friends: User[];
 }
 
 
@@ -15,4 +14,10 @@ export interface FriendRequest {
   targetUser: User;
   requestTime: string;
   status: FriendRequestStatus;
+}
+
+export interface Friend {
+  user: User;
+  addDate: Date;
+  stared: boolean;
 }

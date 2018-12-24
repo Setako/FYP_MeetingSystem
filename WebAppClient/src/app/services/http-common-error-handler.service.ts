@@ -1,8 +1,9 @@
 import {Injectable} from '@angular/core';
 import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest} from '@angular/common/http';
 import {MatSnackBar} from '@angular/material';
-import {Observable} from 'rxjs';
+import {concat, iif, Observable, of, throwError} from 'rxjs';
 import {AuthService} from './auth.service';
+import {concatMap, delay, flatMap, map, retryWhen, take, tap} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,22 @@ export class HttpCommonErrorHandlerService implements HttpInterceptor {
 
   public intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return new Observable((observer) => {
-      next.handle(req).subscribe(
+      next.handle(req).pipe(retryWhen((err) => {
+
+        return err.pipe(
+          concatMap((pipeErr, times) => {
+            return iif(
+              () => times >= 3,
+              throwError(pipeErr),
+              of(pipeErr).pipe(tap(() => {
+                this.snackBar.open('Connection Error occurred, retrying', null, {
+                  duration: 3000
+                });
+              }), delay(3000))
+            );
+          })
+        );
+      })).subscribe(
         res => {
           observer.next(res);
         },
@@ -23,8 +39,9 @@ export class HttpCommonErrorHandlerService implements HttpInterceptor {
           if (err instanceof HttpErrorResponse) {
             switch (err.status) {
               case 0:
+              case 503:
                 this.snackBar.open('Connection Error occurred', null, {
-                  duration: 5000
+                  duration: 10000
                 });
                 observer.complete();
                 break;

@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>Change avatar</h2>
+
+
+<form>
+  <div mat-dialog-content>
+    Click the image to select a new avatar:
+    <div class="d-flex justify-content-center py-2">
+      <div style="position: relative; display: inline-block" (click)="uploadAvatar()">
+        <label for="avatar">
+          <img [src]="imageDataUrl !=null? imageDataUrl:userService.getUserAvatarPath(authService.loggedInUser)"
+               class="d-inline-block p-1"
+               style="object-fit:cover;height: 200px; width: 200px; border-radius: 50%; cursor: pointer" alt="">
+        </label>
+        <input style="display: none" type="file" (change)="selectImage($event)" id="avatar">
+      </div>
+    </div>
+    <div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="d-flex justify-content-end">
+    <a href="#" mat-button (click)="$event.preventDefault();dialogRef.close()">CANCEL</a>
+    <button mat-button type="submit">CHANGE</button>
+  </div>
+</form>
+

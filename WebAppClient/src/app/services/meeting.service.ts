@@ -21,7 +21,9 @@ export class MeetingService {
 
   public static mapModelToDTO(meeting: Meeting): any {
     const meetingDTO: any = JSON.parse(JSON.stringify(meeting));
-    meetingDTO.attendance = Array.from(meeting.attendance.keys());
+    if (meetingDTO.attendance != null) {
+      meetingDTO.attendance = Array.from(meeting.attendance.keys());
+    }
     return meetingDTO;
   }
 
