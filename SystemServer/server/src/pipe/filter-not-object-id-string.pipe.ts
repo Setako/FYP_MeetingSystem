@@ -1,18 +1,11 @@
 import { PipeTransform, ArgumentMetadata, Injectable } from '@nestjs/common';
-import { ObjectId } from 'bson';
+import { Validator } from 'class-validator';
 
 @Injectable()
 export class FilterNotObjectIdStringPipe implements PipeTransform<string[]> {
-    async transform(arr: string[], metadata: ArgumentMetadata) {
-        return arr
-            .map(item => {
-                try {
-                    const _ = new ObjectId(item);
-                    return item;
-                } catch {
-                    return null;
-                }
-            })
-            .filter(Boolean);
+    transform(arr: string[], metadata: ArgumentMetadata) {
+        const validator = new Validator();
+        const isMongoId = validator.isMongoId.bind(validator);
+        return arr.filter(isMongoId);
     }
 }

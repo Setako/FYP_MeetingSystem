@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType } from 'typegoose';
-import { User, Friend } from './user.model';
+import { User } from './user.model';
 import { CreateUserDto } from './dto/create-user.dto';
 import uuidv4 from 'uuid/v4';
 import { EditUserDto } from './dto/edit-user.dto';
@@ -40,6 +40,12 @@ export class UserService {
             .find({
                 username: {
                     $in: [usernames],
+                },
+            })
+            .populate({
+                path: 'friends',
+                populate: {
+                    path: 'friend',
                 },
             })
             .skip(pageSize * (pageNum - 1))
@@ -117,27 +123,24 @@ export class UserService {
             );
         }
 
-        if (editUserDto.friends) {
-            edited.friends = (await Promise.all(
-                editUserDto.friends
-                    .filter(friend => friend.friend !== edited.username)
-                    .map(
-                        async friend =>
-                            new Friend(
-                                await this.userModel.findByUsername(
-                                    friend.friend,
-                                ),
-                                new Date(friend.addDate),
-                                friend.started,
-                            ),
-                    ),
-            )).filter(friend => friend.friend && friend.friend);
-        }
-
         edited.email = editUserDto.email || edited.email;
         edited.displayName = editUserDto.displayName || edited.displayName;
         edited.googleAccessToken =
             editUserDto.googleAccessToken || edited.googleAccessToken;
+        if (editUserDto.setting) {
+            edited.setting = {
+                ...edited.setting,
+                markEventOnCalendarId:
+                    editUserDto.setting.markEventOnCalendarId ||
+                    edited.setting.markEventOnCalendarId,
+                calendarImportance:
+                    editUserDto.setting.calendarImportance ||
+                    edited.setting.calendarImportance,
+                notification:
+                    editUserDto.setting.notification ||
+                    edited.setting.notification,
+            };
+        }
 
         return edited.save();
     }
@@ -145,5 +148,11 @@ export class UserService {
     async delete(username: string) {
         const deleted = await this.userModel.findByUsername(username);
         return deleted.remove();
+    }
+
+    async uploadUserAratar(username: string, dataUrl: string) {
+        const updated = await this.userModel.findByUsername(username);
+        updated.avatar = dataUrl;
+        return updated.save();
     }
 }

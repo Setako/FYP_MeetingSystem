@@ -11,7 +11,7 @@ export class ValidationPipe implements PipeTransform<any> {
         this.isTransform = transform;
     }
 
-    async transform(value, metadata: ArgumentMetadata) {
+    async transform(value: any, metadata: ArgumentMetadata) {
         const { metatype } = metadata;
 
         if (!metatype || !this.toValidate(metadata)) {

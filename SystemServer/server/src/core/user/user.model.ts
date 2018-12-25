@@ -9,19 +9,25 @@ import {
     Typegoose,
 } from 'typegoose';
 
-export class Friend {
-    public friend: Ref<User>;
+// export class Friend {
 
-    public addDate: Date;
+//     @prop({
+//         ref:'Friend',
+//         required: true
+//     })
+//     public friend: Ref<FriendModel>;
 
-    public started?: boolean;
+//     // public addDate: Date;
 
-    constructor(friend: Ref<User>, addDate: Date, started: boolean) {
-        this.friend = friend;
-        this.addDate = addDate;
-        this.started = started;
-    }
-}
+//     @prop()
+//     public stared?: boolean;
+
+//     // constructor(friend: Ref<User>, addDate: Date, started: boolean) {
+//     //     this.friend = friend;
+//     //     this.addDate = addDate;
+//     //     this.started = started;
+//     // }
+// }
 
 export class Relation {
     public attendee: Ref<User>;
@@ -42,6 +48,84 @@ export class Relation {
         this.recordStartDate = recordStartDate;
         this.latesMeetingDate = latesMeetingDate;
         this.meetingCount = meetingCount;
+    }
+}
+
+export class CalendarImportance {
+    public carlendarId: string;
+
+    public importance: number;
+}
+
+export class NotificationSetting {
+    email: boolean;
+    notification: boolean;
+}
+
+export class UserSetting {
+    // @prop()
+    public markEventOnCalendarId?: string;
+
+    // @arrayProp({
+    //     items: CalendarImportance,
+    // })
+    public calendarImportance: CalendarImportance[];
+
+    // @prop({
+    //     required: true,
+    //     default: {
+    //         friendRequest: {
+    //             email: true,
+    //             notification: true,
+    //         },
+    //         meetingInfoUpdate: {
+    //             email: true,
+    //             notification: true,
+    //         },
+    //         meetingInvitation: {
+    //             email: true,
+    //             notification: true,
+    //         },
+    //         meetingCancelled: {
+    //             email: true,
+    //             notification: true,
+    //         },
+    //     },
+    // })
+    public notification: {
+        friendRequest: NotificationSetting;
+        meetingInfoUpdate: NotificationSetting;
+        meetingInvitation: NotificationSetting;
+        meetingCancelled: NotificationSetting;
+    };
+
+    constructor(partial: Partial<UserSetting> = {}) {
+        if (partial.markEventOnCalendarId) {
+            this.markEventOnCalendarId = partial.markEventOnCalendarId;
+        }
+        this.calendarImportance = partial.calendarImportance
+            ? partial.calendarImportance
+            : [];
+        this.notification = partial.notification
+            ? partial.notification
+            : {
+                  friendRequest: {
+                      email: true,
+                      notification: true,
+                  },
+                  meetingInfoUpdate: {
+                      email: true,
+                      notification: true,
+                  },
+                  meetingInvitation: {
+                      email: true,
+                      notification: true,
+                  },
+                  meetingCancelled: {
+                      email: true,
+                      notification: true,
+                  },
+              };
     }
 }
 
@@ -78,6 +162,11 @@ export class User extends Typegoose {
             .createHash('md5')
             .update(password + salt)
             .digest('hex');
+    }
+
+    @instanceMethod
+    public checkPassword(password: string) {
+        return this.password === User.encryptPassword(password, this.salt);
     }
 
     @prop({
@@ -122,11 +211,8 @@ export class User extends Typegoose {
     @prop()
     public googleAccessToken?: string;
 
-    @arrayProp({
-        items: Friend,
-        default: [],
-    })
-    public friends: Friend[];
+    @prop()
+    public avatar?: string;
 
     @arrayProp({
         items: Relation,
@@ -134,8 +220,9 @@ export class User extends Typegoose {
     })
     public userMeetingRelation: Relation[];
 
-    @instanceMethod
-    public checkPassword(password: string) {
-        return this.password === User.encryptPassword(password, this.salt);
-    }
+    @prop({
+        required: true,
+        default: new UserSetting(),
+    })
+    public setting: UserSetting;
 }
