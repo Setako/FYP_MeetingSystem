@@ -1,6 +1,6 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { ObjectId } from 'bson';
-import { EditFriendDto } from './edit-friend.dto';
+import { UserSetting } from '../user.model';
 
 export class GetUserDto {
     username: string;
@@ -9,17 +9,20 @@ export class GetUserDto {
 
     userMeetingRelation: [];
 
-    @Type(() => EditFriendDto)
-    @Transform(
-        arr => {
-            return arr.map((friend: { friend: { username: any } }) => ({
-                ...friend,
-                friend: friend.friend.username,
-            }));
-        },
-        { toPlainOnly: true },
-    )
-    friends: EditFriendDto[];
+    // @Type(() => EditFriendDto)
+    // @Transform(
+    //     arr => {
+    //         return arr.map((friend: { friend: { username: any } }) => ({
+    //             ...friend,
+    //             friend: friend.friend.username,
+    //         }));
+    //     },
+    //     { toPlainOnly: true },
+    // )
+    @Exclude()
+    friends: any[];
+
+    setting: UserSetting;
 
     @Expose()
     get id(): string {

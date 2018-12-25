@@ -7,6 +7,7 @@ import {
     ValidateNested,
     IsISO8601,
     IsInt,
+    IsInstance,
 } from 'class-validator';
 import { MeetingType, MeetingStatus } from '../meeting.model';
 import { PermissionDto } from './permission.dto';
@@ -76,6 +77,8 @@ export class EditMeetingDto {
     readonly attendance?: AttendanceDto[];
 
     @IsOptional()
+    @IsInstance(InvitationsDto)
     @ValidateNested()
+    @Type(() => InvitationsDto)
     readonly invitations?: InvitationsDto;
 }

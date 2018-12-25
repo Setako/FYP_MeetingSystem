@@ -2,7 +2,7 @@ import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { ObjectId } from 'bson';
 import { AccessPostMeetingPermission } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
-import { GetOwnerDto } from './owner.dto';
+import { GetOwnerDto } from './get-owner.dto';
 
 export class GetMeetingDto {
     type: string;
@@ -59,9 +59,5 @@ export class GetMeetingDto {
 
     constructor(partial: Partial<GetMeetingDto>) {
         Object.assign(this, partial);
-    }
-
-    static of(partial: Partial<GetMeetingDto>) {
-        return new GetMeetingDto(partial);
     }
 }

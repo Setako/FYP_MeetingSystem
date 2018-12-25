@@ -10,10 +10,12 @@ import {
     ValidateNested,
 } from 'class-validator';
 import { AttendanceStatus } from '../meeting.model';
+import { IsUsername } from '../../../decorator/is-username.decorator';
 
 export class AttendanceDto {
     @IsString()
     @Length(2, 20)
+    @IsUsername()
     readonly user: string;
 
     @IsInt()

@@ -7,6 +7,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { EditFriendDto } from './edit-friend.dto';
+import { EditUserSettingDto } from './edit-user-setting.dto';
 
 export class EditUserDto {
     @IsOptional()
@@ -35,4 +36,8 @@ export class EditUserDto {
     @IsOptional()
     @IsString()
     readonly googleAccessToken?: string;
+
+    @IsOptional()
+    @ValidateNested()
+    readonly setting?: EditUserSettingDto;
 }

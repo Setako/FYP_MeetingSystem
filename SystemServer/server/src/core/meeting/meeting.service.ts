@@ -50,7 +50,9 @@ export class MeetingService {
         const options = {} as any;
 
         if (query.status) {
-            options.status = query.status;
+            options.status = {
+                $in: query.status,
+            };
         }
 
         const hostedByMe = query.hostedByMe === 'true';
@@ -142,49 +144,48 @@ export class MeetingService {
 
     async edit(id: string, editMeetingDto: EditMeetingDto) {
         let edited = await this.meetingModel.findById(id);
-        await Promise.all(
-            Object.keys(editMeetingDto).map(async key => {
-                if (editMeetingDto[key]) {
-                    if (key === 'attendance') {
-                        edited.attendance = (await Promise.all(
-                            editMeetingDto.attendance.map(async item => ({
-                                ...item,
-                                arrivalTime: new Date(item.arrivalTime),
-                                user: await this.userService.getByUsername(
-                                    item.user,
-                                ),
-                                permission:
-                                    item.permission || edited.generalPermission,
-                            })),
-                        )).filter(item => item.user);
-                        return;
-                    }
 
-                    if (key === 'invitations') {
-                        await edited.save();
-                        edited = await this.editInvitations(
-                            edited.id,
-                            editMeetingDto[key],
-                        );
-                        return;
-                    }
+        if (editMeetingDto.attendance) {
+            // edited.attendance = (await Promise.all(
+            //     editMeetingDto.attendance.map(async item => ({
+            //         ...item,
+            //         arrivalTime: new Date(item.arrivalTime),
+            //         user: await this.userService.getByUsername(item.user),
+            //         permission: item.permission || edited.generalPermission,
+            //     })),
+            // )).filter(item => item.user);
+        }
 
-                    if (
-                        [
-                            'plannedStartTime',
-                            'plannedEndTime',
-                            'realStartTime',
-                            'realEndTime',
-                        ].some(val => val === key)
-                    ) {
-                        edited[key] = new Date(editMeetingDto[key]);
-                        return;
-                    }
+        if (editMeetingDto.invitations) {
+            await edited.save();
+            edited = await this.editInvitations(
+                edited.id,
+                editMeetingDto.invitations,
+            );
+        }
 
-                    edited[key] = editMeetingDto[key];
-                }
-            }),
-        );
+        edited.type = editMeetingDto.type || edited.type;
+        edited.title = editMeetingDto.title || edited.title;
+        edited.description = editMeetingDto.description || edited.description;
+        edited.length = editMeetingDto.length || edited.length;
+        edited.location = editMeetingDto.location || edited.location;
+        edited.language = editMeetingDto.language || edited.language;
+        edited.priority = editMeetingDto.priority || edited.priority;
+        edited.status = editMeetingDto.status || edited.status;
+        edited.plannedStartTime = editMeetingDto.plannedStartTime
+            ? new Date(editMeetingDto.plannedStartTime)
+            : edited.plannedStartTime;
+        edited.plannedEndTime = editMeetingDto.plannedEndTime
+            ? new Date(editMeetingDto.plannedEndTime)
+            : edited.plannedEndTime;
+        edited.realStartTime = editMeetingDto.realStartTime
+            ? new Date(editMeetingDto.realStartTime)
+            : edited.realStartTime;
+        edited.realEndTime = editMeetingDto.realEndTime
+            ? new Date(editMeetingDto.realEndTime)
+            : edited.realEndTime;
+        edited.generalPermission =
+            editMeetingDto.generalPermission || edited.generalPermission;
 
         // Todo: when the meeting change to planned, add host to attendance
         if (

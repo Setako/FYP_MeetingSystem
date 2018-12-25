@@ -16,8 +16,10 @@ export class GetAllQueryDto {
     readonly resultPageSize?: string;
 
     @IsOptional()
-    @IsEnum(MeetingStatus)
-    readonly status?: MeetingStatus;
+    @IsEnum(MeetingStatus, {
+        each: true,
+    })
+    readonly status?: MeetingStatus[];
 
     @IsOptional()
     @IsBooleanString()

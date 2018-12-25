@@ -15,7 +15,7 @@ import { NumberUtils } from '../../utils/number.utils';
 import { ObjectUtils } from '../../utils/object.utils';
 import { GetMeetingDto } from './dto/get-meeting.dto';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
-import { User } from '../../decorator/user.decorator';
+import { Auth } from '../../decorator/auth.decorator';
 import { User as UserModel } from '../user/user.model';
 import { SplitSemicolonPipe } from '../../pipe/split-semicolon.pipe';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
@@ -26,8 +26,7 @@ import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingGuard } from '../../guard/meeting.guard';
 import { FilterNotObjectIdStringPipe } from '../../pipe/filter-not-object-id-string.pipe';
 import { GetAllQueryDto } from './dto/get-all-query.dto';
-import { GetUserDto } from '../user/dto/get-user.dto';
-import { GetOwnerDto } from './dto/owner.dto';
+import { GetOwnerDto } from './dto/get-owner.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -38,7 +37,7 @@ export class MeetingController {
     ) {}
 
     @Get()
-    async getAll(@Query() query: GetAllQueryDto, @User() user: UserModel) {
+    async getAll(@Query() query: GetAllQueryDto, @Auth() user: UserModel) {
         const options = await this.meetingService.getQueryOption(
             query,
             user.username,
@@ -119,9 +118,18 @@ export class MeetingController {
     }
 
     @Post()
-    async create(@User() owner: UserModel, @Body() meeting: CreateMeetingDto) {
+    async create(@Auth() owner: UserModel, @Body() meeting: CreateMeetingDto) {
         const created = await this.meetingService.create(meeting, owner);
-        return ObjectUtils.DocumentToPlain(created, GetMeetingDto);
+
+        const object = {
+            ...created.toObject(),
+            owner: ObjectUtils.DocumentToPlain(
+                created.owner as any,
+                GetOwnerDto,
+            ),
+        };
+
+        return classToPlain(new GetMeetingDto(object));
     }
 
     @Put(':id')
@@ -131,7 +139,18 @@ export class MeetingController {
         @Body() editMeetingDto: EditMeetingDto,
     ) {
         const edited = await this.meetingService.edit(id, editMeetingDto);
-        return ObjectUtils.DocumentToPlain(edited, GetMeetingDto);
+
+        const object = {
+            ...edited.toObject(),
+            owner: ObjectUtils.DocumentToPlain(
+                await this.userService.getById(
+                    (edited.owner as ObjectId).toHexString(),
+                ),
+                GetOwnerDto,
+            ),
+        };
+
+        return classToPlain(new GetMeetingDto(object));
     }
 
     @Delete(':id')
@@ -164,5 +183,11 @@ export class MeetingController {
             items: meeting.invitations,
             length: meeting.invitations.length,
         };
+    }
+
+    @Put(':id/calendar')
+    @UseGuards(MeetingGuard)
+    async markOrUnMarkCalendar() {
+        // Todo: mark the calendar
     }
 }
