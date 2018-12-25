@@ -1,10 +1,12 @@
-import { Module, CacheModule, CacheInterceptor } from '@nestjs/common';
+import { Module, CacheModule } from '@nestjs/common';
 import { TypegooseModule } from 'nestjs-typegoose';
 import { UserModule } from './core/user/user.module';
 import { MeetingModule } from './core/meeting/meeting.module';
 import { DeviceModule } from './core/device/device.module';
 import { AuthModule } from './core/auth/auth.module';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { FriendRequestModule } from './core/friend-request/friend-request.module';
+import { NotificationModule } from './core/notification/notification.module';
+import { FriendModule } from './core/friend/friend.module';
 
 @Module({
     imports: [
@@ -12,18 +14,21 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
             useNewUrlParser: true,
             useCreateIndex: true,
         }),
-        CacheModule.register(),
+        // CacheModule.register(),
         AuthModule,
         UserModule,
         MeetingModule,
         DeviceModule,
+        FriendRequestModule,
+        NotificationModule,
+        FriendModule,
     ],
     controllers: [],
     providers: [
-        {
-            provide: APP_INTERCEPTOR,
-            useClass: CacheInterceptor,
-        },
+        // {
+        //     provide: APP_INTERCEPTOR,
+        //     useClass: CacheInterceptor,
+        // },
     ],
 })
 export class AppModule {}
