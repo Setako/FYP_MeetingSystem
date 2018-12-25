@@ -14,22 +14,28 @@
         "prestart:prod": "rimraf dist && npm run build",
         "start:prod": "node dist/main.js",
         "lint": "tslint -p tsconfig.json -c tslint.json",
+        "lint:fix": "tslint -p tsconfig.json -c tslint.json --fix",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:e2e": "jest --config ./test/jest-e2e.json",
+        "webpack": "webpack --config webpack.config.js",
         "postinstall": "npm run prestart:prod"
     },
     "dependencies": {
         "@nestjs/common": "^5.4.0",
         "@nestjs/core": "^5.4.0",
         "@nestjs/jwt": "^0.2.1",
+        "@nestjs/mongoose": "^5.2.2",
         "@nestjs/passport": "^5.1.0",
         "cache-manager": "^2.9.0",
         "class-transformer": "^0.2.0",
         "class-validator": "^0.9.1",
+        "data-urls": "^1.1.0",
         "dotenv": "^6.2.0",
+        "fastify": "^1.13.3",
+        "fastify-formbody": "^2.0.3",
         "mongoose": "^5.4.0",
         "morgan": "^1.9.1",
         "nestjs-typegoose": "^5.1.2",
@@ -62,7 +68,10 @@
         "ts-loader": "^5.3.1",
         "ts-node": "^7.0.1",
         "tsconfig-paths": "^3.5.0",
-        "tslint": "^5.12.0"
+        "tslint": "^5.12.0",
+        "webpack": "^4.28.1",
+        "webpack-cli": "^3.1.2",
+        "webpack-node-externals": "^1.7.2"
     },
     "jest": {
         "moduleFileExtensions": [
