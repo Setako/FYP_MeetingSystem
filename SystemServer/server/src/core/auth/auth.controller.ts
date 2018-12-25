@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { User } from '../../decorator/user.decorator';
+import { Auth } from '../../decorator/auth.decorator';
 import { User as UserModel } from '../user/user.model';
 
 @Controller('auth')
@@ -26,7 +26,7 @@ export class AuthController {
     @Post('refresh')
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
-    async refresh(@User() user: UserModel) {
+    async refresh(@Auth() user: UserModel) {
         return {
             token: await this.authService.refresh(user),
         };
@@ -35,7 +35,7 @@ export class AuthController {
     @Post('logout')
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
-    async logout(@User() user: UserModel) {
+    async logout(@Auth() user: UserModel) {
         this.authService.logout(user);
     }
 }
