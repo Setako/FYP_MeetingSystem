@@ -1,5 +1,5 @@
+import { GetOwnerDto } from '@commander/core/meeting/dto/get-owner.dto';
 import { Type } from 'class-transformer';
-import { GetOwnerDto } from '../../meeting/dto/get-owner.dto';
 
 export class GetFriendDto {
     @Type(() => GetOwnerDto)

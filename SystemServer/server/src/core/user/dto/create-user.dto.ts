@@ -1,5 +1,5 @@
-import { IsString, Length, IsEmail } from 'class-validator';
-import { IsUsername } from '../../../decorator/is-username.decorator';
+import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
+import { IsEmail, IsString, Length } from 'class-validator';
 
 export class CreateUserDto {
     @IsString()

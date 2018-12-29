@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Friend } from './friend.model';
-import { ModelType } from 'typegoose';
 import { Types } from 'mongoose';
-import { UserService } from '../user/user.service';
 import { InjectModel } from 'nestjs-typegoose';
+import { ModelType } from 'typegoose';
+import { UserService } from '../user/user.service';
+import { Friend } from './friend.model';
 
 @Injectable()
 export class FriendService {

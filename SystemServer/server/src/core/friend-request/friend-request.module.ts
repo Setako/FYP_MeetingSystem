@@ -1,11 +1,11 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypegooseModule } from 'nestjs-typegoose';
-import { FriendRequest } from './friend-request.model';
-import { FriendRequestService } from './friend-request.service';
-import { FriendRequestController } from './friend-request.controller';
-import { UserModule } from '../user/user.module';
 import { FriendModule } from '../friend/friend.module';
 import { NotificationModule } from '../notification/notification.module';
+import { UserModule } from '../user/user.module';
+import { FriendRequestController } from './friend-request.controller';
+import { FriendRequest } from './friend-request.model';
+import { FriendRequestService } from './friend-request.service';
 
 @Module({
     imports: [

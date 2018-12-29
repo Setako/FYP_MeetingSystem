@@ -1,14 +1,14 @@
 import {
-    Controller,
-    Get,
-    Post,
     Body,
-    UseGuards,
-    Param,
+    Controller,
     Delete,
+    Get,
+    Param,
+    Post,
+    UseGuards,
 } from '@nestjs/common';
-import { DeviceService } from './device.service';
 import { AuthGuard } from '@nestjs/passport';
+import { DeviceService } from './device.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 
 @Controller('device')

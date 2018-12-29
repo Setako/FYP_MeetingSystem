@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import { ObjectId } from 'bson';
+import { Types } from 'mongoose';
 import { UserSetting } from '../user.model';
 
 export class GetUserDto {
@@ -9,16 +9,6 @@ export class GetUserDto {
 
     userMeetingRelation: [];
 
-    // @Type(() => EditFriendDto)
-    // @Transform(
-    //     arr => {
-    //         return arr.map((friend: { friend: { username: any } }) => ({
-    //             ...friend,
-    //             friend: friend.friend.username,
-    //         }));
-    //     },
-    //     { toPlainOnly: true },
-    // )
     @Exclude()
     friends: any[];
 
@@ -30,7 +20,7 @@ export class GetUserDto {
     }
 
     @Exclude()
-    _id: ObjectId;
+    _id: Types.ObjectId;
 
     @Exclude()
     password: string;

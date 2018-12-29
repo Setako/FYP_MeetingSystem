@@ -1,10 +1,10 @@
-import { Controller, Post, Body, UseGuards, HttpCode } from '@nestjs/common';
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { User } from '../user/user.model';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { CreateUserDto } from '../user/dto/create-user.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { Auth } from '../../decorator/auth.decorator';
-import { User as UserModel } from '../user/user.model';
 
 @Controller('auth')
 export class AuthController {
@@ -26,7 +26,7 @@ export class AuthController {
     @Post('refresh')
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
-    async refresh(@Auth() user: UserModel) {
+    async refresh(@Auth() user: User) {
         return {
             token: await this.authService.refresh(user),
         };
@@ -35,7 +35,7 @@ export class AuthController {
     @Post('logout')
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
-    async logout(@Auth() user: UserModel) {
+    async logout(@Auth() user: User) {
         this.authService.logout(user);
     }
 }

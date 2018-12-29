@@ -1,10 +1,10 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypegooseModule } from 'nestjs-typegoose';
-import { Notification } from './notification.model';
-import { NotificationController } from './notification.controller';
-import { NotificationService } from './notification.service';
 import { FriendRequestModule } from '../friend-request/friend-request.module';
 import { UserModule } from '../user/user.module';
+import { NotificationController } from './notification.controller';
+import { Notification } from './notification.model';
+import { NotificationService } from './notification.service';
 
 @Module({
     imports: [

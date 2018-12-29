@@ -1,8 +1,8 @@
 import {
-    IsOptional,
-    IsNumberString,
     IsBooleanString,
     IsEnum,
+    IsNumberString,
+    IsOptional,
 } from 'class-validator';
 import { MeetingStatus } from '../meeting.model';
 

@@ -1,10 +1,10 @@
+import { MeetingService } from '@commander/core/meeting/meeting.service';
 import {
-    Injectable,
     CanActivate,
     ExecutionContext,
+    Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { MeetingService } from '../core/meeting/meeting.service';
 import { from } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 

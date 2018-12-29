@@ -1,10 +1,10 @@
+import { UserService } from '@commander/core/user/user.service';
 import {
-    Injectable,
     CanActivate,
     ExecutionContext,
+    Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { UserService } from '../core/user/user.service';
 
 @Injectable()
 export class UserGuard implements CanActivate {

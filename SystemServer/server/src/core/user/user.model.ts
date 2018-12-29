@@ -9,26 +9,6 @@ import {
     Typegoose,
 } from 'typegoose';
 
-// export class Friend {
-
-//     @prop({
-//         ref:'Friend',
-//         required: true
-//     })
-//     public friend: Ref<FriendModel>;
-
-//     // public addDate: Date;
-
-//     @prop()
-//     public stared?: boolean;
-
-//     // constructor(friend: Ref<User>, addDate: Date, started: boolean) {
-//     //     this.friend = friend;
-//     //     this.addDate = addDate;
-//     //     this.started = started;
-//     // }
-// }
-
 export class Relation {
     public attendee: Ref<User>;
 
@@ -63,40 +43,16 @@ export class NotificationSetting {
 }
 
 export class UserSetting {
-    // @prop()
     public markEventOnCalendarId?: string;
 
-    // @arrayProp({
-    //     items: CalendarImportance,
-    // })
     public calendarImportance: CalendarImportance[];
 
-    // @prop({
-    //     required: true,
-    //     default: {
-    //         friendRequest: {
-    //             email: true,
-    //             notification: true,
-    //         },
-    //         meetingInfoUpdate: {
-    //             email: true,
-    //             notification: true,
-    //         },
-    //         meetingInvitation: {
-    //             email: true,
-    //             notification: true,
-    //         },
-    //         meetingCancelled: {
-    //             email: true,
-    //             notification: true,
-    //         },
-    //     },
-    // })
     public notification: {
         friendRequest: NotificationSetting;
         meetingInfoUpdate: NotificationSetting;
         meetingInvitation: NotificationSetting;
         meetingCancelled: NotificationSetting;
+        meetingReminder: NotificationSetting;
     };
 
     constructor(partial: Partial<UserSetting> = {}) {
@@ -122,6 +78,10 @@ export class UserSetting {
                       notification: true,
                   },
                   meetingCancelled: {
+                      email: true,
+                      notification: true,
+                  },
+                  meetingReminder: {
                       email: true,
                       notification: true,
                   },

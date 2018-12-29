@@ -1,4 +1,4 @@
-import { PipeTransform, ArgumentMetadata, Injectable } from '@nestjs/common';
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
 import { Validator } from 'class-validator';
 
 @Injectable()

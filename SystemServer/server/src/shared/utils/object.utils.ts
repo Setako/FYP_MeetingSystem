@@ -1,5 +1,5 @@
-import { Document } from 'mongoose';
 import { classToPlain } from 'class-transformer';
+import { Document } from 'mongoose';
 
 export class ObjectUtils {
     static DocumentToPlain(

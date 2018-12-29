@@ -1,7 +1,7 @@
+import { EditFriendDto } from '@commander/core/user/dto/edit-friend.dto';
+import { GetUserDto } from '@commander/core/user/dto/get-user.dto';
+import { UserSetting } from '@commander/core/user/user.model';
 import { Exclude } from 'class-transformer';
-import { GetUserDto } from '../../user/dto/get-user.dto';
-import { EditFriendDto } from '../../user/dto/edit-friend.dto';
-import { UserSetting } from '../../user/user.model';
 
 export class GetOwnerDto extends GetUserDto {
     @Exclude()

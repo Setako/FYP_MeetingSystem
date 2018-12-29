@@ -1,11 +1,11 @@
 import { arrayProp, prop, Ref, Typegoose } from 'typegoose';
-import { User } from '../user/user.model';
 import { Device } from '../device/device.model';
+import { User } from '../user/user.model';
 
 export class Attendance {
     public user: Ref<User>;
 
-    public proiority: number;
+    public priority: number;
 
     public arrivalTime?: Date;
 
@@ -23,7 +23,7 @@ export class Invitation extends Typegoose {
 
     public email?: string;
 
-    public proiority: number;
+    public priority: number;
 
     public status: InvitationStatus;
 }

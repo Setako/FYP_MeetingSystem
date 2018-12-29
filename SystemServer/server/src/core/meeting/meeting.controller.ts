@@ -1,32 +1,32 @@
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { MeetingGuard } from '@commander/shared/guard/meeting.guard';
+import { FilterNotObjectIdStringPipe } from '@commander/shared/pipe/filter-not-object-id-string.pipe';
+import { SplitSemicolonPipe } from '@commander/shared/pipe/split-semicolon.pipe';
+import { NumberUtils } from '@commander/shared/utils/number.utils';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import {
-    Controller,
-    Get,
-    Post,
     Body,
-    UseGuards,
-    Query,
-    Param,
-    Put,
+    Controller,
     Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    Query,
+    UseGuards,
 } from '@nestjs/common';
-import { MeetingService } from './meeting.service';
 import { AuthGuard } from '@nestjs/passport';
-import { NumberUtils } from '../../utils/number.utils';
-import { ObjectUtils } from '../../utils/object.utils';
-import { GetMeetingDto } from './dto/get-meeting.dto';
-import { CreateMeetingDto } from './dto/create-meeting.dto';
-import { Auth } from '../../decorator/auth.decorator';
-import { User as UserModel } from '../user/user.model';
-import { SplitSemicolonPipe } from '../../pipe/split-semicolon.pipe';
-import { EditMeetingDto } from './dto/edit-meeting.dto';
-import { UserService } from '../user/user.service';
-import { ObjectId } from 'bson';
 import { classToPlain } from 'class-transformer';
-import { InvitationsDto } from './dto/invitations.dto';
-import { MeetingGuard } from '../../guard/meeting.guard';
-import { FilterNotObjectIdStringPipe } from '../../pipe/filter-not-object-id-string.pipe';
+import { Types } from 'mongoose';
+import { User } from '../user/user.model';
+import { UserService } from '../user/user.service';
+import { CreateMeetingDto } from './dto/create-meeting.dto';
+import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { GetAllQueryDto } from './dto/get-all-query.dto';
+import { GetMeetingDto } from './dto/get-meeting.dto';
 import { GetOwnerDto } from './dto/get-owner.dto';
+import { InvitationsDto } from './dto/invitations.dto';
+import { MeetingService } from './meeting.service';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -37,7 +37,7 @@ export class MeetingController {
     ) {}
 
     @Get()
-    async getAll(@Query() query: GetAllQueryDto, @Auth() user: UserModel) {
+    async getAll(@Query() query: GetAllQueryDto, @Auth() user: User) {
         const options = await this.meetingService.getQueryOption(
             query,
             user.username,
@@ -56,7 +56,7 @@ export class MeetingController {
                 ...val.toObject(),
                 owner: ObjectUtils.DocumentToPlain(
                     await this.userService.getById(
-                        (val.owner as ObjectId).toHexString(),
+                        (val.owner as Types.ObjectId).toHexString(),
                     ),
                     GetOwnerDto,
                 ),
@@ -99,7 +99,7 @@ export class MeetingController {
                 ...val.toObject(),
                 owner: ObjectUtils.DocumentToPlain(
                     await this.userService.getById(
-                        (val.owner as ObjectId).toHexString(),
+                        (val.owner as Types.ObjectId).toHexString(),
                     ),
                     GetOwnerDto,
                 ),
@@ -118,7 +118,7 @@ export class MeetingController {
     }
 
     @Post()
-    async create(@Auth() owner: UserModel, @Body() meeting: CreateMeetingDto) {
+    async create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
         const created = await this.meetingService.create(meeting, owner);
 
         const object = {
@@ -144,7 +144,7 @@ export class MeetingController {
             ...edited.toObject(),
             owner: ObjectUtils.DocumentToPlain(
                 await this.userService.getById(
-                    (edited.owner as ObjectId).toHexString(),
+                    (edited.owner as Types.ObjectId).toHexString(),
                 ),
                 GetOwnerDto,
             ),

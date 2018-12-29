@@ -1,11 +1,11 @@
+import { Type } from 'class-transformer';
 import {
+    IsEmail,
+    IsOptional,
     IsString,
     Length,
-    IsEmail,
     ValidateNested,
-    IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { EditFriendDto } from './edit-friend.dto';
 import { EditUserSettingDto } from './edit-user-setting.dto';
 

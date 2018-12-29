@@ -1,14 +1,14 @@
 import {
-    IsString,
-    IsPositive,
-    IsOptional,
-    ValidateNested,
     IsEnum,
-    MinLength,
     IsInt,
+    IsOptional,
+    IsPositive,
+    IsString,
+    MinLength,
+    ValidateNested,
 } from 'class-validator';
-import { PermissionDto } from './permission.dto';
 import { MeetingType } from '../meeting.model';
+import { PermissionDto } from './permission.dto';
 
 export class CreateMeetingDto {
     @IsEnum(MeetingType)

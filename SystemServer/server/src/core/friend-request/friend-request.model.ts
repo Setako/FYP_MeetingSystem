@@ -1,4 +1,4 @@
-import { Typegoose, Ref, prop } from 'typegoose';
+import { prop, Ref, Typegoose } from 'typegoose';
 import { User } from '../user/user.model';
 
 export enum FriendRequestStatus {

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { InjectModel } from 'nestjs-typegoose';
+import { ModelType } from 'typegoose';
 import {
     Notification,
-    NotificationType,
     NotificationObjectModel,
+    NotificationType,
 } from './notification.model';
-import { ModelType } from 'typegoose';
-import { Types } from 'mongoose';
 
 @Injectable()
 export class NotificationService {

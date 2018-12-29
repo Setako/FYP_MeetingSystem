@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsISO8601 } from 'class-validator';
+import { IsBoolean, IsISO8601, IsString } from 'class-validator';
 
 export class EditFriendDto {
     @IsString()

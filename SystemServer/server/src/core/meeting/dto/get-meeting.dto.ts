@@ -1,5 +1,5 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { ObjectId } from 'bson';
+import { Types } from 'mongoose';
 import { AccessPostMeetingPermission } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
 import { GetOwnerDto } from './get-owner.dto';
@@ -27,8 +27,8 @@ export class GetMeetingDto {
 
     priority: number;
 
-    @Type(() => ObjectId)
-    @Transform((val: ObjectId) => val.toHexString())
+    @Type(() => Types.ObjectId)
+    @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
 
     owner: GetOwnerDto;
@@ -52,7 +52,7 @@ export class GetMeetingDto {
     }
 
     @Exclude()
-    _id: ObjectId;
+    _id: Types.ObjectId;
 
     @Exclude()
     __v: number;

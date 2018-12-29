@@ -1,10 +1,10 @@
+import { TokenExpiredException } from '@commander/shared/exception/auth/token-expired.exception';
+import { TokenOwnerNotExistException } from '@commander/shared/exception/auth/token-owner-not-exist.exception';
+import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { AuthService } from './auth.service';
-import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
 import { JwtPayload } from './dto/jwt-payload.dto';
-import { TokenOwnerNotExistException } from '../../exception/auth/token-owner-not-exist.exception';
-import { TokenExpiredException } from '../../exception/auth/token-expired.exception';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

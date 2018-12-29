@@ -1,3 +1,7 @@
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { UserGuard } from '@commander/shared/guard/user.guard';
+import { SplitSemicolonPipe } from '@commander/shared/pipe/split-semicolon.pipe';
+import { NumberUtils } from '@commander/shared/utils/number.utils';
 import {
     Controller,
     Delete,
@@ -12,10 +16,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { classToPlain } from 'class-transformer';
 import { Types } from 'mongoose';
 import { InstanceType } from 'typegoose';
-import { Auth } from '../../decorator/auth.decorator';
-import { UserGuard } from '../../guard/user.guard';
-import { SplitSemicolonPipe } from '../../pipe/split-semicolon.pipe';
-import { NumberUtils } from '../../utils/number.utils';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { GetFirendQueryDto } from './dto/get-friend-query.dto';

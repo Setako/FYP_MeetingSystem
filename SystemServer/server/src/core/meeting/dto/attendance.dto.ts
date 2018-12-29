@@ -1,16 +1,16 @@
-import { PermissionDto } from './permission.dto';
+import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
 import {
-    IsString,
-    IsOptional,
-    IsISO8601,
     IsEnum,
-    IsInt,
-    Length,
     IsIn,
+    IsInt,
+    IsISO8601,
+    IsOptional,
+    IsString,
+    Length,
     ValidateNested,
 } from 'class-validator';
 import { AttendanceStatus } from '../meeting.model';
-import { IsUsername } from '../../../decorator/is-username.decorator';
+import { PermissionDto } from './permission.dto';
 
 export class AttendanceDto {
     @IsString()
@@ -20,7 +20,7 @@ export class AttendanceDto {
 
     @IsInt()
     @IsIn([1, 2, 3])
-    readonly proiority: number;
+    readonly priority: number;
 
     @IsOptional()
     @IsISO8601()

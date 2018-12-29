@@ -1,15 +1,15 @@
+import { NotificationService } from '@commander/core/notification/notification.service';
+import { User } from '@commander/core/user/user.model';
 import {
-    Injectable,
     CanActivate,
     ExecutionContext,
+    Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { NotificationService } from '../core/notification/notification.service';
 import { InstanceType } from 'typegoose';
-import { User } from '../core/user/user.model';
-import { Types } from 'mongoose';
 
 @Injectable()
 export class NotificationGuard implements CanActivate {

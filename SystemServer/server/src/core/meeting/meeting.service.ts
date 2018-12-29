@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType } from 'typegoose';
-import {
-    Meeting,
-    AccessPostMeetingPermission,
-    MeetingStatus,
-    InvitationStatus,
-    Invitation,
-} from './meeting.model';
-import { CreateMeetingDto } from './dto/create-meeting.dto';
-import { User } from '../user/user.model';
-import { EditMeetingDto } from './dto/edit-meeting.dto';
-import { UserService } from '../user/user.service';
-import { InvitationsDto } from './dto/invitations.dto';
 import uuidv4 from 'uuid/v4';
+import { User } from '../user/user.model';
+import { UserService } from '../user/user.service';
+import { CreateMeetingDto } from './dto/create-meeting.dto';
+import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { GetAllQueryDto } from './dto/get-all-query.dto';
-import { Types } from 'mongoose';
+import { InvitationsDto } from './dto/invitations.dto';
+import {
+    AccessPostMeetingPermission,
+    Invitation,
+    InvitationStatus,
+    Meeting,
+    MeetingStatus,
+} from './meeting.model';
 
 @Injectable()
 export class MeetingService {
@@ -194,7 +194,7 @@ export class MeetingService {
         ) {
             edited.attendance.push({
                 user: edited.owner,
-                proiority: 1,
+                priority: 1,
                 permission: edited.generalPermission,
             });
         }

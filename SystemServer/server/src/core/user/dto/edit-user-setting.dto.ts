@@ -1,11 +1,11 @@
 import {
+    IsArray,
+    IsBoolean,
+    IsIn,
+    IsInt,
     IsOptional,
     IsString,
     ValidateNested,
-    IsInt,
-    IsIn,
-    IsArray,
-    IsBoolean,
 } from 'class-validator';
 
 export class EditUserSettingDto {
@@ -16,15 +16,6 @@ export class EditUserSettingDto {
     @IsOptional()
     @IsArray()
     @ValidateNested()
-    // @Transform(val => {
-    //     if (val === undefined) {
-    //         return val;
-    //     }
-    //     if (!Array.isArray(val)) {
-    //         return val;
-    //     }
-    //     return (val as CalendarImportanceDto[]).length === 0 ? [] : val;
-    // })
     readonly calendarImportance: CalendarImportanceDto[];
 
     @IsOptional()
@@ -34,6 +25,7 @@ export class EditUserSettingDto {
         meetingInfoUpdate: NotificationSettingDto;
         meetingInvitation: NotificationSettingDto;
         meetingCancelled: NotificationSettingDto;
+        meetingReminder: NotificationSettingDto;
     };
 }
 

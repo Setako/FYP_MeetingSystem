@@ -1,31 +1,31 @@
+import { UserGuard } from '@commander/shared/guard/user.guard';
+import { SplitSemicolonPipe } from '@commander/shared/pipe/split-semicolon.pipe';
+import { FileUtils } from '@commander/shared/utils/file.utils';
+import { NumberUtils } from '@commander/shared/utils/number.utils';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import {
     BadRequestException,
     Body,
     Controller,
     Delete,
     Get,
+    Header,
     HttpCode,
     HttpStatus,
+    NotFoundException,
     Param,
     Post,
     Put,
     Query,
     UseGuards,
-    NotFoundException,
-    Header,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { UserGuard } from '../../guard/user.guard';
-import { SplitSemicolonPipe } from '../../pipe/split-semicolon.pipe';
-import { FileUtils } from '../../utils/file.utils';
-import { NumberUtils } from '../../utils/number.utils';
-import { ObjectUtils } from '../../utils/object.utils';
 import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
-import parseDataURL = require('data-urls');
+import parseDataURL from 'data-urls';
 
 @Controller('user')
 export class UsersController {

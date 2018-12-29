@@ -1,4 +1,4 @@
-import { Typegoose, Ref, arrayProp, prop } from 'typegoose';
+import { arrayProp, prop, Ref, Typegoose } from 'typegoose';
 import { User } from '../user/user.model';
 
 export class Friend extends Typegoose {

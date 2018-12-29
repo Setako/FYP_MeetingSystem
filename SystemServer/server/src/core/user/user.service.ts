@@ -1,12 +1,12 @@
+import { EmailUsedExistException } from '@commander/shared/exception/auth/email-used-exist.exception';
+import { UsernameUsedExistException } from '@commander/shared/exception/auth/username-used-exist.exception';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType } from 'typegoose';
-import { User } from './user.model';
-import { CreateUserDto } from './dto/create-user.dto';
 import uuidv4 from 'uuid/v4';
+import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
-import { UsernameUsedExistException } from '../../exception/auth/username-used-exist.exception';
-import { EmailUsedExistException } from '../../exception/auth/email-used-exist.exception';
+import { User } from './user.model';
 
 @Injectable()
 export class UserService {

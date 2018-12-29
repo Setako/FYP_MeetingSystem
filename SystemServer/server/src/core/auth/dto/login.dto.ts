@@ -1,5 +1,5 @@
+import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
 import { IsString, Length } from 'class-validator';
-import { IsUsername } from '../../../decorator/is-username.decorator';
 
 export class LoginDto {
     @IsString()

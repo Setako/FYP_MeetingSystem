@@ -1,7 +1,7 @@
+import { LoginFailedException } from '@commander/shared/exception/auth/login-failed.exception';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignOptions } from 'jsonwebtoken';
-import { LoginFailedException } from '../../exception/auth/login-failed.exception';
 import uuidv4 from 'uuid/v4';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { User } from '../user/user.model';

@@ -1,19 +1,19 @@
+import { Type } from 'class-transformer';
 import {
     IsEnum,
+    IsInstance,
+    IsInt,
+    IsISO8601,
+    IsOptional,
+    IsPositive,
     IsString,
     MinLength,
-    IsPositive,
-    IsOptional,
     ValidateNested,
-    IsISO8601,
-    IsInt,
-    IsInstance,
 } from 'class-validator';
-import { MeetingType, MeetingStatus } from '../meeting.model';
-import { PermissionDto } from './permission.dto';
-import { Type } from 'class-transformer';
+import { MeetingStatus, MeetingType } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
 import { InvitationsDto } from './invitations.dto';
+import { PermissionDto } from './permission.dto';
 
 export class EditMeetingDto {
     @IsOptional()

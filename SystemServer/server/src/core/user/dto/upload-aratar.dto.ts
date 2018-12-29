@@ -1,4 +1,4 @@
-import { IsString, IsBase64 } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class UploadAratarDto {
     @IsString()

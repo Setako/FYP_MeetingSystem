@@ -1,3 +1,7 @@
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { UserGuard } from '@commander/shared/guard/user.guard';
+import { NumberUtils } from '@commander/shared/utils/number.utils';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import {
     BadRequestException,
     Body,
@@ -17,10 +21,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Types } from 'mongoose';
 import { InstanceType } from 'typegoose';
-import { Auth } from '../../decorator/auth.decorator';
-import { UserGuard } from '../../guard/user.guard';
-import { NumberUtils } from '../../utils/number.utils';
-import { ObjectUtils } from '../../utils/object.utils';
 import { GetFirendQueryDto } from '../friend/dto/get-friend-query.dto';
 import { FriendService } from '../friend/friend.service';
 import {

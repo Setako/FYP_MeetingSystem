@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsNumberString } from 'class-validator';
+import { IsNumberString, IsOptional } from 'class-validator';
 
 export class GetFirendQueryDto {
     @IsOptional()

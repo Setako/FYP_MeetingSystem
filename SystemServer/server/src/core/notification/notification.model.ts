@@ -1,6 +1,6 @@
-import { Typegoose, prop, Ref } from 'typegoose';
-import { User } from '../user/user.model';
 import { Types } from 'mongoose';
+import { prop, Ref, Typegoose } from 'typegoose';
+import { User } from '../user/user.model';
 
 export enum NotificationType {
     FriendRequestReceived = 'friendRequestReceived',
