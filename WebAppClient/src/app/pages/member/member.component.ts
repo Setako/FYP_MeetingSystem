@@ -3,6 +3,7 @@ import {AuthService} from '../../services/auth.service';
 import {MatSnackBar} from '@angular/material';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {MediaMatcher} from '@angular/cdk/layout';
+import {UserService} from '../../services/user.service';
 
 @Component({
   selector: 'app-member',
@@ -36,6 +37,7 @@ export class MemberComponent implements OnInit {
   ];
 
   constructor(public auth: AuthService, private snackBar: MatSnackBar,
+              public userService:UserService,
               private  changeDetectorRef: ChangeDetectorRef, private mediaMatcher: MediaMatcher) {
     this.mobileQuery = mediaMatcher.matchMedia('(max-width: 600px)');
     this.mobileQuery.addListener(() => changeDetectorRef.detectChanges());

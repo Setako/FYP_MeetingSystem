@@ -10,7 +10,7 @@ import {
   MatSidenavModule, MatSliderModule, MatSlideToggleModule,
   MatSnackBarModule, MatStepperModule, MatTableModule,
   MatTabsModule,
-  MatToolbarModule
+  MatToolbarModule, MatTooltipModule
 } from '@angular/material';
 import {NgcFloatButtonModule} from 'ngc-float-button';
 import {CdkTableModule} from '@angular/cdk/table';
@@ -45,6 +45,7 @@ import {CdkTableModule} from '@angular/cdk/table';
     MatButtonToggleModule,
     MatSlideToggleModule,
     MatTableModule,
+    MatTooltipModule,
     CdkTableModule,
     NgcFloatButtonModule,
   ]

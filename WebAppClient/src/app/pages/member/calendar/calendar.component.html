@@ -34,16 +34,16 @@
 <mwl-calendar-month-view
   *ngIf="view == CalendarView.Month"
   [viewDate]="viewDate"
-  [events]="events"
+  [events]="meetings"
   [activeDayIsOpen]="false">
 </mwl-calendar-month-view>
 <mwl-calendar-week-view
   *ngIf="view == CalendarView.Week"
   [viewDate]="viewDate"
-  [events]="events">
+  [events]="meetings">
 </mwl-calendar-week-view>
 <mwl-calendar-day-view
   *ngIf="view == CalendarView.Day"
   [viewDate]="viewDate"
-  [events]="events">
+  [events]="meetings">
 </mwl-calendar-day-view>

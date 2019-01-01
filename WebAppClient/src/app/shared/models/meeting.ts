@@ -26,7 +26,7 @@ export interface Meeting {
 
 export interface MeetingAttendance {
   username: string;
-  proiority: number;
+  priority: number;
   arrivalTime?: Date;
   status?: MeetingAttendanceStatus;
   permission: AccessPostMeetingPermission;

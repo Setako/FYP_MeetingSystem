@@ -3,6 +3,7 @@ import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {AuthService} from '../../../../services/auth.service';
 import {MatDialog} from '@angular/material';
 import {UserAvatarUploadDialogComponent} from '../../../../shared/components/dialogs/user-avatar-upload-dialog/user-avatar-upload-dialog.component';
+import {UserService} from '../../../../services/user.service';
 
 declare const gapi: any;
 
@@ -34,7 +35,7 @@ export class UserInfoComponent implements OnInit {
 
   private googleOAuth2: any;
 
-  constructor(private auth: AuthService, private dialog: MatDialog) {
+  constructor(public auth: AuthService, private dialog: MatDialog, public userService: UserService) {
   }
 
   ngOnInit() {
@@ -44,7 +45,7 @@ export class UserInfoComponent implements OnInit {
   }
 
   googleLogin() {
-    let googleAuth = gapi.auth2.getAuthInstance();
+    const googleAuth = gapi.auth2.getAuthInstance();
     googleAuth.then(() => {
       googleAuth.signIn({scope: 'profile email'}).then(googleUser => {
         console.log(googleUser.getBasicProfile());

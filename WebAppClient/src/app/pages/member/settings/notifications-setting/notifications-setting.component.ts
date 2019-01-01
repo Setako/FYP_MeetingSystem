@@ -22,6 +22,7 @@ export class NotificationsSettingComponent implements OnInit {
       types: [
         {display: 'Meeting invited by other', name: 'meetingInvited'},
         {display: 'Meeting updated', name: 'meetingUpdated'},
+        {display: 'Meeting cancelled', name: 'meetingCancelled'},
         {display: 'Meeting reminder', name: 'meetingReminder'},
       ]
     }

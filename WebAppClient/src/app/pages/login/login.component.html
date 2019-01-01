@@ -1,13 +1,13 @@
 <div class="d-flex h-100">
-  <div class="mat-elevation-z8 container w-100 my-auto align-self-center" style="max-width: 800px; height: 400px">
-    <div class="row h-100">
-      <div class="col-5 cc-bg-primary">
+  <div class="mat-elevation-z8 container w-100 my-auto align-self-center login-frame">
+    <div class="row h-100" style="overflow: hidden">
+      <div class="col-sm-12 col-md-5 cc-bg-primary">
         <div class="h-100 w-100 d-flex">
-          <span class="m-auto" style="color: white; font-size: 35px">C-Commander</span>
+          <span class="m-auto py-3" style="color: white; font-size: 35px;">C-Commander</span>
         </div>
 
       </div>
-      <div class="col-7 h-100 p-3">
+      <div class="col-sm-12 col-md-7 h-100 p-3">
         <div class="d-flex h-100 w-100" *ngIf="querying">
           <div class="d-inline-block align-self-center mx-auto text-center">
             <div class="d-inline-block p-1">Loggin in...</div>
@@ -30,7 +30,7 @@
                 <mat-error *ngIf="loginForm.get('password').invalid">Username is required</mat-error>
               </mat-form-field>
 
-              <button mat-raised-button color="primary" class="float-right">Login</button>
+              <button mat-raised-button color="primary" class="float-right">LOGIN</button>
             </form>
           </mat-tab>
           <mat-tab label="Register">
@@ -45,17 +45,19 @@
                 <mat-error *ngIf="registerForm.get('email').hasError('email')">Not a valid Email format</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password" type="password" formControlName="password" name="password" required>
+                <input matInput placeholder="Password" type="password" formControlName="password" name="password"
+                       required>
                 <mat-error *ngIf="registerForm.get('password').hasError('required')">Password is required</mat-error>
               </mat-form-field>
               <mat-form-field class="w-100">
-                <input matInput placeholder="Password confirm" type="password" formControlName="passwordConfirm" name="passwordConfirm"
+                <input matInput placeholder="Password confirm" type="password" formControlName="passwordConfirm"
+                       name="passwordConfirm"
                        required>
                 <mat-error *ngIf="registerForm.get('passwordConfirm').hasError('passwordNotMatch')">Password is not
                   match
                 </mat-error>
               </mat-form-field>
-              <button mat-raised-button color="primary" class="float-right">Register</button>
+              <button mat-raised-button color="primary" class="float-right">REGISTER</button>
             </form>
           </mat-tab>
         </mat-tab-group>

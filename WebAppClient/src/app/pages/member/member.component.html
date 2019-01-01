@@ -54,9 +54,9 @@
             <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default">
               <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
                 <mat-panel-title class="d-flex align-items-center">
-                  <img src="https://http.cat/404" class="d-inline-block p-1"
-                       style="height: 80px; width: 80px; border-radius: 50%" alt="">
-                  <div class="d-inline-block pl-3" style="font-size: 20px">{{auth.loggedInUser.username}}</div>
+                  <img [src]="userService.getUserAvatarPath(auth.loggedInUser)" class="p-1 cc-avatar"
+                       style="height: 50px; width: 50px;" alt="">
+                  <div class="d-inline-block pl-1" style="font-size: 20px">{{auth.loggedInUser.displayName}}</div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <!--User options-->
@@ -110,7 +110,7 @@
         <div class="flex-grow-1 flex-shrink-1 h-100 justify-content-center"
              style="overflow-x: hidden; overflow-y: auto">
           <div class="h-100">
-            <div class="w-100 px-0 px-md-2 px-xl-5 h-100 py-4" style="background: #fafafa">
+            <div class="w-100 px-2 px-md-3 px-xl-5 h-100 py-4" style="background: #fafafa">
               <router-outlet></router-outlet>
             </div>
           </div>

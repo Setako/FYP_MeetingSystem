@@ -4,9 +4,8 @@
     <div class="d-flex align-items-center">
       <div class="mx-5">
         <div style="position: relative; display: inline-block" (click)="uploadAvatar()">
-          <img src="https://http.cat/404" class="d-inline-block p-1"
-               style="height: 200px; width: 200px; border-radius: 50%; opacity: 0.5; cursor: pointer" alt=""
-               >
+          <img [src]="userService.getUserAvatarPath(auth.loggedInUser)" class="p-1 cc-avatar"
+               style="height: 200px; width: 200px; opacity: 0.5; cursor: pointer" alt="">
           <mat-icon
             style="position:absolute;top: 50%;left: 50%;opacity:0.8; cursor: pointer;
                   transform: translate(-50%,-50%); height: 100px; width: 100px; z-index: 1; font-size: 100px">
@@ -64,6 +63,6 @@
         </mat-form-field>
       </div>
     </mat-card>
-    <button mat-raised-button color="primary" class="float-right">Edit</button>
+    <button mat-raised-button color="primary">EDIT</button>
   </form>
 </div>

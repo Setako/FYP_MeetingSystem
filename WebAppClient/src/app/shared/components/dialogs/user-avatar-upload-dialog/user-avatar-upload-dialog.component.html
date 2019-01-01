@@ -5,7 +5,7 @@
   <div mat-dialog-content>
     Click the image to select a new avatar:
     <div class="d-flex justify-content-center py-2">
-      <div style="position: relative; display: inline-block" (click)="uploadAvatar()">
+      <div style="position: relative; display: inline-block" >
         <label for="avatar">
           <img [src]="imageDataUrl !=null? imageDataUrl:userService.getUserAvatarPath(authService.loggedInUser)"
                class="d-inline-block p-1"

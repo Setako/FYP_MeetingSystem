@@ -82,15 +82,14 @@
 
 
           <mat-card-actions>
-            <div class="d-flex justify-content-end">
+            <div>
+              <a mat-raised-button color="primary" [routerLink]="'/member/meeting/'+meeting.id">
+                DETAILS
+              </a>
 
-              <button mat-flat-button class="mr-2" (click)="moreOperation(meeting)">
+              <button mat-button class="mr-2" (click)="moreOperation(meeting)">
                 <mat-icon>more_horiz</mat-icon>
               </button>
-
-              <a mat-flat-button color="primary" [routerLink]="'/member/meeting/'+meeting.id">
-                Details
-              </a>
 
 
             </div>

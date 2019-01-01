@@ -9,7 +9,7 @@ import {User} from '../../shared/models/user';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit {
   public loginForm = new FormGroup({

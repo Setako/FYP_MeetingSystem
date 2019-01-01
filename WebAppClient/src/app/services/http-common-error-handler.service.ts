@@ -21,7 +21,7 @@ export class HttpCommonErrorHandlerService implements HttpInterceptor {
         return err.pipe(
           concatMap((pipeErr, times) => {
             return iif(
-              () => times >= 3,
+              () => (times >= 3) || (pipeErr.status !== 0 && pipeErr.status !== 503),
               throwError(pipeErr),
               of(pipeErr).pipe(tap(() => {
                 this.snackBar.open('Connection Error occurred, retrying', null, {

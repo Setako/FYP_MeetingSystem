@@ -25,5 +25,4 @@ export class UserAvatarUploadDialogComponent implements OnInit {
     fileReader.readAsDataURL((event.target as any).files[0]);
     fileReader.onload = (e: any) => this.imageDataUrl = e.target.result;
   }
-
 }

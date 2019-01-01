@@ -35,4 +35,8 @@ export class UserFriendsComponent implements OnInit {
     ).subscribe(() => this.querying = false);
   }
 
+  responseFriendRequest(friendRequest: FriendRequest, approve: boolean) {
+
+  }
+
 }

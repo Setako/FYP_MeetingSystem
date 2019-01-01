@@ -15,19 +15,19 @@
           <mat-action-list class="h-100" style="overflow-y: auto; overflow-x: hidden">
             <button mat-list-item matRipple class="my-2 friend-item"
                     *ngFor="let friendRequest of receivedFriendRequests">
-              <div class="d-flex justify-content-between align-items-center w-100" matRipple="">
+              <div class="d-flex justify-content-between align-items-center w-100">
                 <div class="d-flex flex-row align-items-center">
-                  <img class="friend-icon"
+                  <img class="friend-icon cc-avatar"
                        [src]="userService.getUserAvatarPath(friendRequest.user.username)"
                        alt="">
-                  <span class="ml-3">{{friendRequest.user.displayName}}(@{{friendRequest.user.username}})</span>
+                  <span class="ml-3">{{friendRequest.user.displayName}} (@{{friendRequest.user.username}})</span>
                 </div>
                 <div>
                   <button mat-icon-button>
-                    <mat-icon color="warn">close</mat-icon>
+                    <mat-icon color="warn" (click)="responseFriendRequest(friendRequest,false)">close</mat-icon>
                   </button>
                   <button mat-icon-button>
-                    <mat-icon color="primary">done</mat-icon>
+                    <mat-icon color="primary" (click)="responseFriendRequest(friendRequest,true)">done</mat-icon>
                   </button>
                 </div>
               </div>
@@ -50,10 +50,10 @@
                       *ngFor="let friend of friends">
                 <div class="d-flex justify-content-between align-items-center w-100" matRipple="">
                   <div class="d-flex flex-row align-items-center">
-                    <img class="friend-icon"
+                    <img class="friend-icon cc-avatar"
                          [src]="userService.getUserAvatarPath(friend.user.username)"
                          alt="">
-                    <span class="ml-3">{{friend.user.displayName}}(@{{friend.user.username}})</span>
+                    <span class="ml-3">{{friend.user.displayName}} (@{{friend.user.username}})</span>
                   </div>
                   <button mat-icon-button>
                     <mat-icon color="warn">delete</mat-icon>

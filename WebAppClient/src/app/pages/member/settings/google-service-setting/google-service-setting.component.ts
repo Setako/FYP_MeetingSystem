@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 
 @Component({
   selector: 'app-google-service-setting',
@@ -7,9 +7,13 @@ import { Component, OnInit } from '@angular/core';
 })
 export class GoogleServiceSettingComponent implements OnInit {
 
-  constructor() { }
+  constructor() {
+  }
 
   ngOnInit() {
   }
 
+  googleLogin() {
+
+  }
 }
