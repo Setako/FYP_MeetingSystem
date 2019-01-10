@@ -146,14 +146,14 @@ export class MeetingService {
         let edited = await this.meetingModel.findById(id);
 
         if (editMeetingDto.attendance) {
-            // edited.attendance = (await Promise.all(
-            //     editMeetingDto.attendance.map(async item => ({
-            //         ...item,
-            //         arrivalTime: new Date(item.arrivalTime),
-            //         user: await this.userService.getByUsername(item.user),
-            //         permission: item.permission || edited.generalPermission,
-            //     })),
-            // )).filter(item => item.user);
+            edited.attendance = (await Promise.all(
+                editMeetingDto.attendance.map(async item => ({
+                    ...item,
+                    arrivalTime: new Date(item.arrivalTime),
+                    user: await this.userService.getByUsername(item.user),
+                    permission: item.permission || edited.generalPermission,
+                })),
+            )).filter(item => item.user);
         }
 
         if (editMeetingDto.invitations) {

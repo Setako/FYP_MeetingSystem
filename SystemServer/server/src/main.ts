@@ -2,14 +2,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import logger from 'morgan';
-import { NestFactory, FastifyAdapter } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from './shared/pipe/validation.pipe';
 
 declare const module: any;
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule, new FastifyAdapter());
+    const app = await NestFactory.create(AppModule);
 
     app.setGlobalPrefix('/api').useGlobalPipes(
         new ValidationPipe({
@@ -21,7 +21,7 @@ async function bootstrap() {
         app.use(logger('dev')).enableCors();
     }
 
-    await app.listen(process.env.PORT || 3000, '0.0.0.0');
+    await app.listen(process.env.PORT || 3000);
 
     if (module.hot) {
         module.hot.accept();

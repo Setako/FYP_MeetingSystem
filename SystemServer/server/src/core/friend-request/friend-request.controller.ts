@@ -149,8 +149,13 @@ export class FriendRequestController {
                   user.username,
                   NumberUtils.parseOrThrow(resultPageSize),
                   NumberUtils.parseOr(resultPageNum, 1),
+                  {
+                      status: FriendRequestStatus.Requested,
+                  },
               )
-            : await this.friendRequestService.getAllByTarget(user.username);
+            : await this.friendRequestService.getAllByTarget(user.username, {
+                  status: FriendRequestStatus.Requested,
+              });
 
         const length = await this.friendRequestService.countDocumentsByTarget(
             user.username,

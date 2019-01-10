@@ -7,10 +7,7 @@ export class GetUserDto {
     email: string;
     displayName: string;
 
-    userMeetingRelation: [];
-
-    @Exclude()
-    friends: any[];
+    userMeetingRelation: any[];
 
     setting: UserSetting;
 
@@ -36,6 +33,9 @@ export class GetUserDto {
 
     @Exclude()
     __v: number;
+
+    @Exclude()
+    avatar: string;
 
     constructor(partial: Partial<GetUserDto>) {
         Object.assign(this, partial);

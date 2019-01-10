@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
     IsEmail,
     IsOptional,
@@ -6,7 +5,6 @@ import {
     Length,
     ValidateNested,
 } from 'class-validator';
-import { EditFriendDto } from './edit-friend.dto';
 import { EditUserSettingDto } from './edit-user-setting.dto';
 
 export class EditUserDto {
@@ -24,11 +22,6 @@ export class EditUserDto {
     @IsString()
     @Length(2, 20)
     readonly displayName?: string;
-
-    @Type(() => EditFriendDto)
-    @IsOptional()
-    @ValidateNested()
-    readonly friends?: EditFriendDto[];
 
     @IsOptional()
     readonly userMeetingRelation?: any[];

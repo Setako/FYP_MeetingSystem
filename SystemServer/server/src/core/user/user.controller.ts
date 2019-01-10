@@ -9,7 +9,6 @@ import {
     Controller,
     Delete,
     Get,
-    Header,
     HttpCode,
     HttpStatus,
     NotFoundException,
@@ -17,15 +16,20 @@ import {
     Post,
     Put,
     Query,
+    Res,
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateUserDto } from './dto/create-user.dto';
+import parseDataURL from 'data-urls';
+import { Response } from 'express';
 import { EditUserDto } from './dto/edit-user.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
-import parseDataURL from 'data-urls';
+import { GetAllUserDto } from './dto/get-all-user.dto';
+import { SelfGuard } from '@commander/shared/guard/self.guard';
+import { defer, combineLatest, from } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Controller('user')
 export class UsersController {
@@ -36,22 +40,30 @@ export class UsersController {
     async getAll(@Query() query) {
         const { resultPageNum, resultPageSize } = query;
 
-        const items = resultPageSize
-            ? await this.userService.getAllWithPage(
-                  NumberUtils.parseOrThrow(resultPageSize),
-                  NumberUtils.parseOr(resultPageNum, 1),
-              )
-            : await this.userService.getAll();
-
-        const length = await this.userService.countDocuments();
-
-        return {
-            items: items.map(val =>
-                ObjectUtils.DocumentToPlain(val, GetUserDto),
+        const items = defer(() =>
+            resultPageSize
+                ? this.userService.getAllWithPage(
+                      NumberUtils.parseOrThrow(resultPageSize),
+                      NumberUtils.parseOr(resultPageNum, 1),
+                  )
+                : this.userService.getAll(),
+        ).pipe(
+            map(item =>
+                item.map(val =>
+                    ObjectUtils.DocumentToPlain(val, GetAllUserDto),
+                ),
             ),
-            resultPageNum,
-            length,
-        };
+        );
+
+        const length = from(this.userService.countDocuments());
+
+        return combineLatest(items, length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
+            })),
+        );
     }
 
     @Get(':usernames')
@@ -83,16 +95,10 @@ export class UsersController {
         };
     }
 
-    @Post()
-    @UseGuards(AuthGuard('jwt'))
-    async create(@Body() user: CreateUserDto) {
-        const created = await this.userService.create(user);
-        return ObjectUtils.DocumentToPlain(created, GetUserDto);
-    }
-
     @Put(':username')
-    @UseGuards(AuthGuard('jwt'))
     @UseGuards(UserGuard)
+    @UseGuards(SelfGuard)
+    @UseGuards(AuthGuard('jwt'))
     async edit(
         @Param('username') username: string,
         @Body() editUserDto: EditUserDto,
@@ -102,16 +108,19 @@ export class UsersController {
     }
 
     @Delete(':username')
-    @UseGuards(AuthGuard('jwt'))
     @UseGuards(UserGuard)
+    @UseGuards(SelfGuard)
+    @UseGuards(AuthGuard('jwt'))
     async delete(@Param('username') username: string) {
         await this.userService.delete(username);
     }
 
     @Get(':username/avatar')
-    @Header('Content-Type', 'image')
     @UseGuards(UserGuard)
-    async getUserAvatar(@Param('username') username: string) {
+    async getUserAvatar(
+        @Res() res: Response,
+        @Param('username') username: string,
+    ) {
         const root = FileUtils.getRoot('cache/img/');
         const filename = await FileUtils.findFileInPathStartWith(
             `${username}.`,
@@ -119,9 +128,7 @@ export class UsersController {
         );
 
         if (filename) {
-            return FileUtils.getFileBuffer(
-                FileUtils.normalize(root + '/' + filename),
-            );
+            return res.sendFile(FileUtils.normalize(root + '/' + filename));
         }
 
         const user = await this.userService.getByUsername(username);
@@ -136,13 +143,14 @@ export class UsersController {
         await FileUtils.mkdir(createdFile);
         await FileUtils.writeFile(createdFile, img.body);
 
-        return img.body;
+        return res.sendFile(createdFile);
     }
 
     @Post(':username/avatar')
-    @UseGuards(AuthGuard('jwt'))
-    @UseGuards(UserGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(UserGuard)
+    @UseGuards(SelfGuard)
+    @UseGuards(AuthGuard('jwt'))
     async uploadUserAvatar(
         @Body() aratarDto: UploadAratarDto,
         @Param('username') username: string,

@@ -21,6 +21,8 @@ import { UserService } from '../user/user.service';
 import { GetFirendQueryDto } from './dto/get-friend-query.dto';
 import { GetFriendDto } from './dto/get-friend.dto';
 import { FriendService } from './friend.service';
+import { from, identity, defer, combineLatest, pipe } from 'rxjs';
+import { flatMap, map, toArray, filter, take, scan } from 'rxjs/operators';
 
 @Controller('friend')
 @UseGuards(AuthGuard('jwt'))
@@ -35,36 +37,47 @@ export class FriendController {
         @Auth() user: InstanceType<User>,
         @Query() query: GetFirendQueryDto,
     ) {
-        const list = query.resultPageSize
-            ? await this.friendService.getAllByUserIdWithPage(
-                  user.id,
-                  NumberUtils.parseOrThrow(query.resultPageSize),
-                  NumberUtils.parseOr(query.resultPageNum, 1),
-              )
-            : await this.friendService.getAllByUserId(user.id);
+        const length = from(this.friendService.countDocumentsByUserId(user.id));
 
-        const items = list.map(item => ({
-            user: (item.friends.filter(
-                (friend: InstanceType<User>) => friend.id !== user.id,
-            )[0] as InstanceType<User>).toObject(),
-            addDate: item.addDate,
-            stared: Boolean(
-                item.stared &&
-                    item.stared.some(
-                        (friend: InstanceType<User>) => friend.id === user.id,
-                    ),
+        const list = defer(() =>
+            query.resultPageSize
+                ? this.friendService.getAllByUserIdWithPage(
+                      user.id,
+                      NumberUtils.parseOrThrow(query.resultPageSize),
+                      NumberUtils.parseOr(query.resultPageNum, 1),
+                  )
+                : this.friendService.getAllByUserId(user.id),
+        ).pipe(flatMap(identity));
+
+        const items = list.pipe(
+            map(item => ({
+                user: (item.friends.filter(
+                    (friend: InstanceType<User>) => friend.id !== user.id,
+                )[0] as InstanceType<User>).toObject(),
+                addDate: item.addDate,
+                stared: Boolean(
+                    item.stared &&
+                        item.stared.some(
+                            (friend: InstanceType<User>) =>
+                                friend.id === user.id,
+                        ),
+                ),
+            })),
+        );
+
+        return combineLatest(
+            items.pipe(
+                map(item => classToPlain(new GetFriendDto(item))),
+                toArray(),
             ),
-        }));
-
-        const length = await this.friendService.countDocumentsByUserId(user.id);
-
-        return {
-            items: items.map(item =>
-                classToPlain(new GetFriendDto(item as any)),
-            ),
-            resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
             length,
-        };
+        ).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
+            })),
+        );
     }
 
     @Get(':usernames')
@@ -72,34 +85,53 @@ export class FriendController {
         @Auth() user: InstanceType<User>,
         @Param('usernames', new SplitSemicolonPipe()) usernames: string[],
     ) {
-        const friends = await this.userService.getByUsernames(usernames);
-
-        const list = await Promise.all(
-            friends.filter(Boolean).map(async item => {
-                return await this.friendService.getByFriends(user.id, item.id);
-            }),
+        const users = from(this.userService.getByUsernames(usernames)).pipe(
+            flatMap(identity),
+            filter(item => Boolean(item)),
         );
 
-        const items = list.filter(Boolean).map(item => ({
-            user: (item.friends.filter(
-                (friend: InstanceType<User>) => friend.id !== user.id,
-            )[0] as InstanceType<User>).toObject(),
-            addDate: item.addDate,
-            stared: Boolean(
-                item.stared &&
-                    item.stared.some(
-                        (friend: InstanceType<User>) => friend.id === user.id,
-                    ),
+        const friends = users.pipe(
+            flatMap(
+                pipe(
+                    item => this.friendService.getByFriends(user.id, item.id),
+                    item => from(item),
+                ),
             ),
-        }));
+            filter(item => Boolean(item)),
+        );
 
-        return {
-            items: items.map(item =>
-                classToPlain(new GetFriendDto(item as any)),
+        const items = friends.pipe(
+            map(
+                pipe(
+                    item => ({
+                        user: (item.friends.filter(
+                            (friend: InstanceType<User>) =>
+                                friend.id !== user.id,
+                        )[0] as InstanceType<User>).toObject(),
+                        addDate: item.addDate,
+                        stared: Boolean(
+                            item.stared &&
+                                item.stared.some(
+                                    (friend: InstanceType<User>) =>
+                                        friend.id === user.id,
+                                ),
+                        ),
+                    }),
+                    item => classToPlain(new GetFriendDto(item)),
+                ),
             ),
-            resultPageNum: 1,
-            length: items.length,
-        };
+            toArray(),
+        );
+
+        // TODO: query friends
+
+        return items.pipe(
+            map(itemList => ({
+                items: itemList,
+                resultPageNum: 1,
+                length: itemList.length,
+            })),
+        );
     }
 
     @Delete(':username')

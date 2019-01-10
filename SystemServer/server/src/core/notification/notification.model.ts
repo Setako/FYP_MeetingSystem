@@ -6,10 +6,16 @@ export enum NotificationType {
     FriendRequestReceived = 'friendRequestReceived',
     FriendRequestAccepted = 'friendRequestAccepted',
     FriendRequestRejected = 'friendRequestRejected',
+
+    MeetingInviteReceived = 'meetingInviteRecived',
+    MeetingUpdated = 'meetingUpdated',
+    MeetingCancelled = 'meetingCancelled',
+    MeetingReminder = 'meetingReminder',
 }
 
 export enum NotificationObjectModel {
     FriendRequest = 'FriendRequest',
+    Meeting = 'Meeting',
 }
 
 export class Notification extends Typegoose {

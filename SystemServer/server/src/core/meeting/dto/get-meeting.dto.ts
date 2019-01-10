@@ -27,6 +27,8 @@ export class GetMeetingDto {
 
     priority: number;
 
+    location?: string;
+
     @Type(() => Types.ObjectId)
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;

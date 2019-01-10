@@ -23,6 +23,17 @@ import { GetFirendQueryDto } from '../friend/dto/get-friend-query.dto';
 import { User } from '../user/user.model';
 import { NotificationObjectModel } from './notification.model';
 import { NotificationService } from './notification.service';
+import {
+    defer,
+    identity,
+    from,
+    pipe,
+    zip,
+    Observable,
+    combineLatest,
+    of,
+} from 'rxjs';
+import { flatMap, map, filter, toArray, switchMap } from 'rxjs/operators';
 
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
@@ -38,50 +49,76 @@ export class NotificationController {
         @Auth() user: InstanceType<User>,
         @Query() query: GetFirendQueryDto,
     ) {
-        const list = query.resultPageSize
-            ? await this.notificationService.getAllByReceiverIdWithPage(
-                  user.id,
-                  NumberUtils.parseOrThrow(query.resultPageSize),
-                  NumberUtils.parseOr(query.resultPageNum, 1),
-              )
-            : await this.notificationService.getAllByReceiverId(user.id);
+        const list = defer(() =>
+            query.resultPageSize
+                ? this.notificationService.getAllByReceiverIdWithPage(
+                      user.id,
+                      NumberUtils.parseOrThrow(query.resultPageSize),
+                      NumberUtils.parseOr(query.resultPageNum, 1),
+                  )
+                : this.notificationService.getAllByReceiverId(user.id),
+        ).pipe(flatMap(identity));
 
-        const length = await this.notificationService.countDocumentsByReceiverId(
-            user.id,
+        const length = from(
+            this.notificationService.countDocumentsByReceiverId(user.id),
         );
 
-        const items = await Promise.all(
-            list.map(async item => {
-                let object: any = item.object;
-
-                if (
-                    item.objectModel === NotificationObjectModel.FriendRequest
-                ) {
-                    object = await this.friendRequestService.getById(
-                        (item.object as Types.ObjectId).toHexString(),
+        const entityToPlain = (
+            type: NotificationObjectModel,
+            object: any,
+        ): Observable<object> => {
+            const types = {
+                [NotificationObjectModel.FriendRequest]: (
+                    obj: Types.ObjectId,
+                ) => {
+                    return from(
+                        this.friendRequestService.getById(obj.toHexString()),
+                    ).pipe(
+                        filter(item => Boolean(item)),
+                        map(
+                            pipe(
+                                item => item.toObject(),
+                                item => new GetFriendRequestDto(item),
+                                item => classToPlain(item),
+                            ),
+                        ),
                     );
+                },
+            };
 
-                    object = classToPlain(
-                        new GetFriendRequestDto(object.toObject()),
-                    );
-                }
-
-                return {
-                    type: item.type,
-                    time: item.time,
-                    // receiver: (await this.userService.getById(
-                    //     (item.receiver as Types.ObjectId).toHexString(),
-                    // )).username,
-                    object,
-                };
-            }),
-        );
-
-        return {
-            items,
-            resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
-            length,
+            return types[type] ? types[type](object) : null;
         };
+
+        const items = list.pipe(
+            flatMap(
+                pipe(
+                    async item => ({
+                        ...item.toObject(),
+                        object: await entityToPlain(
+                            item.objectModel,
+                            item.object,
+                        ).toPromise(),
+                    }),
+                    item => from(item),
+                ),
+            ),
+            filter(item => Boolean(item.object)),
+            map(({ id, type, time, object }) => ({
+                id,
+                type,
+                time,
+                object,
+            })),
+            toArray(),
+        );
+
+        return combineLatest(items, length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
+            })),
+        );
     }
 
     @Delete()
@@ -94,6 +131,6 @@ export class NotificationController {
     @HttpCode(HttpStatus.NO_CONTENT)
     @UseGuards(NotificationGuard)
     async delete(@Param('id') id: string) {
-        this.notificationService.delete(id);
+        await this.notificationService.delete(id);
     }
 }
