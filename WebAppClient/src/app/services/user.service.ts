@@ -2,13 +2,16 @@ import {Injectable} from '@angular/core';
 import {User} from '../shared/models/user';
 import {AppConfig} from '../app-config';
 import {HttpClient} from '@angular/common/http';
+import {concat, Observable} from 'rxjs';
+import {AuthService} from './auth.service';
+import {mergeMap} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private auth: AuthService) {
   }
 
   public getUserAvatarPath(user: User) {
@@ -21,6 +24,9 @@ export class UserService {
     }
   }
 
-  public editUserProfile(user: User) {
+  public editUserProfile(user: User | any, currentPassword?: string): Observable<any> {
+    user.currentPassword = currentPassword;
+    return this.http.put(`${AppConfig.API_PATH}/user/${user.username}`, user)
+      .pipe(mergeMap(() => this.auth.updateUserInfo()));
   }
 }

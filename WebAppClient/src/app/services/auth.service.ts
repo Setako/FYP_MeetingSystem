@@ -54,6 +54,7 @@ export class AuthService {
       const username = this.tokenObject.username;
       return this.http.get<ListResponse<User>>(`${AppConfig.API_PATH}/user/${username}`)
         .pipe(tap((res) => {
+          console.log("ok")
           this._loggedInUser = res.items[0];
         }));
     }

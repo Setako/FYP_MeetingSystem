@@ -40,6 +40,7 @@ import { GoogleServiceSettingComponent } from './pages/member/settings/google-se
 import { CalendarSettingComponent } from './pages/member/settings/calendar-setting/calendar-setting.component';
 import { PrivacySettingComponent } from './pages/member/settings/privacy-setting/privacy-setting.component';
 import { UserAvatarUploadDialogComponent } from './shared/components/dialogs/user-avatar-upload-dialog/user-avatar-upload-dialog.component';
+import {TimeAgoPipe} from 'time-ago-pipe';
 
 @NgModule({
   declarations: [
@@ -69,7 +70,8 @@ import { UserAvatarUploadDialogComponent } from './shared/components/dialogs/use
     GoogleServiceSettingComponent,
     CalendarSettingComponent,
     PrivacySettingComponent,
-    UserAvatarUploadDialogComponent
+    UserAvatarUploadDialogComponent,
+    TimeAgoPipe
   ],
   imports: [
     BrowserModule,

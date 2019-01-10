@@ -1,9 +1,10 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {AuthService} from '../../../../services/auth.service';
-import {MatDialog} from '@angular/material';
+import {MatDialog, MatSnackBar} from '@angular/material';
 import {UserAvatarUploadDialogComponent} from '../../../../shared/components/dialogs/user-avatar-upload-dialog/user-avatar-upload-dialog.component';
 import {UserService} from '../../../../services/user.service';
+import {User} from '../../../../shared/models/user';
 
 declare const gapi: any;
 
@@ -35,7 +36,8 @@ export class UserInfoComponent implements OnInit {
 
   private googleOAuth2: any;
 
-  constructor(public auth: AuthService, private dialog: MatDialog, public userService: UserService) {
+  constructor(public auth: AuthService, private dialog: MatDialog, public userService: UserService,
+              private snackBar: MatSnackBar) {
   }
 
   ngOnInit() {
@@ -54,7 +56,16 @@ export class UserInfoComponent implements OnInit {
   }
 
   editInformation() {
-
+    const newUserInfo: User = {
+      username: this.auth.loggedInUser.username,
+      displayName: this.userInformationForm.value.displayName,
+      email: this.userInformationForm.value.email
+    } as User;
+    if (this.userInformationForm.value.changePassword) {
+      newUserInfo.password = this.userInformationForm.value.newPassword;
+    }
+    this.userService.editUserProfile(newUserInfo, this.userInformationForm.value.currentPassword)
+      .subscribe(() => this.snackBar.open('User profile updated!', 'Dismiss', {duration: 4000}));
   }
 
   editGoogleServiceSettings() {

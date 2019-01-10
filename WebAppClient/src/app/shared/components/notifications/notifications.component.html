@@ -6,34 +6,16 @@
     </button>
   </div>
   <mat-divider></mat-divider>
-  <a mat-list-item matRipple class="notification-item">
+  <a *ngFor="let notification of notifications" mat-list-item matRipple class="notification-item">
     <div class="d-flex justify-content-between align-items-center my-1  w-100">
       <div class="py-2">
         <div>
-          <h4 class="my-1 mr-2" style="display: inline-block">Friend Request</h4>
-          <span style="color: gray; font-size: 0.85em">3hr ago</span>
+          <h4 class="my-1 mr-2" style="display: inline-block">{{notification.title}}</h4>
+          <span style="color: gray; font-size: 0.85em">{{notifications | timeAgo }}</span>
         </div>
-        <span>Jack Lau send a friend request to you.</span>
+        <span>{{notification.content}}</span>
       </div>
       <div>
-        <button mat-icon-button>
-          <mat-icon color="warn">close</mat-icon>
-        </button>
-      </div>
-    </div>
-  </a>
-  <a mat-list-item matRipple class="notification-item">
-    <div class="d-flex justify-content-between align-items-center my-1  w-100">
-      <div class="py-2">
-        <div>
-          <h4 class="my-1 mr-2" style="display: inline-block">Meeting Updated</h4>
-          <span style="color: gray; font-size: 0.85em">1day ago</span>
-        </div>
-        <span>
-        The information of "Project report discussion" has been updated!
-      </span>
-      </div>
-      <div class="ml-1">
         <button mat-icon-button>
           <mat-icon color="warn">close</mat-icon>
         </button>
