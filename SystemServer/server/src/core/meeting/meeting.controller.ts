@@ -27,6 +27,8 @@ import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
 import { SimpleUserDto } from '../user/dto/simple-user.dto';
+import { defer, identity, zip, from, combineLatest, pipe } from 'rxjs';
+import { flatMap, filter, map, toArray } from 'rxjs/operators';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -43,35 +45,43 @@ export class MeetingController {
             user.username,
         );
 
-        let items = query.resultPageSize
-            ? await this.meetingService.getAllWithPage(
-                  NumberUtils.parseOrThrow(query.resultPageSize),
-                  NumberUtils.parseOr(query.resultPageNum, 1),
-                  options,
-              )
-            : await this.meetingService.getAll(options);
+        const list = defer(() =>
+            query.resultPageSize
+                ? this.meetingService.getAllWithPage(
+                      NumberUtils.parseOrThrow(query.resultPageSize),
+                      NumberUtils.parseOr(query.resultPageNum, 1),
+                      options,
+                  )
+                : this.meetingService.getAll(options),
+        ).pipe(
+            flatMap(identity),
+            filter(item => Boolean(item)),
+        );
 
-        items = await Promise.all(
-            items.filter(Boolean).map(async val => ({
-                ...val.toObject(),
-                owner: ObjectUtils.DocumentToPlain(
-                    await this.userService.getById(
-                        (val.owner as Types.ObjectId).toHexString(),
-                    ),
-                    SimpleUserDto,
+        const owners = list.pipe(
+            flatMap(item =>
+                this.userService.getById(
+                    (item.owner as Types.ObjectId).toHexString(),
                 ),
+            ),
+        );
+
+        const items = zip(list, owners).pipe(
+            map(([meeting, owner]) => ({
+                ...meeting.toObject(),
+                owner: ObjectUtils.DocumentToPlain(owner, SimpleUserDto),
             })),
         );
 
-        const length = await this.meetingService.countDocuments(options);
+        const length = from(this.meetingService.countDocuments(options));
 
-        return {
-            items: items
-                .filter(item => item.owner)
-                .map(item => classToPlain(new GetMeetingDto(item))),
-            resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
-            length,
-        };
+        return combineLatest(items.pipe(toArray()), length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
+            })),
+        );
     }
 
     @Get(':ids')
@@ -86,35 +96,49 @@ export class MeetingController {
     ) {
         const { resultPageNum = 1, resultPageSize } = query;
 
-        let items = resultPageSize
-            ? await this.meetingService.getByIdsWithPage(
-                  ids,
-                  NumberUtils.parseOrThrow(resultPageSize),
-                  NumberUtils.parseOrThrow(resultPageNum),
-              )
-            : await this.meetingService.getByIds(ids);
+        const list = defer(() =>
+            resultPageSize
+                ? this.meetingService.getByIdsWithPage(
+                      ids,
+                      NumberUtils.parseOrThrow(resultPageSize),
+                      NumberUtils.parseOrThrow(resultPageNum),
+                  )
+                : this.meetingService.getByIds(ids),
+        ).pipe(flatMap(identity));
 
-        items = await Promise.all(
-            items.filter(Boolean).map(async val => ({
-                ...val.toObject(),
-                owner: ObjectUtils.DocumentToPlain(
-                    await this.userService.getById(
-                        (val.owner as Types.ObjectId).toHexString(),
-                    ),
-                    SimpleUserDto,
+        const owners = list.pipe(
+            flatMap(
+                pipe(
+                    item => (item.owner as Types.ObjectId).toHexString(),
+                    item => this.userService.getById(item),
                 ),
-            })),
+            ),
         );
 
-        const length = await this.meetingService.countDocumentsByIds(ids);
+        const items = zip(list, owners).pipe(
+            map(
+                pipe(
+                    ([meeting, owner]) => ({
+                        ...meeting.toObject(),
+                        owner: ObjectUtils.DocumentToPlain(
+                            owner,
+                            SimpleUserDto,
+                        ),
+                    }),
+                    item => new GetMeetingDto(item),
+                    item => classToPlain(item),
+                ),
+            ),
+        );
+        const length = from(this.meetingService.countDocumentsByIds(ids));
 
-        return {
-            items: items
-                .filter(item => item.owner)
-                .map(item => classToPlain(new GetMeetingDto(item))),
-            resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
-            length,
-        };
+        return combineLatest(items.pipe(toArray()), length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(query.resultPageNum, 1),
+            })),
+        );
     }
 
     @Post()
@@ -162,11 +186,12 @@ export class MeetingController {
     @Get(':id/participant')
     @UseGuards(MeetingGuard)
     async getInvitation(@Param('id') id: string) {
-        const meeting = await this.meetingService.getById(id);
-        return {
-            items: meeting.invitations,
-            length: meeting.invitations.length,
-        };
+        return from(this.meetingService.getById(id)).pipe(
+            map(({ invitations }) => ({
+                items: invitations,
+                length: invitations.length,
+            })),
+        );
     }
 
     @Put(':id/participant')
@@ -175,14 +200,14 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() invitationDto: InvitationsDto,
     ) {
-        const meeting = await this.meetingService.editInvitations(
-            id,
-            invitationDto,
+        return from(
+            this.meetingService.editInvitations(id, invitationDto),
+        ).pipe(
+            map(({ invitations }) => ({
+                items: invitations,
+                length: invitations.length,
+            })),
         );
-        return {
-            items: meeting.invitations,
-            length: meeting.invitations.length,
-        };
     }
 
     @Put(':id/calendar')

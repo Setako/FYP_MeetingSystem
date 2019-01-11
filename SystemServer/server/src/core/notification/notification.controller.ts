@@ -1,4 +1,5 @@
 import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { NotificationGuard } from '@commander/shared/guard/notification.guard';
 import { NumberUtils } from '@commander/shared/utils/number.utils';
 import {
@@ -16,17 +17,15 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { classToPlain } from 'class-transformer';
 import { Types } from 'mongoose';
+import { combineLatest, defer, from, identity, Observable, pipe } from 'rxjs';
+import { filter, flatMap, map, toArray } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetFriendRequestDto } from '../friend-request/dto/get-friend-request.dto';
 import { FriendRequestService } from '../friend-request/friend-request.service';
 import { User } from '../user/user.model';
+import { NotificationDto } from './dto/notification.dto';
 import { NotificationObjectModel } from './notification.model';
 import { NotificationService } from './notification.service';
-import { defer, identity, from, pipe, Observable, combineLatest } from 'rxjs';
-import { flatMap, map, filter, toArray } from 'rxjs/operators';
-import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
-import { NotificationDto } from './dto/notification.dto';
-import { ObjectUtils } from '@commander/shared/utils/object.utils';
 
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))

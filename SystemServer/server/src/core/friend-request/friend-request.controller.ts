@@ -34,6 +34,8 @@ import { GetFriendRequestDto } from './dto/get-friend-request.dto';
 import { FriendRequestStatus } from './friend-request.model';
 import { FriendRequestService } from './friend-request.service';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { defer, identity, from, combineLatest } from 'rxjs';
+import { map, flatMap, toArray } from 'rxjs/operators';
 
 @Controller('friend/request')
 @UseGuards(AuthGuard('jwt'))
@@ -53,25 +55,51 @@ export class FriendRequestController {
     ) {
         const { resultPageNum, resultPageSize } = query;
 
-        const items = resultPageSize
-            ? await this.friendRequestService.getAllByUserWithPage(
-                  user.username,
-                  NumberUtils.parseOrThrow(resultPageSize),
-                  NumberUtils.parseOr(resultPageNum, 1),
-              )
-            : await this.friendRequestService.getAllByUser(user.username);
+        const list = defer(() =>
+            resultPageSize
+                ? this.friendRequestService.getAllByUserWithPage(
+                      user.username,
+                      NumberUtils.parseOrThrow(resultPageSize),
+                      NumberUtils.parseOr(resultPageNum, 1),
+                  )
+                : this.friendRequestService.getAllByUser(user.username),
+        ).pipe(flatMap(identity));
 
-        const length = await this.friendRequestService.countDocumentsByUser(
-            user.username,
+        const items = list.pipe(
+            map(item => ObjectUtils.DocumentToPlain(item, GetFriendRequestDto)),
         );
 
-        return {
-            items: items.map(val =>
-                ObjectUtils.DocumentToPlain(val, GetFriendRequestDto),
-            ),
-            resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
-            length,
-        };
+        const length = from(
+            this.friendRequestService.countDocumentsByUser(user.username),
+        );
+
+        return combineLatest(items.pipe(toArray()), length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
+            })),
+        );
+
+        // const items = resultPageSize
+        //     ? await this.friendRequestService.getAllByUserWithPage(
+        //           user.username,
+        //           NumberUtils.parseOrThrow(resultPageSize),
+        //           NumberUtils.parseOr(resultPageNum, 1),
+        //       )
+        //     : await this.friendRequestService.getAllByUser(user.username);
+
+        // const length = await this.friendRequestService.countDocumentsByUser(
+        //     user.username,
+        // );
+
+        // return {
+        //     items: items.map(val =>
+        //         ObjectUtils.DocumentToPlain(val, GetFriendRequestDto),
+        //     ),
+        //     resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
+        //     length,
+        // };
     }
 
     @Post(':username')
@@ -144,30 +172,36 @@ export class FriendRequestController {
     ) {
         const { resultPageNum, resultPageSize } = query;
 
-        const items = resultPageSize
-            ? await this.friendRequestService.getAllByTargetWithPage(
-                  user.username,
-                  NumberUtils.parseOrThrow(resultPageSize),
-                  NumberUtils.parseOr(resultPageNum, 1),
-                  {
+        const list = defer(() =>
+            resultPageSize
+                ? this.friendRequestService.getAllByTargetWithPage(
+                      user.username,
+                      NumberUtils.parseOrThrow(resultPageSize),
+                      NumberUtils.parseOr(resultPageNum, 1),
+                      {
+                          status: FriendRequestStatus.Requested,
+                      },
+                  )
+                : this.friendRequestService.getAllByTarget(user.username, {
                       status: FriendRequestStatus.Requested,
-                  },
-              )
-            : await this.friendRequestService.getAllByTarget(user.username, {
-                  status: FriendRequestStatus.Requested,
-              });
+                  }),
+        ).pipe(flatMap(identity));
 
-        const length = await this.friendRequestService.countDocumentsByTarget(
-            user.username,
+        const items = list.pipe(
+            map(item => ObjectUtils.DocumentToPlain(item, GetFriendRequestDto)),
         );
 
-        return {
-            items: items.map(val =>
-                ObjectUtils.DocumentToPlain(val, GetFriendRequestDto),
-            ),
-            resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
-            length,
-        };
+        const length = from(
+            this.friendRequestService.countDocumentsByTarget(user.username),
+        );
+
+        return combineLatest(items.pipe(toArray()), length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
+            })),
+        );
     }
 
     @Put('/received/:username')

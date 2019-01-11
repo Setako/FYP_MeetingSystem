@@ -23,12 +23,12 @@ import { AuthGuard } from '@nestjs/passport';
 import parseDataURL from 'data-urls';
 import { Response } from 'express';
 import { EditUserDto } from './dto/edit-user.dto';
-import { GetUserDto } from './dto/get-user.dto';
+import { UserDto } from './dto/user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
-import { defer, combineLatest, from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { defer, combineLatest, from, identity, iif, of, pipe } from 'rxjs';
+import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { SimpleUserDto } from './dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { User } from './user.model';
@@ -78,32 +78,38 @@ export class UsersController {
     ) {
         const { resultPageNum = 1, resultPageSize } = query;
 
-        const items = resultPageSize
-            ? await this.userService.getByUsernamesWithPage(
-                  usernames,
-                  NumberUtils.parseOrThrow(resultPageSize),
-                  NumberUtils.parseOrThrow(resultPageNum),
-              )
-            : await this.userService.getByUsernames(usernames);
-
-        const length = await this.userService.countDocumentsByUsernames(
-            usernames,
+        const list = defer(() =>
+            resultPageSize
+                ? this.userService.getByUsernamesWithPage(
+                      usernames,
+                      NumberUtils.parseOrThrow(resultPageSize),
+                      NumberUtils.parseOrThrow(resultPageNum),
+                  )
+                : this.userService.getByUsernames(usernames),
         );
 
-        return {
-            items: items
-                .filter(Boolean)
-                .map(val =>
-                    ObjectUtils.DocumentToPlain(
-                        val,
-                        val.username === user.username
-                            ? GetUserDto
-                            : SimpleUserDto,
-                    ),
+        const items = list.pipe(
+            flatMap(identity),
+            filter(item => Boolean(item)),
+            map(item =>
+                ObjectUtils.DocumentToPlain(
+                    item,
+                    item.username === user.username ? UserDto : SimpleUserDto,
                 ),
-            resultPageNum,
-            length,
-        };
+            ),
+        );
+
+        const length = from(
+            this.userService.countDocumentsByUsernames(usernames),
+        );
+
+        return combineLatest(items.pipe(toArray()), length).pipe(
+            map(([itemList, totalLength]) => ({
+                items: itemList,
+                length: totalLength,
+                resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
+            })),
+        );
     }
 
     @Put(':username')
@@ -114,8 +120,9 @@ export class UsersController {
         @Param('username') username: string,
         @Body() editUserDto: EditUserDto,
     ) {
-        const edited = await this.userService.edit(username, editUserDto);
-        return ObjectUtils.DocumentToPlain(edited, GetUserDto);
+        return from(this.userService.edit(username, editUserDto)).pipe(
+            map(item => ObjectUtils.DocumentToPlain(item, UserDto)),
+        );
     }
 
     @Delete(':username')

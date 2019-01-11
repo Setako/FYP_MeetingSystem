@@ -2,7 +2,7 @@ import { Exclude, Expose } from 'class-transformer';
 import { Types } from 'mongoose';
 import { UserSetting } from '../user.model';
 
-export class GetUserDto {
+export class UserDto {
     username: string;
     email: string;
     displayName: string;
@@ -10,11 +10,6 @@ export class GetUserDto {
     userMeetingRelation: any[];
 
     setting: UserSetting;
-
-    @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
 
     @Exclude()
     _id: Types.ObjectId;
@@ -37,7 +32,7 @@ export class GetUserDto {
     @Exclude()
     avatar: string;
 
-    constructor(partial: Partial<GetUserDto>) {
+    constructor(partial: Partial<UserDto>) {
         Object.assign(this, partial);
     }
 }
