@@ -19,21 +19,14 @@ import { Types } from 'mongoose';
 import { InstanceType } from 'typegoose';
 import { GetFriendRequestDto } from '../friend-request/dto/get-friend-request.dto';
 import { FriendRequestService } from '../friend-request/friend-request.service';
-import { GetFirendQueryDto } from '../friend/dto/get-friend-query.dto';
 import { User } from '../user/user.model';
 import { NotificationObjectModel } from './notification.model';
 import { NotificationService } from './notification.service';
-import {
-    defer,
-    identity,
-    from,
-    pipe,
-    zip,
-    Observable,
-    combineLatest,
-    of,
-} from 'rxjs';
-import { flatMap, map, filter, toArray, switchMap } from 'rxjs/operators';
+import { defer, identity, from, pipe, Observable, combineLatest } from 'rxjs';
+import { flatMap, map, filter, toArray } from 'rxjs/operators';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { NotificationDto } from './dto/notification.dto';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
 
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
@@ -47,7 +40,7 @@ export class NotificationController {
     @Get()
     async getAll(
         @Auth() user: InstanceType<User>,
-        @Query() query: GetFirendQueryDto,
+        @Query() query: PaginationQueryDto,
     ) {
         const list = defer(() =>
             query.resultPageSize
@@ -103,12 +96,12 @@ export class NotificationController {
                 ),
             ),
             filter(item => Boolean(item.object)),
-            map(({ id, type, time, object }) => ({
-                id,
-                type,
-                time,
-                object,
-            })),
+            map(
+                pipe(
+                    item => new NotificationDto(item),
+                    item => classToPlain(item),
+                ),
+            ),
             toArray(),
         );
 

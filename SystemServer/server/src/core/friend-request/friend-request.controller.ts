@@ -21,7 +21,6 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Types } from 'mongoose';
 import { InstanceType } from 'typegoose';
-import { GetFirendQueryDto } from '../friend/dto/get-friend-query.dto';
 import { FriendService } from '../friend/friend.service';
 import {
     NotificationObjectModel,
@@ -34,6 +33,7 @@ import { AcceptFriendRequestDto } from './dto/accept-friend-request.dto';
 import { GetFriendRequestDto } from './dto/get-friend-request.dto';
 import { FriendRequestStatus } from './friend-request.model';
 import { FriendRequestService } from './friend-request.service';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 
 @Controller('friend/request')
 @UseGuards(AuthGuard('jwt'))
@@ -49,7 +49,7 @@ export class FriendRequestController {
     @Get()
     async getAllSentRequests(
         @Auth() user: InstanceType<User>,
-        @Query() query: GetFirendQueryDto,
+        @Query() query: PaginationQueryDto,
     ) {
         const { resultPageNum, resultPageSize } = query;
 
@@ -140,7 +140,7 @@ export class FriendRequestController {
     @Get('/received')
     async getAllReceivedRequests(
         @Auth() user: InstanceType<User>,
-        @Query() query: GetFirendQueryDto,
+        @Query() query: PaginationQueryDto,
     ) {
         const { resultPageNum, resultPageSize } = query;
 

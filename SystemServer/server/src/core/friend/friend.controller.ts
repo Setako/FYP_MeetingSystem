@@ -18,11 +18,11 @@ import { Types } from 'mongoose';
 import { InstanceType } from 'typegoose';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
-import { GetFirendQueryDto } from './dto/get-friend-query.dto';
 import { GetFriendDto } from './dto/get-friend.dto';
 import { FriendService } from './friend.service';
 import { from, identity, defer, combineLatest, pipe } from 'rxjs';
-import { flatMap, map, toArray, filter, take, scan } from 'rxjs/operators';
+import { flatMap, map, toArray, filter } from 'rxjs/operators';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 
 @Controller('friend')
 @UseGuards(AuthGuard('jwt'))
@@ -35,7 +35,7 @@ export class FriendController {
     @Get()
     async getAll(
         @Auth() user: InstanceType<User>,
-        @Query() query: GetFirendQueryDto,
+        @Query() query: PaginationQueryDto,
     ) {
         const length = from(this.friendService.countDocumentsByUserId(user.id));
 

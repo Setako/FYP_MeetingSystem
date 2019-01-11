@@ -1,6 +1,6 @@
-import { IsNumberString, IsOptional } from 'class-validator';
+import { IsOptional, IsNumberString } from "class-validator";
 
-export class GetFirendQueryDto {
+export class PaginationQueryDto {
     @IsOptional()
     @IsNumberString()
     readonly resultPageNum: string;
