@@ -47,7 +47,7 @@ export class MeetingService {
     async getQueryOption(query: MeetingQueryDto, owner: string) {
         const ownerId = (await this.userService.getByUsername(owner)).id;
 
-        const options = {} as any;
+        let options = {} as any;
 
         if (query.status) {
             options.status = {
@@ -55,26 +55,62 @@ export class MeetingService {
             };
         }
 
+        const hostedByAnyone = ['true', undefined].some(
+            item => item === query.hostedByMe && item === query.hostedByOther,
+        );
         const hostedByMe = query.hostedByMe === 'true';
         const hostedByOther = query.hostedByOther === 'true';
+        const invitingMe = query.invitingMe === 'true';
 
-        if (hostedByMe && hostedByOther) {
-            options.$or = [
-                {
-                    owner: { $eq: Types.ObjectId(ownerId) },
+        if (invitingMe) {
+            options = {
+                ...options,
+                'invitations.user': { $eq: Types.ObjectId(ownerId) },
+                'invitations.status': InvitationStatus.Waiting,
+                owner: {
+                    $not: {
+                        $eq: Types.ObjectId(ownerId),
+                    },
                 },
-                {
-                    'attendance.user': { $eq: Types.ObjectId(ownerId) },
+            };
+        } else if (hostedByAnyone) {
+            options = {
+                ...options,
+                $or: [
+                    {
+                        owner: { $eq: Types.ObjectId(ownerId) },
+                    },
+                    {
+                        'attendance.user': {
+                            $eq: Types.ObjectId(ownerId),
+                        },
+                    },
+                ],
+            };
+        } else if (hostedByOther) {
+            options = {
+                ...options,
+                'attendance.user': { $eq: Types.ObjectId(ownerId) },
+                owner: {
+                    $not: {
+                        $eq: Types.ObjectId(ownerId),
+                    },
                 },
-            ];
-        } else if (!hostedByMe && query.hostedByMe !== undefined) {
-            options.owner = {
-                $not: {
+            };
+        } else if (hostedByMe) {
+            options = {
+                ...options,
+                owner: {
                     $eq: Types.ObjectId(ownerId),
                 },
             };
-        } else if (hostedByOther) {
-            options['attendance.user'] = { $eq: Types.ObjectId(ownerId) };
+        } else {
+            options = {
+                ...options,
+                owner: {
+                    $in: [],
+                },
+            };
         }
 
         return options;

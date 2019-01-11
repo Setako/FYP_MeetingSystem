@@ -3,17 +3,21 @@ import { MeetingStatus } from '../meeting.model';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 
 export class MeetingQueryDto extends PaginationQueryDto {
-    @IsOptional()
     @IsEnum(MeetingStatus, {
         each: true,
     })
+    @IsOptional()
     readonly status?: MeetingStatus[];
 
-    @IsOptional()
     @IsBooleanString()
+    @IsOptional()
     readonly hostedByMe?: string;
 
-    @IsOptional()
     @IsBooleanString()
+    @IsOptional()
     readonly hostedByOther?: string;
+
+    @IsBooleanString()
+    @IsOptional()
+    readonly invitingMe?: string;
 }
