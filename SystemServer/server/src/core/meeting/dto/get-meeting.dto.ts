@@ -2,7 +2,7 @@ import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { Types } from 'mongoose';
 import { AccessPostMeetingPermission } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
-import { GetOwnerDto } from './get-owner.dto';
+import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 
 export class GetMeetingDto {
     type: string;
@@ -33,7 +33,7 @@ export class GetMeetingDto {
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
 
-    owner: GetOwnerDto;
+    owner: SimpleUserDto;
 
     @Type(() => AttendanceDto)
     @Transform(arr => {

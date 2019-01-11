@@ -24,9 +24,9 @@ import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { GetAllQueryDto } from './dto/get-all-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
-import { GetOwnerDto } from './dto/get-owner.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
+import { SimpleUserDto } from '../user/dto/simple-user.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -58,7 +58,7 @@ export class MeetingController {
                     await this.userService.getById(
                         (val.owner as Types.ObjectId).toHexString(),
                     ),
-                    GetOwnerDto,
+                    SimpleUserDto,
                 ),
             })),
         );
@@ -101,7 +101,7 @@ export class MeetingController {
                     await this.userService.getById(
                         (val.owner as Types.ObjectId).toHexString(),
                     ),
-                    GetOwnerDto,
+                    SimpleUserDto,
                 ),
             })),
         );
@@ -125,7 +125,7 @@ export class MeetingController {
             ...created.toObject(),
             owner: ObjectUtils.DocumentToPlain(
                 created.owner as any,
-                GetOwnerDto,
+                SimpleUserDto,
             ),
         };
 
@@ -146,7 +146,7 @@ export class MeetingController {
                 await this.userService.getById(
                     (edited.owner as Types.ObjectId).toHexString(),
                 ),
-                GetOwnerDto,
+                SimpleUserDto,
             ),
         };
 

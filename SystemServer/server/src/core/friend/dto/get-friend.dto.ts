@@ -1,9 +1,9 @@
-import { GetOwnerDto } from '@commander/core/meeting/dto/get-owner.dto';
 import { Type } from 'class-transformer';
+import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 
 export class GetFriendDto {
-    @Type(() => GetOwnerDto)
-    user: GetOwnerDto;
+    @Type(() => SimpleUserDto)
+    user: SimpleUserDto;
 
     addDate: Date;
 

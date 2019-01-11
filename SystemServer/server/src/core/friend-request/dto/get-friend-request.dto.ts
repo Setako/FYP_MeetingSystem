@@ -1,17 +1,22 @@
-import { GetOwnerDto } from '@commander/core/meeting/dto/get-owner.dto';
 import { ObjectId } from 'bson';
 import { Exclude, Expose, Type } from 'class-transformer';
 import { FriendRequestStatus } from '../friend-request.model';
+import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 
+@Exclude()
 export class GetFriendRequestDto {
-    @Type(() => GetOwnerDto)
-    user: GetOwnerDto;
+    @Expose()
+    @Type(() => SimpleUserDto)
+    user: SimpleUserDto;
 
-    @Type(() => GetOwnerDto)
-    targetUser: GetOwnerDto;
+    @Expose()
+    @Type(() => SimpleUserDto)
+    targetUser: SimpleUserDto;
 
+    @Expose()
     status: FriendRequestStatus;
 
+    @Expose()
     requestTime: string;
 
     @Expose()
@@ -19,10 +24,8 @@ export class GetFriendRequestDto {
         return this._id.toHexString();
     }
 
-    @Exclude()
     _id: ObjectId;
 
-    @Exclude()
     __v: number;
 
     constructor(partial: Partial<GetFriendRequestDto>) {
