@@ -45,6 +45,13 @@ export class NotificationService {
             .exec();
     }
 
+    async countDocuments(options) {
+        return this.notificationModuel
+            .find(options)
+            .countDocuments()
+            .exec();
+    }
+
     async countDocumentsByReceiverId(receiverId: string, options = {}) {
         return this.notificationModuel
             .find({
