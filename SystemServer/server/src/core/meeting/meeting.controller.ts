@@ -67,10 +67,19 @@ export class MeetingController {
         );
 
         const items = zip(list, owners).pipe(
-            map(([meeting, owner]) => ({
-                ...meeting.toObject(),
-                owner: ObjectUtils.DocumentToPlain(owner, SimpleUserDto),
-            })),
+            map(
+                pipe(
+                    ([meeting, owner]) => ({
+                        ...meeting.toObject(),
+                        owner: ObjectUtils.DocumentToPlain(
+                            owner,
+                            SimpleUserDto,
+                        ),
+                    }),
+                    item => new GetMeetingDto(item),
+                    item => classToPlain(item),
+                ),
+            ),
         );
 
         const length = from(this.meetingService.countDocuments(options));
