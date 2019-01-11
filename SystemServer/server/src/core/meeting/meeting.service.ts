@@ -7,7 +7,7 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
-import { GetAllQueryDto } from './dto/get-all-query.dto';
+import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import {
     AccessPostMeetingPermission,
@@ -44,7 +44,7 @@ export class MeetingService {
             .exec();
     }
 
-    async getQueryOption(query: GetAllQueryDto, owner: string) {
+    async getQueryOption(query: MeetingQueryDto, owner: string) {
         const ownerId = (await this.userService.getByUsername(owner)).id;
 
         const options = {} as any;

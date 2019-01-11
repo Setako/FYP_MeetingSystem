@@ -26,10 +26,13 @@ import { EditUserDto } from './dto/edit-user.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
-import { GetAllUserDto } from './dto/get-all-user.dto';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
 import { defer, combineLatest, from } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SimpleUserDto } from './dto/simple-user.dto';
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { User } from './user.model';
+import { InstanceType } from 'typegoose';
 
 @Controller('user')
 export class UsersController {
@@ -50,7 +53,7 @@ export class UsersController {
         ).pipe(
             map(item =>
                 item.map(val =>
-                    ObjectUtils.DocumentToPlain(val, GetAllUserDto),
+                    ObjectUtils.DocumentToPlain(val, SimpleUserDto),
                 ),
             ),
         );
@@ -69,6 +72,7 @@ export class UsersController {
     @Get(':usernames')
     @UseGuards(AuthGuard('jwt'))
     async get(
+        @Auth() user: InstanceType<User>,
         @Param('usernames', new SplitSemicolonPipe()) usernames: string[],
         @Query() query,
     ) {
@@ -89,7 +93,14 @@ export class UsersController {
         return {
             items: items
                 .filter(Boolean)
-                .map(val => ObjectUtils.DocumentToPlain(val, GetUserDto)),
+                .map(val =>
+                    ObjectUtils.DocumentToPlain(
+                        val,
+                        val.username === user.username
+                            ? GetUserDto
+                            : SimpleUserDto,
+                    ),
+                ),
             resultPageNum,
             length,
         };

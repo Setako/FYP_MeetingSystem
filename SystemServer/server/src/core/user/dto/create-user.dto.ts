@@ -2,16 +2,16 @@ import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
 import { IsEmail, IsString, Length } from 'class-validator';
 
 export class CreateUserDto {
-    @IsString()
-    @Length(2, 20)
     @IsUsername()
+    @Length(2, 20)
+    @IsString()
     readonly username: string;
 
-    @IsString()
     @Length(8, 60)
+    @IsString()
     readonly password: string;
 
-    @IsString()
     @IsEmail()
+    @IsString()
     readonly email: string;
 }

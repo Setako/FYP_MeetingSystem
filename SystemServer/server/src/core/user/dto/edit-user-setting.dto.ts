@@ -9,17 +9,17 @@ import {
 } from 'class-validator';
 
 export class EditUserSettingDto {
-    @IsOptional()
     @IsString()
+    @IsOptional()
     readonly markEventOnCalendarId?: string;
 
-    @IsOptional()
-    @IsArray()
     @ValidateNested()
+    @IsArray()
+    @IsOptional()
     readonly calendarImportance: CalendarImportanceDto[];
 
-    @IsOptional()
     @ValidateNested()
+    @IsOptional()
     readonly notification: {
         friendRequest: NotificationSettingDto;
         meetingInfoUpdate: NotificationSettingDto;
@@ -33,8 +33,8 @@ class CalendarImportanceDto {
     @IsString()
     readonly carlendarId: string;
 
-    @IsInt()
     @IsIn([1, 2, 3])
+    @IsInt()
     readonly importance: number;
 }
 

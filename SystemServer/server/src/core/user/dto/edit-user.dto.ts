@@ -8,29 +8,29 @@ import {
 import { EditUserSettingDto } from './edit-user-setting.dto';
 
 export class EditUserDto {
-    @IsOptional()
-    @IsString()
     @Length(8, 60)
+    @IsString()
+    @IsOptional()
     readonly password?: string;
 
-    @IsOptional()
-    @IsString()
     @IsEmail()
+    @IsString()
+    @IsOptional()
     readonly email?: string;
 
-    @IsOptional()
-    @IsString()
     @Length(2, 20)
+    @IsString()
+    @IsOptional()
     readonly displayName?: string;
 
     @IsOptional()
     readonly userMeetingRelation?: any[];
 
-    @IsOptional()
     @IsString()
+    @IsOptional()
     readonly googleAccessToken?: string;
 
-    @IsOptional()
     @ValidateNested()
+    @IsOptional()
     readonly setting?: EditUserSettingDto;
 }

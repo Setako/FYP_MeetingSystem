@@ -22,7 +22,7 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
-import { GetAllQueryDto } from './dto/get-all-query.dto';
+import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
@@ -37,7 +37,7 @@ export class MeetingController {
     ) {}
 
     @Get()
-    async getAll(@Query() query: GetAllQueryDto, @Auth() user: User) {
+    async getAll(@Query() query: MeetingQueryDto, @Auth() user: User) {
         const options = await this.meetingService.getQueryOption(
             query,
             user.username,

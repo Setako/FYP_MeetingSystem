@@ -1,20 +1,8 @@
-import {
-    IsBooleanString,
-    IsEnum,
-    IsNumberString,
-    IsOptional,
-} from 'class-validator';
+import { IsBooleanString, IsEnum, IsOptional } from 'class-validator';
 import { MeetingStatus } from '../meeting.model';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 
-export class GetAllQueryDto {
-    @IsOptional()
-    @IsNumberString()
-    readonly resultPageNum?: string;
-
-    @IsOptional()
-    @IsNumberString()
-    readonly resultPageSize?: string;
-
+export class MeetingQueryDto extends PaginationQueryDto {
     @IsOptional()
     @IsEnum(MeetingStatus, {
         each: true,

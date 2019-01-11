@@ -39,13 +39,7 @@ export class UserService {
         return this.userModel
             .find({
                 username: {
-                    $in: [usernames],
-                },
-            })
-            .populate({
-                path: 'friends',
-                populate: {
-                    path: 'friend',
+                    $in: usernames,
                 },
             })
             .skip(pageSize * (pageNum - 1))
@@ -57,7 +51,7 @@ export class UserService {
         return this.userModel
             .find({
                 username: {
-                    $in: [usernames],
+                    $in: usernames,
                 },
             })
             .countDocuments()
