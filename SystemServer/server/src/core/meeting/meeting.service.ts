@@ -10,12 +10,13 @@ import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import {
-    AccessPostMeetingPermission,
     Invitation,
     InvitationStatus,
     Meeting,
     MeetingStatus,
 } from './meeting.model';
+import { from } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class MeetingService {
@@ -73,7 +74,7 @@ export class MeetingService {
                 ...options,
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
-                owner: {
+                'owner': {
                     $not: {
                         $eq: Types.ObjectId(ownerId),
                     },
@@ -87,15 +88,19 @@ export class MeetingService {
                         owner: { $eq: Types.ObjectId(ownerId) },
                     },
                     {
-                        $or: {
-                            'attendance.user': { $eq: Types.ObjectId(ownerId) },
-                            $and: {
+                        'attendance.user': { $eq: Types.ObjectId(ownerId) },
+                    },
+                    {
+                        $and: [
+                            {
                                 'invitations.user': {
                                     $eq: Types.ObjectId(ownerId),
                                 },
+                            },
+                            {
                                 'invitations.status': InvitationStatus.Accepted,
                             },
-                        },
+                        ],
                     },
                 ],
             };
@@ -170,13 +175,6 @@ export class MeetingService {
 
     async create(createMeetingDto: CreateMeetingDto, owner: User) {
         const { language = 'en-US', priority = 1 } = createMeetingDto;
-
-        new this.meetingModel({
-            ...createMeetingDto,
-            language,
-            priority,
-            owner,
-        });
 
         const meeting = new this.meetingModel({
             ...createMeetingDto,
@@ -276,5 +274,36 @@ export class MeetingService {
         ) as Invitation[]);
 
         return meeting.save();
+    }
+
+    async hasViewPermission(meetingId: string, userId: string) {
+        const meetingObjectId = Types.ObjectId(meetingId);
+        const userObjectId = Types.ObjectId(userId);
+        const options = {
+            $and: [
+                { _id: { $eq: meetingObjectId } },
+                {
+                    $or: [
+                        {
+                            owner: { $eq: userObjectId },
+                        },
+                        {
+                            'invitations.user': { $eq: userObjectId },
+                            'invitations.status': {
+                                $in: [
+                                    InvitationStatus.Accepted,
+                                    InvitationStatus.Waiting,
+                                ],
+                            },
+                        },
+                        { 'attendance.user': { $eq: userObjectId } },
+                    ],
+                },
+            ],
+        };
+
+        return from(this.meetingModel.countDocuments(options).exec())
+            .pipe(map(n => n !== 0))
+            .toPromise();
     }
 }

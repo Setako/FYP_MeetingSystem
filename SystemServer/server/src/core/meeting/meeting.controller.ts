@@ -27,24 +27,16 @@ import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
 import { SimpleUserDto } from '../user/dto/simple-user.dto';
-import {
-    defer,
-    identity,
-    zip,
-    from,
-    combineLatest,
-    pipe,
-    forkJoin,
-} from 'rxjs';
+import { defer, identity, zip, from, combineLatest, pipe } from 'rxjs';
 import {
     flatMap,
     filter,
     map,
     toArray,
-    pluck,
-    mergeMap,
-    tap,
+    mapTo,
+    switchMap,
 } from 'rxjs/operators';
+import { InstanceType } from 'typegoose';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -111,6 +103,7 @@ export class MeetingController {
 
     @Get(':ids')
     async get(
+        @Auth() user: InstanceType<User>,
         @Param(
             'ids',
             new SplitSemicolonPipe(),
@@ -120,6 +113,20 @@ export class MeetingController {
         @Query() query,
     ) {
         const { resultPageNum = 1, resultPageSize } = query;
+
+        ids = await from(ids)
+            .pipe(
+                switchMap(id =>
+                    from(
+                        this.meetingService.hasViewPermission(id, user.id),
+                    ).pipe(
+                        filter(Boolean),
+                        mapTo(id),
+                    ),
+                ),
+                toArray(),
+            )
+            .toPromise();
 
         const list = defer(() =>
             resultPageSize
@@ -132,7 +139,6 @@ export class MeetingController {
         ).pipe(flatMap(identity));
 
         const owners = list.pipe(
-            tap(console.log.bind(console)),
             flatMap(
                 pipe(
                     item => (item.owner as Types.ObjectId).toHexString(),
