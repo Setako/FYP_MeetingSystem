@@ -9,8 +9,9 @@ import {
     IsString,
     MinLength,
     ValidateNested,
+    ValidateIf,
 } from 'class-validator';
-import { MeetingStatus, MeetingType } from '../meeting.model';
+import { MeetingStatus, MeetingType, MeetingPriority } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
 import { InvitationsDto } from './invitations.dto';
 import { PermissionDto } from './permission.dto';
@@ -43,8 +44,7 @@ export class EditMeetingDto {
     readonly language?: string;
 
     @IsOptional()
-    @IsInt()
-    @IsPositive()
+    @IsEnum(MeetingPriority)
     readonly priority?: number;
 
     @IsOptional()

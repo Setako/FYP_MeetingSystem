@@ -5,10 +5,8 @@ import {
     IsPositive,
     IsString,
     MinLength,
-    ValidateNested,
 } from 'class-validator';
-import { MeetingType } from '../meeting.model';
-import { PermissionDto } from './permission.dto';
+import { MeetingType, MeetingPriority } from '../meeting.model';
 
 export class CreateMeetingDto {
     @IsEnum(MeetingType)
@@ -25,19 +23,14 @@ export class CreateMeetingDto {
     @IsPositive()
     readonly length: number;
 
-    @IsOptional()
     @IsString()
+    @IsOptional()
     readonly location?: string;
 
-    @IsOptional()
     @IsString()
+    @IsOptional()
     readonly language?: string;
 
-    @IsInt()
-    @IsPositive()
+    @IsEnum(MeetingPriority)
     readonly priority: number;
-
-    @IsOptional()
-    @ValidateNested()
-    readonly generalPermission?: PermissionDto;
 }

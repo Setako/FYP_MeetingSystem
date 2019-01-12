@@ -29,7 +29,13 @@ export class MeetingService {
     }
 
     async getByIds(ids: string[]) {
-        return Promise.all(ids.map(async id => this.meetingModel.findById(id)));
+        return this.meetingModel
+            .find({
+                _id: {
+                    $in: ids,
+                },
+            })
+            .exec();
     }
 
     async getByIdsWithPage(ids: string[], pageSize: number, pageNum = 1) {
@@ -81,8 +87,14 @@ export class MeetingService {
                         owner: { $eq: Types.ObjectId(ownerId) },
                     },
                     {
-                        'attendance.user': {
-                            $eq: Types.ObjectId(ownerId),
+                        $or: {
+                            'attendance.user': { $eq: Types.ObjectId(ownerId) },
+                            $and: {
+                                'invitations.user': {
+                                    $eq: Types.ObjectId(ownerId),
+                                },
+                                'invitations.status': InvitationStatus.Accepted,
+                            },
                         },
                     },
                 ],
@@ -90,12 +102,18 @@ export class MeetingService {
         } else if (hostedByOther) {
             options = {
                 ...options,
-                'attendance.user': { $eq: Types.ObjectId(ownerId) },
                 owner: {
                     $not: {
                         $eq: Types.ObjectId(ownerId),
                     },
                 },
+                $or: [
+                    { 'attendance.user': { $eq: Types.ObjectId(ownerId) } },
+                    {
+                        'invitations.user': { $eq: Types.ObjectId(ownerId) },
+                        'invitations.status': InvitationStatus.Accepted,
+                    },
+                ],
             };
         } else if (hostedByMe) {
             options = {
@@ -151,27 +169,20 @@ export class MeetingService {
     }
 
     async create(createMeetingDto: CreateMeetingDto, owner: User) {
-        const {
-            language = 'en-US',
-            priority = 1,
-            generalPermission,
-        } = createMeetingDto;
+        const { language = 'en-US', priority = 1 } = createMeetingDto;
+
+        new this.meetingModel({
+            ...createMeetingDto,
+            language,
+            priority,
+            owner,
+        });
 
         const meeting = new this.meetingModel({
             ...createMeetingDto,
             language,
             priority,
             owner,
-            generalPermission:
-                generalPermission ||
-                new AccessPostMeetingPermission(
-                    true,
-                    true,
-                    true,
-                    true,
-                    true,
-                    true,
-                ),
             status: MeetingStatus.Draft,
         });
 

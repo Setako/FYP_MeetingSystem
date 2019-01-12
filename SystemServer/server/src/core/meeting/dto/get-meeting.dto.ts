@@ -3,8 +3,9 @@ import { Types } from 'mongoose';
 import { AccessPostMeetingPermission } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
 import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
+import { DocumentDto } from '@commander/shared/dto/document.dto';
 
-export class GetMeetingDto {
+export class GetMeetingDto extends DocumentDto {
     type: string;
 
     title: string;
@@ -48,18 +49,19 @@ export class GetMeetingDto {
 
     generalPermission: AccessPostMeetingPermission;
 
-    @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
+    // @Expose()
+    // get id(): string {
+    //     return this._id.toHexString();
+    // }
 
-    @Exclude()
-    _id: Types.ObjectId;
+    // @Exclude()
+    // _id: Types.ObjectId;
 
-    @Exclude()
-    __v: number;
+    // @Exclude()
+    // __v: number;
 
     constructor(partial: Partial<GetMeetingDto>) {
+        super(partial);
         Object.assign(this, partial);
     }
 }

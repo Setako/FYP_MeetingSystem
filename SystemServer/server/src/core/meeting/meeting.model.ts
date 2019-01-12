@@ -40,6 +40,12 @@ export enum AttendanceStatus {
     Exit = 'exit',
 }
 
+export enum MeetingPriority {
+    Hight = 1,
+    Medium = 2,
+    Low = 3,
+}
+
 export enum MeetingStatus {
     Draft = 'draft',
     Planned = 'planned',
@@ -69,14 +75,21 @@ export class AccessPostMeetingPermission {
 
     public reviewMeetingMinute: boolean;
 
-    constructor(
-        accessShareResources: boolean,
-        accessRecordedVoice: boolean,
-        accessTextRecordOfSpeech: boolean,
-        accessAttendanceRecord: boolean,
-        makeMeetingMinute: boolean,
-        reviewMeetingMinute: boolean,
-    ) {
+    constructor({
+        accessShareResources = true,
+        accessRecordedVoice = true,
+        accessTextRecordOfSpeech = true,
+        accessAttendanceRecord = true,
+        makeMeetingMinute = true,
+        reviewMeetingMinute = true,
+    }: {
+        accessShareResources?: boolean;
+        accessRecordedVoice?: boolean;
+        accessTextRecordOfSpeech?: boolean;
+        accessAttendanceRecord?: boolean;
+        makeMeetingMinute?: boolean;
+        reviewMeetingMinute?: boolean;
+    } = {}) {
         this.accessShareResources = accessShareResources;
         this.accessRecordedVoice = accessRecordedVoice;
         this.accessTextRecordOfSpeech = accessTextRecordOfSpeech;
@@ -163,6 +176,7 @@ export class Meeting extends Typegoose {
 
     @prop({
         required: true,
+        default: () => new AccessPostMeetingPermission(),
     })
     public generalPermission: AccessPostMeetingPermission;
 }

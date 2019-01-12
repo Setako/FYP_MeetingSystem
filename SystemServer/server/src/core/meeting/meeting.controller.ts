@@ -27,8 +27,24 @@ import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
 import { SimpleUserDto } from '../user/dto/simple-user.dto';
-import { defer, identity, zip, from, combineLatest, pipe } from 'rxjs';
-import { flatMap, filter, map, toArray } from 'rxjs/operators';
+import {
+    defer,
+    identity,
+    zip,
+    from,
+    combineLatest,
+    pipe,
+    forkJoin,
+} from 'rxjs';
+import {
+    flatMap,
+    filter,
+    map,
+    toArray,
+    pluck,
+    mergeMap,
+    tap,
+} from 'rxjs/operators';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -116,6 +132,7 @@ export class MeetingController {
         ).pipe(flatMap(identity));
 
         const owners = list.pipe(
+            tap(console.log.bind(console)),
             flatMap(
                 pipe(
                     item => (item.owner as Types.ObjectId).toHexString(),
@@ -152,17 +169,21 @@ export class MeetingController {
 
     @Post()
     async create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
-        const created = await this.meetingService.create(meeting, owner);
-
-        const object = {
-            ...created.toObject(),
-            owner: ObjectUtils.DocumentToPlain(
-                created.owner as any,
-                SimpleUserDto,
+        return from(this.meetingService.create(meeting, owner)).pipe(
+            map(
+                pipe(
+                    item => ({
+                        ...item.toObject(),
+                        owner: ObjectUtils.DocumentToPlain(
+                            item.owner as any,
+                            SimpleUserDto,
+                        ),
+                    }),
+                    item => new GetMeetingDto(item),
+                    item => classToPlain(item),
+                ),
             ),
-        };
-
-        return classToPlain(new GetMeetingDto(object));
+        );
     }
 
     @Put(':id')

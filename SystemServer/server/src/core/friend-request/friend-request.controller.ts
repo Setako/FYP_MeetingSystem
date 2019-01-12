@@ -34,8 +34,8 @@ import { GetFriendRequestDto } from './dto/get-friend-request.dto';
 import { FriendRequestStatus } from './friend-request.model';
 import { FriendRequestService } from './friend-request.service';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
-import { defer, identity, from, combineLatest } from 'rxjs';
-import { map, flatMap, toArray } from 'rxjs/operators';
+import { defer, identity, from, combineLatest, throwError } from 'rxjs';
+import { map, flatMap, toArray, tap } from 'rxjs/operators';
 
 @Controller('friend/request')
 @UseGuards(AuthGuard('jwt'))
@@ -80,26 +80,6 @@ export class FriendRequestController {
                 resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
             })),
         );
-
-        // const items = resultPageSize
-        //     ? await this.friendRequestService.getAllByUserWithPage(
-        //           user.username,
-        //           NumberUtils.parseOrThrow(resultPageSize),
-        //           NumberUtils.parseOr(resultPageNum, 1),
-        //       )
-        //     : await this.friendRequestService.getAllByUser(user.username);
-
-        // const length = await this.friendRequestService.countDocumentsByUser(
-        //     user.username,
-        // );
-
-        // return {
-        //     items: items.map(val =>
-        //         ObjectUtils.DocumentToPlain(val, GetFriendRequestDto),
-        //     ),
-        //     resultPageNum: NumberUtils.parseOr(resultPageNum, 1),
-        //     length,
-        // };
     }
 
     @Post(':username')
@@ -230,6 +210,12 @@ export class FriendRequestController {
             const friendship = await this.friendService.create(
                 (result.user as InstanceType<User>).id,
                 (result.targetUser as InstanceType<User>).id,
+            );
+
+            await this.friendRequestService.acceptOrRejectRequest(
+                user.username,
+                source,
+                acceptDto,
             );
 
             await this.notificationService.create({
