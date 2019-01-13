@@ -22,15 +22,23 @@ export enum InvitationStatus {
     Waiting = 'waiting',
 }
 
-export class Invitation extends Typegoose {
+export class Invitation {
     public id: string;
 
+    @prop({
+        ref: User,
+    })
     public user?: Ref<User>;
 
+    @prop()
     public email?: string;
 
+    @prop()
     public priority: number;
 
+    @prop({
+        enum: InvitationStatus,
+    })
     public status: InvitationStatus;
 }
 

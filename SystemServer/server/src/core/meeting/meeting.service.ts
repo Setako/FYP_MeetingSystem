@@ -15,14 +15,16 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from, merge } from 'rxjs';
+import { from, merge, defer, empty, identity, of, pipe } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
+import { FriendService } from '../friend/friend.service';
 
 @Injectable()
 export class MeetingService {
     constructor(
         @InjectModel(Meeting) private readonly meetingModel: ModelType<Meeting>,
         private readonly userService: UserService,
+        private readonly friendService: FriendService,
     ) {}
 
     async getById(id: string) {
@@ -68,8 +70,39 @@ export class MeetingService {
         const hostedByMe = query.hostedByMe === 'true';
         const hostedByOther = query.hostedByOther === 'true';
         const invitingMe = query.invitingMe === 'true';
+        const invitingFromFriend = query.invitingFromFriend === 'true';
 
         if (invitingMe) {
+            const ownerOptions = {
+                owner: await (async () => {
+                    if (query.invitingFromFriend === undefined) {
+                        return {
+                            $not: {
+                                $eq: Types.ObjectId(ownerId),
+                            },
+                        };
+                    }
+
+                    const friends = await from(
+                        this.friendService.getAllByUserId(ownerId),
+                    )
+                        .pipe(
+                            flatMap(identity),
+                            flatMap(item =>
+                                item.friends.filter(
+                                    (f: Types.ObjectId) => !f.equals(ownerId),
+                                ),
+                            ),
+                            toArray(),
+                        )
+                        .toPromise();
+
+                    return invitingFromFriend
+                        ? { $in: friends }
+                        : { $nin: friends };
+                })(),
+            };
+
             options = {
                 ...options,
                 status: {
@@ -79,11 +112,12 @@ export class MeetingService {
                 },
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
-                owner: {
-                    $not: {
-                        $eq: Types.ObjectId(ownerId),
-                    },
-                },
+                ...ownerOptions,
+                // owner: {
+                //     $not: {
+                //         $eq: Types.ObjectId(ownerId),
+                //     },
+                // },
             };
         } else if (hostedByAnyone) {
             options = {

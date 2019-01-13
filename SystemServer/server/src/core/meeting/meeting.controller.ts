@@ -59,13 +59,7 @@ export class MeetingController {
             flatMap(identity),
             filter(item => Boolean(item)),
             flatMap(item =>
-                item
-                    .populate('owner')
-                    .populate({
-                        path: 'invitations.user',
-                        model: 'User',
-                    })
-                    .execPopulate(),
+                item.populate('owner invitations.user').execPopulate(),
             ),
         );
 
@@ -122,13 +116,7 @@ export class MeetingController {
         ).pipe(
             flatMap(identity),
             flatMap(item =>
-                item
-                    .populate('owner')
-                    .populate({
-                        path: 'invitations.user',
-                        model: 'User',
-                    })
-                    .execPopulate(),
+                item.populate('owner invitations.user').execPopulate(),
             ),
         );
 
@@ -151,13 +139,7 @@ export class MeetingController {
     async create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
         return from(this.meetingService.create(meeting, owner)).pipe(
             flatMap(item =>
-                item
-                    .populate('owner')
-                    .populate({
-                        path: 'invitations.user',
-                        model: 'User',
-                    })
-                    .execPopulate(),
+                item.populate('owner invitations.user').execPopulate(),
             ),
             map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
@@ -174,11 +156,7 @@ export class MeetingController {
             flatMap(_id =>
                 this.meetingService
                     .findAll({ _id: { $eq: _id } })
-                    .populate('owner')
-                    .populate({
-                        path: 'invitations.user',
-                        model: 'User',
-                    })
+                    .populate('owner invitations.user')
                     .exec(),
             ),
             flatMap(identity),
@@ -196,14 +174,7 @@ export class MeetingController {
     @UseGuards(MeetingGuard)
     async getInvitation(@Param('id') id: string) {
         return from(this.meetingService.getById(id)).pipe(
-            flatMap(item =>
-                item
-                    .populate({
-                        path: 'invitations.user',
-                        model: 'User',
-                    })
-                    .execPopulate(),
-            ),
+            flatMap(item => item.populate('invitations.user').execPopulate()),
             map(
                 pipe(
                     item => item.toObject(),
@@ -227,14 +198,7 @@ export class MeetingController {
         return from(
             this.meetingService.editInvitations(id, invitationDto),
         ).pipe(
-            flatMap(item =>
-                item
-                    .populate({
-                        path: 'invitations.user',
-                        model: 'User',
-                    })
-                    .execPopulate(),
-            ),
+            flatMap(item => item.populate('invitations.user').execPopulate()),
             map(
                 pipe(
                     item => item.toObject(),

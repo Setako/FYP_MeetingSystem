@@ -20,4 +20,8 @@ export class MeetingQueryDto extends PaginationQueryDto {
     @IsBooleanString()
     @IsOptional()
     readonly invitingMe?: string;
+
+    @IsBooleanString()
+    @IsOptional()
+    readonly invitingFromFriend?: string;
 }
