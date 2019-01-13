@@ -272,8 +272,8 @@ export class MeetingService {
             filter(item => {
                 const user: InstanceType<User> = item.user as any;
                 const hasEmail = emails.delete(item.email);
-                const hasEmail2 = emails.delete(user.email);
-                const hasFriends = friends.delete(user.username);
+                const hasEmail2 = user && emails.delete(user.email);
+                const hasFriends = user && friends.delete(user.username);
                 return hasEmail || hasEmail2 || hasFriends;
             }),
         );
