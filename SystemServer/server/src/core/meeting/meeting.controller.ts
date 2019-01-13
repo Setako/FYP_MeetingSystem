@@ -142,18 +142,10 @@ export class MeetingController {
     @Post()
     async create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
         return from(this.meetingService.create(meeting, owner)).pipe(
-            map(
-                pipe(
-                    item => ({
-                        ...item.toObject(),
-                        owner: ObjectUtils.DocumentToPlain(
-                            item.owner as any,
-                            SimpleUserDto,
-                        ),
-                    }),
-                    item => ObjectUtils.DocumentToPlain(item, GetMeetingDto),
-                ),
+            flatMap(item =>
+                item.populate('owner invitation.user').execPopulate(),
             ),
+            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
     }
 
