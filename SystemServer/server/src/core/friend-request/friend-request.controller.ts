@@ -197,7 +197,7 @@ export class FriendRequestController {
         );
 
         if (!isRequestExist) {
-            throw new NotFoundException('Not requests sent');
+            throw new NotFoundException('No requests sent');
         }
 
         const result = await this.friendRequestService.acceptOrRejectRequest(

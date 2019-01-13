@@ -3,6 +3,7 @@ import { Types } from 'mongoose';
 import { AccessPostMeetingPermission } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
 import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
+import { GetInvitationDto } from './get-invitation.dto';
 
 export class GetMeetingDto {
     type: string;
@@ -29,10 +30,11 @@ export class GetMeetingDto {
 
     location?: string;
 
-    @Type(() => Types.ObjectId)
+    // @Type(() => Types.ObjectId)
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
 
+    @Type(() => SimpleUserDto)
     owner: SimpleUserDto;
 
     @Type(() => AttendanceDto)
@@ -44,8 +46,10 @@ export class GetMeetingDto {
     })
     attendance: AttendanceDto[];
 
-    invitations: any[];
+    @Type(() => GetInvitationDto)
+    invitations: GetInvitationDto[];
 
+    @Type(() => AccessPostMeetingPermission)
     generalPermission: AccessPostMeetingPermission;
 
     @Expose()

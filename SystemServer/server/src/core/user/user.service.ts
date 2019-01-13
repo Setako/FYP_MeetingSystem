@@ -15,6 +15,14 @@ export class UserService {
         private readonly userModel: typeof User & ModelType<User>,
     ) {}
 
+    async getByEmail(email: string) {
+        return this.userModel
+            .find({
+                email,
+            })
+            .exec();
+    }
+
     async getById(id: string) {
         return this.userModel.findById(id);
     }

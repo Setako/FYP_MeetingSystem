@@ -198,19 +198,22 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() editMeetingDto: EditMeetingDto,
     ) {
-        const edited = await this.meetingService.edit(id, editMeetingDto);
-
-        const object = {
-            ...edited.toObject(),
-            owner: ObjectUtils.DocumentToPlain(
-                await this.userService.getById(
-                    (edited.owner as Types.ObjectId).toHexString(),
-                ),
-                SimpleUserDto,
+        return from(this.meetingService.edit(id, editMeetingDto)).pipe(
+            map(item => item._id),
+            flatMap(id =>
+                this.meetingService
+                    .findAll({ _id: { $eq: id } })
+                    .populate('owner invitation.user')
+                    .exec(),
             ),
-        };
-
-        return classToPlain(new GetMeetingDto(object));
+            flatMap(identity),
+            map(
+                pipe(
+                    item => new GetMeetingDto(item.toObject()),
+                    classToPlain.bind(classToPlain),
+                ),
+            ),
+        );
     }
 
     @Delete(':id')

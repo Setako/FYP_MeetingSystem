@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { InjectModel } from 'nestjs-typegoose';
-import { ModelType } from 'typegoose';
+import { ModelType, InstanceType } from 'typegoose';
 import uuidv4 from 'uuid/v4';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
@@ -15,8 +15,8 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { from, merge } from 'rxjs';
+import { map, flatMap, filter, toArray, mergeMap } from 'rxjs/operators';
 
 @Injectable()
 export class MeetingService {
@@ -74,7 +74,7 @@ export class MeetingService {
                 ...options,
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
-                'owner': {
+                owner: {
                     $not: {
                         $eq: Types.ObjectId(ownerId),
                     },
@@ -209,14 +209,27 @@ export class MeetingService {
             );
         }
 
-        edited.type = editMeetingDto.type || edited.type;
-        edited.title = editMeetingDto.title || edited.title;
-        edited.description = editMeetingDto.description || edited.description;
-        edited.length = editMeetingDto.length || edited.length;
-        edited.location = editMeetingDto.location || edited.location;
-        edited.language = editMeetingDto.language || edited.language;
-        edited.priority = editMeetingDto.priority || edited.priority;
-        edited.status = editMeetingDto.status || edited.status;
+        [
+            'type',
+            'title',
+            'description',
+            'length',
+            'location',
+            'language',
+            'priority',
+            'status',
+        ].forEach(
+            item => (edited[item] = editMeetingDto[item] || edited[item]),
+        );
+
+        // edited.type = editMeetingDto.type || edited.type;
+        // edited.title = editMeetingDto.title || edited.title;
+        // edited.description = editMeetingDto.description || edited.description;
+        // edited.length = editMeetingDto.length || edited.length;
+        // edited.location = editMeetingDto.location || edited.location;
+        // edited.language = editMeetingDto.language || edited.language;
+        // edited.priority = editMeetingDto.priority || edited.priority;
+        // edited.status = editMeetingDto.status || edited.status;
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
             : edited.plannedStartTime;
@@ -253,25 +266,45 @@ export class MeetingService {
     }
 
     async editInvitations(meetingId: string, invitations: InvitationsDto) {
-        const meeting = await this.meetingModel.findById(meetingId);
+        const meeting = await this.meetingModel
+            .findById(meetingId)
+            .populate('invitations.user')
+            .exec();
 
-        meeting.invitations = [];
+        const emails = new Set(invitations.emails);
+        const friends = new Set(invitations.friends);
 
-        meeting.invitations.concat(((await Promise.all(
-            invitations.friends.map(async friend => ({
+        const kept$ = from(meeting.invitations).pipe(
+            filter(item => {
+                const user: InstanceType<User> = item.user as any;
+                const hasEmail = emails.delete(item.email);
+                const hasEmail2 = emails.delete(user.email);
+                const hasFriends = friends.delete(user.username);
+                return hasEmail || hasEmail2 || hasFriends;
+            }),
+        );
+
+        const friends$ = from(friends.values()).pipe(
+            flatMap(item => from(this.userService.getByUsername(item))),
+            filter(Boolean.bind(Boolean)),
+            map(item => ({
                 id: uuidv4(),
-                user: await this.userService.getByUsername(friend),
+                user: item,
                 status: InvitationStatus.Waiting,
             })),
-        )) as unknown) as Invitation[]);
+        );
 
-        meeting.invitations = meeting.invitations.concat(invitations.emails.map(
-            email => ({
+        const emails$ = from(emails.values()).pipe(
+            map(item => ({
                 id: uuidv4(),
-                email,
+                email: item,
                 status: InvitationStatus.Waiting,
-            }),
-        ) as Invitation[]);
+            })),
+        );
+
+        meeting.invitations = (await merge(kept$, friends$, emails$)
+            .pipe(toArray())
+            .toPromise()) as Invitation[];
 
         return meeting.save();
     }
