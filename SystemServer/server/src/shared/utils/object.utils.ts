@@ -6,8 +6,15 @@ export class ObjectUtils {
         document: Document,
         transform?: new (...args: any[]) => any,
     ) {
+        return ObjectUtils.ObjectToPlain(document.toObject(), transform);
+    }
+
+    static ObjectToPlain(
+        object: object,
+        transform?: new (...args: any[]) => any,
+    ) {
         return transform
-            ? classToPlain(new transform(document.toObject()))
-            : classToPlain(document.toObject());
+            ? classToPlain(new transform(object))
+            : classToPlain(object);
     }
 }

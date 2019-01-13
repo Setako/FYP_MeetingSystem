@@ -74,7 +74,7 @@ export class MeetingService {
                 ...options,
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
-                owner: {
+                'owner': {
                     $not: {
                         $eq: Types.ObjectId(ownerId),
                     },
@@ -158,7 +158,10 @@ export class MeetingService {
     }
 
     async getAll(options = {}) {
-        return this.meetingModel.find(options).exec();
+        return this.meetingModel
+            .find(options)
+            .populate('owner invitation.owner')
+            .exec();
     }
 
     async getAllWithPage(pageSize: number, pageNum = 1, options = {}) {

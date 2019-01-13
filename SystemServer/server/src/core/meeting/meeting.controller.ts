@@ -37,14 +37,12 @@ import {
     switchMap,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
+import { GetInvitationDto } from './dto/get-invitation.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
 export class MeetingController {
-    constructor(
-        private readonly meetingService: MeetingService,
-        private readonly userService: UserService,
-    ) {}
+    constructor(private readonly meetingService: MeetingService) {}
 
     @Get()
     async getAll(@Query() query: MeetingQueryDto, @Auth() user: User) {
@@ -64,30 +62,13 @@ export class MeetingController {
         ).pipe(
             flatMap(identity),
             filter(item => Boolean(item)),
-        );
-
-        const owners = list.pipe(
             flatMap(item =>
-                this.userService.getById(
-                    (item.owner as Types.ObjectId).toHexString(),
-                ),
+                item.populate('owner invitations.user').execPopulate(),
             ),
         );
 
-        const items = zip(list, owners).pipe(
-            map(
-                pipe(
-                    ([meeting, owner]) => ({
-                        ...meeting.toObject(),
-                        owner: ObjectUtils.DocumentToPlain(
-                            owner,
-                            SimpleUserDto,
-                        ),
-                    }),
-                    item => new GetMeetingDto(item),
-                    item => classToPlain(item),
-                ),
-            ),
+        const items = list.pipe(
+            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
 
         const length = from(this.meetingService.countDocuments(options));
@@ -136,32 +117,17 @@ export class MeetingController {
                       NumberUtils.parseOrThrow(resultPageNum),
                   )
                 : this.meetingService.getByIds(ids),
-        ).pipe(flatMap(identity));
-
-        const owners = list.pipe(
-            flatMap(
-                pipe(
-                    item => (item.owner as Types.ObjectId).toHexString(),
-                    item => this.userService.getById(item),
-                ),
+        ).pipe(
+            flatMap(identity),
+            flatMap(item =>
+                item.populate('owner invitations.user').execPopulate(),
             ),
         );
 
-        const items = zip(list, owners).pipe(
-            map(
-                pipe(
-                    ([meeting, owner]) => ({
-                        ...meeting.toObject(),
-                        owner: ObjectUtils.DocumentToPlain(
-                            owner,
-                            SimpleUserDto,
-                        ),
-                    }),
-                    item => new GetMeetingDto(item),
-                    item => classToPlain(item),
-                ),
-            ),
+        const items = list.pipe(
+            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
+
         const length = from(this.meetingService.countDocumentsByIds(ids));
 
         return combineLatest(items.pipe(toArray()), length).pipe(
@@ -185,8 +151,7 @@ export class MeetingController {
                             SimpleUserDto,
                         ),
                     }),
-                    item => new GetMeetingDto(item),
-                    item => classToPlain(item),
+                    item => ObjectUtils.DocumentToPlain(item, GetMeetingDto),
                 ),
             ),
         );
@@ -207,12 +172,7 @@ export class MeetingController {
                     .exec(),
             ),
             flatMap(identity),
-            map(
-                pipe(
-                    item => new GetMeetingDto(item.toObject()),
-                    classToPlain.bind(classToPlain),
-                ),
-            ),
+            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
     }
 
@@ -226,10 +186,18 @@ export class MeetingController {
     @UseGuards(MeetingGuard)
     async getInvitation(@Param('id') id: string) {
         return from(this.meetingService.getById(id)).pipe(
-            map(({ invitations }) => ({
-                items: invitations,
-                length: invitations.length,
-            })),
+            flatMap(item => item.populate('invitations.user').execPopulate()),
+            map(
+                pipe(
+                    item => item.toObject(),
+                    ({ invitations }) => ({
+                        items: invitations.map((item: object) =>
+                            ObjectUtils.ObjectToPlain(item, GetInvitationDto),
+                        ),
+                        length: invitations.length,
+                    }),
+                ),
+            ),
         );
     }
 
@@ -242,10 +210,18 @@ export class MeetingController {
         return from(
             this.meetingService.editInvitations(id, invitationDto),
         ).pipe(
-            map(({ invitations }) => ({
-                items: invitations,
-                length: invitations.length,
-            })),
+            flatMap(item => item.populate('invitations.user').execPopulate()),
+            map(
+                pipe(
+                    item => item.toObject(),
+                    ({ invitations }) => ({
+                        items: invitations.map((item: object) =>
+                            ObjectUtils.ObjectToPlain(item, GetInvitationDto),
+                        ),
+                        length: invitations.length,
+                    }),
+                ),
+            ),
         );
     }
 
