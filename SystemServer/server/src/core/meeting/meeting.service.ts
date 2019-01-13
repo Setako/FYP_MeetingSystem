@@ -15,7 +15,7 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from, merge, defer, empty, identity, of, pipe } from 'rxjs';
+import { from, merge, identity } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
@@ -106,18 +106,15 @@ export class MeetingService {
             options = {
                 ...options,
                 status: {
-                    $not: {
-                        $eq: MeetingStatus.Draft,
-                    },
+                    $in: [
+                        MeetingStatus.Planned,
+                        MeetingStatus.Confirmed,
+                        MeetingStatus.Started,
+                    ],
                 },
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
                 ...ownerOptions,
-                // owner: {
-                //     $not: {
-                //         $eq: Types.ObjectId(ownerId),
-                //     },
-                // },
             };
         } else if (hostedByAnyone) {
             options = {
