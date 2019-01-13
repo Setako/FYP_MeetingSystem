@@ -16,18 +16,14 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { classToPlain } from 'class-transformer';
-import { Types } from 'mongoose';
 import { User } from '../user/user.model';
-import { UserService } from '../user/user.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
-import { SimpleUserDto } from '../user/dto/simple-user.dto';
-import { defer, identity, zip, from, combineLatest, pipe } from 'rxjs';
+import { defer, identity, from, combineLatest, pipe } from 'rxjs';
 import {
     flatMap,
     filter,

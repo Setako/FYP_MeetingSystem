@@ -72,6 +72,11 @@ export class MeetingService {
         if (invitingMe) {
             options = {
                 ...options,
+                status: {
+                    $not: {
+                        $eq: MeetingStatus.Draft,
+                    },
+                },
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
                 owner: {
