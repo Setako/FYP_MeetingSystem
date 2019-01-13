@@ -212,11 +212,8 @@ export class FriendRequestController {
                 (result.targetUser as InstanceType<User>).id,
             );
 
-            await this.friendRequestService.acceptOrRejectRequest(
-                user.username,
-                source,
-                acceptDto,
-            );
+            await this.friendRequestService.delete(user.username, source);
+            await this.friendRequestService.delete(source, user.username);
 
             await this.notificationService.create({
                 type: NotificationType.FriendRequestAccepted,

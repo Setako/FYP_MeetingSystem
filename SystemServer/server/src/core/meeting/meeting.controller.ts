@@ -200,9 +200,9 @@ export class MeetingController {
     ) {
         return from(this.meetingService.edit(id, editMeetingDto)).pipe(
             map(item => item._id),
-            flatMap(id =>
+            flatMap(_id =>
                 this.meetingService
-                    .findAll({ _id: { $eq: id } })
+                    .findAll({ _id: { $eq: _id } })
                     .populate('owner invitation.user')
                     .exec(),
             ),

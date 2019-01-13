@@ -16,7 +16,7 @@ import {
     MeetingStatus,
 } from './meeting.model';
 import { from, merge } from 'rxjs';
-import { map, flatMap, filter, toArray, mergeMap } from 'rxjs/operators';
+import { map, flatMap, filter, toArray } from 'rxjs/operators';
 
 @Injectable()
 export class MeetingService {
