@@ -16,6 +16,12 @@ export class Attendance {
     public googleCalendarEventId?: string;
 }
 
+export enum InvitationStatus {
+    Accepted = 'accepted',
+    Declined = 'declined',
+    Waiting = 'waiting',
+}
+
 export class Invitation extends Typegoose {
     public id: string;
 
@@ -26,12 +32,6 @@ export class Invitation extends Typegoose {
     public priority: number;
 
     public status: InvitationStatus;
-}
-
-export enum InvitationStatus {
-    Accepted = 'accepted',
-    Declined = 'declined',
-    Waiting = 'waiting',
 }
 
 export enum AttendanceStatus {
@@ -170,7 +170,7 @@ export class Meeting extends Typegoose {
 
     @arrayProp({
         items: Invitation,
-        default: [],
+        // default: [],
     })
     public invitations: Invitation[];
 

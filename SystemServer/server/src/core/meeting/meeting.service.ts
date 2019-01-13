@@ -283,7 +283,7 @@ export class MeetingService {
             filter(Boolean.bind(Boolean)),
             map(item => ({
                 id: uuidv4(),
-                user: item,
+                user: item._id,
                 status: InvitationStatus.Waiting,
             })),
         );
@@ -294,7 +294,7 @@ export class MeetingService {
                     map(user =>
                         user
                             ? {
-                                  user,
+                                  user: user._id,
                                   email,
                               }
                             : {
