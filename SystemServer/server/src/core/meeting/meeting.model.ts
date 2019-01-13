@@ -170,7 +170,7 @@ export class Meeting extends Typegoose {
 
     @arrayProp({
         items: Invitation,
-        // default: [],
+        default: [],
     })
     public invitations: Invitation[];
 
