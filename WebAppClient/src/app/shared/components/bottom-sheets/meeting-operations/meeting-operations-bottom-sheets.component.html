@@ -18,6 +18,27 @@
     </span>
   </a>
 
+  <a *ngIf="isOwner && cancelableStatus.includes(meeting.status)"
+     href="#" mat-list-item (click)="cancel($event)">
+    <mat-icon matListIcon>delete</mat-icon>
+    <span mat-line>
+      Cancel meeting
+    </span>
+  </a>
+
+  <a *ngIf="isOwner && Object.keys(pushStatusProgressMap).indexOf(meeting.status)!=-1"
+     href="#" mat-list-item (click)="pushStatusProgress($event)">
+    <mat-icon matListIcon>
+      {{pushStatusProgressMap[meeting.status].icon}}
+    </mat-icon>
+    <span mat-line>
+      {{pushStatusProgressMap[meeting.status].action}}
+    </span>
+    <span *ngIf="pushStatusProgressMap[meeting.status].hints != null" mat-line>
+      {{pushStatusProgressMap[meeting.status].hints}}
+    </span>
+  </a>
+
   <a *ngIf="isOwner && editAvailableStatus.indexOf(meeting.status)!=-1"
      [routerLink]="'/member/meeting/'+meeting.id+'/edit'"
      (click)="bottomSheetRef.dismiss()"

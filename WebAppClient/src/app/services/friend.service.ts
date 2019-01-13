@@ -17,6 +17,11 @@ export class FriendService {
     return this.http.get<ListResponse<FriendRequest>>(`${AppConfig.API_PATH}/friend/request/received`);
   }
 
+  public responseRequest(username: string, accept: boolean): Observable<any> {
+    return this.http.put(`${AppConfig.API_PATH}/friend/request/received/${username}`,
+      {accept: accept});
+  }
+
   public sendRequest(username: string): Observable<any> {
     return this.http.post(`${AppConfig.API_PATH}/friend/request/${username}`, {});
   }

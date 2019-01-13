@@ -1,0 +1,25 @@
+<h2 mat-dialog-title>{{title}}</h2>
+
+
+<div mat-dialog-content class="p-2">
+  <app-querying-content-hider [querying]="querying" queryingAction="Getting friends">
+
+    <mat-form-field class="w-100">
+      <input matInput [(ngModel)]="keyWords" placeholder="Search"/>
+    </mat-form-field>
+
+    <mat-selection-list #friendSelect>
+      <ng-container *ngFor="let friend of friends">
+        <mat-list-option [ngStyle]="{display:filteredFriends.includes(friend)?'block':'none'}"
+                         [value]="friend.user">
+          {{friend.user.displayName}} (@{{friend.user.username}})
+        </mat-list-option>
+      </ng-container>
+    </mat-selection-list>
+
+  </app-querying-content-hider>
+</div>
+<div mat-dialog-actions *ngIf="!querying" class="float-right">
+  <a href="#" mat-button (click)="$event.preventDefault();dialogRef.close()">CANCEL</a>
+  <button mat-button type="submit" (click)="$event.preventDefault();confirm()">CONFIRM</button>
+</div>

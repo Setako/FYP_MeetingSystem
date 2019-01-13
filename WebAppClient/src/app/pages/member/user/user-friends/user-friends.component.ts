@@ -14,10 +14,10 @@ import {map, take} from 'rxjs/operators';
   styleUrls: ['./user-friends.component.css']
 })
 export class UserFriendsComponent implements OnInit {
-  public querying = false;
-  public receivedFriendRequests: FriendRequest[];
+  public querying = true;
+  public receivedFriendRequests: FriendRequest[] = [];
   public API_PATH: string = AppConfig.API_PATH;
-  friends: Friend[];
+  friends: Friend[] = [];
 
   constructor(public authService: AuthService, public friendService: FriendService,
               public userService: UserService) {
@@ -36,7 +36,11 @@ export class UserFriendsComponent implements OnInit {
   }
 
   responseFriendRequest(friendRequest: FriendRequest, approve: boolean) {
-
+    this.querying = true;
+    this.friendService.responseRequest(friendRequest.user.username, approve).subscribe(() => {
+      this.update();
+      this.querying = false;
+    }, err => this.querying = false);
   }
 
 }

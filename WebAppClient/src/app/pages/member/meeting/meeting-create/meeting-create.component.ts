@@ -40,10 +40,10 @@ export class MeetingCreateComponent implements OnInit {
         location: this.basicForm.value.location,
         description: this.basicForm.value.description
       } as Meeting).subscribe(
-        () => {
+        (meetingId) => {
           this.querying = false;
           this.snackBar.open('Meeting created successfully', 'Dismiss', {duration: 4000});
-          this.router.navigate(['/member/meeting']);
+          this.router.navigate([`/member/meeting/${meetingId}/edit`]);
         },
         (err) => {
           this.querying = false;

@@ -33,13 +33,14 @@ export class MemberComponent implements OnInit {
   ];
   links = [
     {title: 'Meetings', icon: 'assignment', link: '/member/meeting'},
+    {title: 'Meeting Invitations', icon: 'mail_outline', link: '/member/meeting-invitations'},
     {title: 'Meeting Calendar', icon: 'calendar_today', link: '/member/calendar'}
   ];
 
   constructor(public auth: AuthService, private snackBar: MatSnackBar,
-              public userService:UserService,
+              public userService: UserService,
               private  changeDetectorRef: ChangeDetectorRef, private mediaMatcher: MediaMatcher) {
-    this.mobileQuery = mediaMatcher.matchMedia('(max-width: 600px)');
+    this.mobileQuery = mediaMatcher.matchMedia('(max-width: 767px)');
     this.mobileQuery.addListener(() => changeDetectorRef.detectChanges());
   }
 

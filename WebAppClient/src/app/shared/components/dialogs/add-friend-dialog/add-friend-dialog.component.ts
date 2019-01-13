@@ -1,6 +1,6 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, Inject, OnInit} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
-import {MatDialogRef, MatSnackBar} from '@angular/material';
+import {MAT_DIALOG_DATA, MatDialogRef, MatSnackBar} from '@angular/material';
 import {FriendService} from '../../../../services/friend.service';
 import {HttpErrorResponse} from '@angular/common/http';
 
@@ -17,7 +17,11 @@ export class AddFriendDialogComponent implements OnInit {
     }
   );
 
-  constructor(public dialogRef: MatDialogRef<AddFriendDialogComponent>, public friendService: FriendService, public snackBar: MatSnackBar) {
+  constructor(public dialogRef: MatDialogRef<AddFriendDialogComponent>,
+              public friendService:
+                FriendService, public snackBar: MatSnackBar,
+              @Inject(MAT_DIALOG_DATA) data
+  ) {
   }
 
   ngOnInit() {

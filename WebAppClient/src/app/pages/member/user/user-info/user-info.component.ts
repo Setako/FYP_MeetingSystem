@@ -25,7 +25,7 @@ export class UserInfoComponent implements OnInit {
     newPassword: new FormControl('', [Validators.minLength(8), Validators.maxLength(60)]),
     newPasswordConfirm: new FormControl('', [Validators.minLength(8), Validators.maxLength(60)]),
     currentPassword: new FormControl('', [Validators.required]),
-  });
+  }, {validators: [this.checkPasswordRepeat]});
 
   private permissions = [
     'profile',
@@ -44,6 +44,17 @@ export class UserInfoComponent implements OnInit {
     gapi.load('auth2', function () {
       gapi.auth2.init();
     });
+  }
+
+
+  checkPasswordRepeat(form: FormGroup) {
+    if (form.value.password !== form.value.passwordConfirm) {
+      const error = {passwordNotMatch: true};
+      form.controls.passwordConfirm.setErrors(error);
+      return error;
+    } else {
+      return null;
+    }
   }
 
   googleLogin() {

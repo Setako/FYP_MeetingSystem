@@ -17,7 +17,6 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {HttpCommonErrorHandlerService} from './services/http-common-error-handler.service';
 import {HttpTokenInjectorService} from './services/http-token-injector.service';
-import {AuthGuard} from './shared/route-guards/auth.guard';
 import {SettingsComponent} from './pages/member/settings/settings.component';
 import {CalendarComponent} from './pages/member/calendar/calendar.component';
 import {MeetingCreateComponent} from './pages/member/meeting/meeting-create/meeting-create.component';
@@ -29,18 +28,24 @@ import {FriendsSidebarComponent} from './shared/components/friends-sidebar/frien
 import {
   MeetingOperationsBottomSheetsComponent
 } from './shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
-import { MeetingListFabComponent } from './shared/components/floating-action-buttons/meeting-list-fab/meeting-list-fab.component';
-import { QueryingContentHiderComponent } from './shared/components/querying-content-hider/querying-content-hider.component';
-import { FriendListFabComponent } from './shared/components/floating-action-buttons/friend-list-fab/friend-list-fab.component';
-import { AddFriendDialogComponent } from './shared/components/dialogs/add-friend-dialog/add-friend-dialog.component';
-import { NotificationsComponent } from './shared/components/notifications/notifications.component';
-import { ChatingBoxComponent } from './shared/components/chating-box/chating-box.component';
-import { NotificationsSettingComponent } from './pages/member/settings/notifications-setting/notifications-setting.component';
-import { GoogleServiceSettingComponent } from './pages/member/settings/google-service-setting/google-service-setting.component';
-import { CalendarSettingComponent } from './pages/member/settings/calendar-setting/calendar-setting.component';
-import { PrivacySettingComponent } from './pages/member/settings/privacy-setting/privacy-setting.component';
-import { UserAvatarUploadDialogComponent } from './shared/components/dialogs/user-avatar-upload-dialog/user-avatar-upload-dialog.component';
+import {MeetingListFabComponent} from './shared/components/floating-action-buttons/meeting-list-fab/meeting-list-fab.component';
+import {QueryingContentHiderComponent} from './shared/components/querying-content-hider/querying-content-hider.component';
+import {FriendListFabComponent} from './shared/components/floating-action-buttons/friend-list-fab/friend-list-fab.component';
+import {AddFriendDialogComponent} from './shared/components/dialogs/add-friend-dialog/add-friend-dialog.component';
+import {NotificationsComponent} from './shared/components/notifications/notifications.component';
+import {ChatingBoxComponent} from './shared/components/chating-box/chating-box.component';
+import {NotificationsSettingComponent} from './pages/member/settings/notifications-setting/notifications-setting.component';
+import {GoogleServiceSettingComponent} from './pages/member/settings/google-service-setting/google-service-setting.component';
+import {CalendarSettingComponent} from './pages/member/settings/calendar-setting/calendar-setting.component';
+import {PrivacySettingComponent} from './pages/member/settings/privacy-setting/privacy-setting.component';
+import {UserAvatarUploadDialogComponent} from './shared/components/dialogs/user-avatar-upload-dialog/user-avatar-upload-dialog.component';
 import {TimeAgoPipe} from 'time-ago-pipe';
+import {DatePipe} from '@angular/common';
+import {ToDatePipe} from './shared/pipe/to-date.pipe';
+import {MeetingInvitationsComponent} from './pages/member/meeting-invitations/meeting-invitations.component';
+import {SelectFriendsDialogComponent} from './shared/components/dialogs/select-friends-dialog/select-friends-dialog.component';
+import { ConfirmationDialogComponent } from './shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
+import { FaceRecognitionSettingComponent } from './pages/member/settings/face-recognition-setting/face-recognition-setting.component';
 
 @NgModule({
   declarations: [
@@ -71,7 +76,12 @@ import {TimeAgoPipe} from 'time-ago-pipe';
     CalendarSettingComponent,
     PrivacySettingComponent,
     UserAvatarUploadDialogComponent,
-    TimeAgoPipe
+    TimeAgoPipe,
+    ToDatePipe,
+    MeetingInvitationsComponent,
+    SelectFriendsDialogComponent,
+    ConfirmationDialogComponent,
+    FaceRecognitionSettingComponent
   ],
   imports: [
     BrowserModule,
@@ -97,11 +107,16 @@ import {TimeAgoPipe} from 'time-ago-pipe';
       useClass: HttpTokenInjectorService,
       multi: true
     },
+    DatePipe,
+    TimeAgoPipe,
+    ToDatePipe
   ],
   entryComponents: [
     MeetingOperationsBottomSheetsComponent,
     AddFriendDialogComponent,
-    UserAvatarUploadDialogComponent
+    UserAvatarUploadDialogComponent,
+    SelectFriendsDialogComponent,
+    ConfirmationDialogComponent
   ],
   bootstrap: [AppComponent]
 })

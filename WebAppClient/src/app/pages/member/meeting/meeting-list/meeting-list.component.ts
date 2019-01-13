@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {MatBottomSheet, PageEvent} from '@angular/material';
-import {Meeting, MeetingStatus} from '../../../../shared/models/meeting';
+import {Meeting, MeetingSearchingFilter, MeetingStatus} from '../../../../shared/models/meeting';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ql} from '@angular/core/src/render3';
 import {Observable, Subscription} from 'rxjs';
@@ -16,6 +16,7 @@ import {
   styleUrls: ['./meeting-list.component.css']
 })
 export class MeetingListComponent implements OnInit {
+  public Date = Date;
   public pageSizeOptions: number[] = [2, 5, 10, 20];
   public pageIndex = 0;
   public pageSize = 5;
@@ -27,7 +28,7 @@ export class MeetingListComponent implements OnInit {
 
   public hostedByMe = true;
   public hostedByOther = true;
-  public status: MeetingStatus[] = ['draft'];
+  public status: MeetingStatus[] = this.availableStatus as MeetingStatus[];
 
   constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet) {
   }
@@ -62,7 +63,7 @@ export class MeetingListComponent implements OnInit {
       hostedByMe: this.hostedByMe,
       hostedByOther: this.hostedByOther,
       status: this.status
-    }, this.pageSize, this.pageIndex + 1).subscribe(
+    } as MeetingSearchingFilter, this.pageSize, this.pageIndex + 1).subscribe(
       res => {
         this.meetingList = res.items;
         this.meetingsLength = res.length;

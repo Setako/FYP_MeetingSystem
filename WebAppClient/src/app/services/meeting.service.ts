@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Meeting, MeetingAttendance, MeetingSearchingFilter} from '../shared/models/meeting';
+import {Meeting, MeetingAttendance, MeetingParticipantsDTO, MeetingSearchingFilter, MeetingStatus} from '../shared/models/meeting';
 import {HttpClient} from '@angular/common/http';
 import {AppConfig} from '../app-config';
 import {Observable} from 'rxjs';
@@ -60,9 +60,15 @@ export class MeetingService {
 
   public findMeetings(filter: MeetingSearchingFilter, resultAmount: number, resultPage: number): Observable<ListResponse<Meeting>> {
     const queryUrl = new URL(`${AppConfig.API_PATH}/meeting`);
-    filter.status.forEach(includingStatus => queryUrl.searchParams.append('status', includingStatus));
-    queryUrl.searchParams.append('hostedByMe', filter.hostedByMe + '');
-    queryUrl.searchParams.append('hostedByOther', filter.hostedByOther + '');
+    if (filter.status != null) {
+      filter.status.forEach(includingStatus => queryUrl.searchParams.append('status', includingStatus));
+    }
+    const directAppendFields = ['hostedByMe', 'hostedByOther', 'invitingMe', 'invitingFromFriend'];
+    directAppendFields.forEach(field => {
+      if (filter[field] != null) {
+        queryUrl.searchParams.append(field, filter[field]);
+      }
+    });
     queryUrl.searchParams.append('resultPageSize', resultAmount + '');
     queryUrl.searchParams.append('resultPageNum', resultPage + '');
     return this.http.get<ListResponse<any>>(queryUrl.toString()).pipe(map((res) => {
@@ -75,9 +81,26 @@ export class MeetingService {
     return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}`, MeetingService.mapModelToDTO(meeting));
   }
 
+  public saveMeetingParticipants(meetingParticipantsDTO: MeetingParticipantsDTO): Observable<any> {
+    return this.http.put(`${AppConfig.API_PATH}/meeting/${meetingParticipantsDTO.id}`, meetingParticipantsDTO);
+  }
+
+  public turnMeetingStatus(meeting: Meeting, status: MeetingStatus): Observable<any> {
+    const meetingOperation: Meeting = {id: meeting.id, status: status} as Meeting;
+    switch (status) {
+      case 'planned':
+        break;
+      case 'started':
+        break;
+      case 'confirmed':
+        break;
+    }
+    return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}`, meetingOperation);
+  }
+
 
   public toggleMarkMeetingCalendar(meeting: Meeting): Observable<any> {
-    return this.http.put(`${AppConfig.API_PATH} / meeting /${meeting.id}/calendar`,
+    return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}/calendar`,
       {
         mark: meeting.attendance.get(this.authService.loggedInUser.username).googleCalendarEventId == null
       }

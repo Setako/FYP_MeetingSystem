@@ -2,6 +2,7 @@ import {User} from './user';
 
 export type MeetingStatus = 'draft' | 'planned' | 'confirmed' | 'cancelled' | 'started' | 'ended' | 'deleted';
 export type MeetingAttendanceStatus = 'absent' | 'present' | 'exit';
+export type MeetingInvitationStatus = 'accepted' | 'declined' | 'waiting';
 
 export interface Meeting {
   id: string;
@@ -22,6 +23,15 @@ export interface Meeting {
   attendance: Map<String, MeetingAttendance>;
   // optional: ownername
   owner?: User;
+  invitations: MeetingInvitation[];
+}
+
+export interface MeetingInvitation {
+  id: string;
+  user?: User;
+  email?: string;
+  priority: number;
+  status: MeetingInvitationStatus;
 }
 
 export interface MeetingAttendance {
@@ -46,4 +56,14 @@ export interface MeetingSearchingFilter {
   hostedByMe: boolean;
   hostedByOther: boolean;
   status: MeetingStatus[];
+  invitingMe: boolean;
+  invitingFromFriend: boolean;
+}
+
+export interface MeetingParticipantsDTO {
+  id: string;
+  invitations: {
+    friends: string[];
+    emails: string[];
+  };
 }

@@ -9,6 +9,7 @@ import {Meeting} from '../shared/models/meeting';
 import {Router} from '@angular/router';
 import {map, tap} from 'rxjs/operators';
 import {AppConfig} from '../app-config';
+import {DatePipe} from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -54,13 +55,27 @@ export class NotificationService {
       return new UserNotification(
         dto.id, 'Meeting Info Updated',
         `${meeting.owner.displayName} is inviting you to join the meeting: ${meeting.title}`,
-        () => this.router.navigate(['/member/user/friends']), dto.time);
+        () => this.router.navigate([`/member/meeting/${meeting.id}`]), dto.time);
     },
-    meetingReminder: null,
-    meetingCancelled: null
+    meetingReminder: (dto) => {
+      const meeting = dto.object as Meeting;
+
+      return new UserNotification(
+        dto.id, 'Meeting Reminder',
+        `${meeting.title} Will start at ${this.datePipe.transform(new Date(meeting.plannedStartTime), 'short')}`,
+        () => this.router.navigate([`/member/meeting/${meeting.id}`]), dto.time);
+    },
+    meetingCancelled: (dto) => {
+      const meeting = dto.object as Meeting;
+
+      return new UserNotification(
+        dto.id, 'Meeting Cancelled',
+        `${meeting.title} was cancelled`,
+        () => this.router.navigate([`/member/meeting/${meeting.id}`]), dto.time);
+    }
   };
 
-  constructor(private http: HttpClient, private auth: AuthService, private router: Router) {
+  constructor(private http: HttpClient, private auth: AuthService, private router: Router, private datePipe: DatePipe) {
   }
 
   public getNotifications(): Observable<UserNotification[]> {

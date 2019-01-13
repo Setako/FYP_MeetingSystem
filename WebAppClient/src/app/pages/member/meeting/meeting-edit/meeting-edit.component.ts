@@ -2,11 +2,14 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {MatSnackBar, MatStepper} from '@angular/material';
+import {MatDialog, MatSelectionList, MatSnackBar, MatStepper} from '@angular/material';
 import {StepperSelectionEvent} from '@angular/cdk/stepper';
-import {Meeting} from '../../../../shared/models/meeting';
+import {Meeting, MeetingParticipantsDTO} from '../../../../shared/models/meeting';
 import {Millisecond} from '../../../../utils/time-unit';
 import {ObjectFilter} from '../../../../utils/object-filter';
+import {SelectFriendsDialogComponent} from '../../../../shared/components/dialogs/select-friends-dialog/select-friends-dialog.component';
+import {Friend, User} from '../../../../shared/models/user';
+import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-meeting-edit',
@@ -22,9 +25,14 @@ export class MeetingEditComponent implements OnInit {
 
   today: Date = new Date();
   queryingAction = null;
+
   @ViewChild('stepper') stepper: MatStepper;
 
+  @ViewChild('selectFriend') selectFriend: MatSelectionList;
+
   public meeting: Meeting;
+  public meetingParticipantFriends: User[] = [];
+  public meetingParticipantEmails = '';
 
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
@@ -42,7 +50,8 @@ export class MeetingEditComponent implements OnInit {
   }
 
   constructor(private activatedRoute: ActivatedRoute, private  meetingService: MeetingService,
-              private snackBar: MatSnackBar, private router: Router) {
+              private snackBar: MatSnackBar, private router: Router,
+              private dialog: MatDialog) {
   }
 
   ngOnInit() {
@@ -76,7 +85,52 @@ export class MeetingEditComponent implements OnInit {
               this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
             });
         }
+        break;
+      case 1:
+        this.queryingAction = 'Updating participants';
+        this.meetingService.saveMeetingParticipants({
+          id: this.meeting.id,
+          invitations: {
+            friends: this.meetingParticipantFriends.map(user => user.username),
+            emails: this.meetingParticipantEmails.split('\n').filter(email => email.trim().length > 0)
+          }
+        }).subscribe(
+          () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
+          }, () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
+          });
     }
+  }
+
+  private deleteSelectedFriendParticipants() {
+    const deletingUsers = this.selectFriend.selectedOptions.selected.map(opt => opt.value);
+    if (deletingUsers.length === 0) {
+      this.dialog.open(ConfirmationDialogComponent, {
+        data: {title: 'Confirmation', content: 'Delete all participants?'}
+      }).afterClosed().subscribe(res => {
+        this.meetingParticipantFriends = res ? [] : this.meetingParticipantFriends;
+      });
+
+    } else {
+      this.meetingParticipantFriends = this.meetingParticipantFriends
+        .filter(friend => deletingUsers.indexOf(friend) === -1);
+    }
+  }
+
+  private selectFriendParticipants() {
+    this.dialog.open(SelectFriendsDialogComponent, {
+      data: {
+        title: 'Add friends as participant',
+        hiddenFriendsUsername: this.meetingParticipantFriends.map(user => user.username)
+      }
+    }).afterClosed().subscribe((friends: User[]) => {
+      if (friends != null) {
+        this.meetingParticipantFriends = this.meetingParticipantFriends.concat(friends);
+      }
+    });
   }
 
   private updateMeeting(meetingId: string) {
@@ -91,6 +145,16 @@ export class MeetingEditComponent implements OnInit {
           location: meeting.location,
           description: meeting.description
         });
+
+        // Update participants
+        this.meetingParticipantFriends = meeting.invitations
+          .filter(invitation => invitation.user != null && invitation.email == null)
+          .map(invitation => invitation.user);
+
+        this.meetingParticipantEmails = meeting.invitations
+          .filter(invitation => invitation.email != null)
+          .map(invitation => invitation.email).join('\n');
+
         this.queryingAction = null;
         this.meeting = meeting;
       },

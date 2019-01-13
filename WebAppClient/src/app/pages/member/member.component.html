@@ -51,14 +51,16 @@
              class="mat-elevation-z6 user-panel cc-bg-secondary d-flex h-100 flex-column">
           <div style="overflow-y: auto;"
                class="flex-shrink-1 flex-grow-1">
-            <mat-expansion-panel class="cc-bg-dark-secondary p-0" style="cursor: default">
-              <mat-expansion-panel-header [collapsedHeight]="'100px'" [expandedHeight]="'100px'">
-                <mat-panel-title class="d-flex align-items-center">
-                  <img [src]="userService.getUserAvatarPath(auth.loggedInUser)" class="p-1 cc-avatar"
-                       style="height: 50px; width: 50px;" alt="">
-                  <div class="d-inline-block pl-1" style="font-size: 20px">{{auth.loggedInUser.displayName}}</div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
+
+            <div class="mat-elevation-z2 d-flex align-items-center" style="height: 100px;padding: 4px 36px;">
+              <img [src]="userService.getUserAvatarPath(auth.loggedInUser)" class="p-1 cc-avatar"
+                   style="height: 50px; width: 50px;" alt="">
+              <div class="d-inline-block pl-1"
+                   style="font-size: 20px;overflow: hidden;text-overflow: ellipsis">{{auth.loggedInUser.displayName}}</div>
+            </div>
+
+            <div class="pt-2">
+
               <!--User options-->
               <a [routerLink]="link.link" *ngFor="let link of userLinks" routerLinkActive="actived"
                  class="user-link w-100 sidebar-link"
@@ -69,7 +71,7 @@
 
                 </div>
               </a>
-            </mat-expansion-panel>
+            </div>
             <div class="pt-4">
               <a [routerLink]="link.link" *ngFor="let link of links" routerLinkActive="actived"
                  class="user-link w-100 sidebar-link"
