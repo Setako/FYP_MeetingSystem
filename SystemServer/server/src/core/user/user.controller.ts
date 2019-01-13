@@ -27,7 +27,7 @@ import { UserDto } from './dto/user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
-import { defer, combineLatest, from, identity, iif, of, pipe } from 'rxjs';
+import { defer, combineLatest, from, identity } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { SimpleUserDto } from './dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';

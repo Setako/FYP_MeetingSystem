@@ -31,9 +31,11 @@ export function IsUsername(
                             .split('')
                             .some(
                                 char =>
-                                    !isAlphanumeric(char) ||
-                                    char === '_' ||
-                                    char === '-',
+                                    !(
+                                        isAlphanumeric(char) ||
+                                        char === '_' ||
+                                        char === '-'
+                                    ),
                             )
                     );
                 },

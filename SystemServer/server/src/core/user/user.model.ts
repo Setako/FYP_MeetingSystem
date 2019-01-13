@@ -135,7 +135,8 @@ export class User extends Typegoose {
         index: true,
         maxlength: 20,
         minlength: 2,
-    })
+        lowercase: true,
+    } as any)
     public username: string;
 
     @prop({
