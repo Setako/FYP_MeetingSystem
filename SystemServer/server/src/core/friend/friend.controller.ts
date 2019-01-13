@@ -20,9 +20,18 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { GetFriendDto } from './dto/get-friend.dto';
 import { FriendService } from './friend.service';
-import { from, identity, defer, combineLatest, pipe } from 'rxjs';
+import {
+    from,
+    identity,
+    defer,
+    combineLatest,
+    pipe,
+    empty,
+    throwError,
+} from 'rxjs';
 import { flatMap, map, toArray, filter } from 'rxjs/operators';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
 
 @Controller('friend')
 @UseGuards(AuthGuard('jwt'))
@@ -47,27 +56,27 @@ export class FriendController {
                       NumberUtils.parseOr(query.resultPageNum, 1),
                   )
                 : this.friendService.getAllByUserId(user.id),
-        ).pipe(flatMap(identity));
+        ).pipe(
+            flatMap(identity),
+            flatMap(item => item.populate('friends').execPopulate()),
+        );
 
         const items = list.pipe(
             map(item => ({
-                user: (item.friends.filter(
-                    (friend: InstanceType<User>) => friend.id !== user.id,
-                )[0] as InstanceType<User>).toObject(),
+                user: item.friends.filter(
+                    (friend: InstanceType<User>) =>
+                        !Types.ObjectId(friend.id).equals(user.id),
+                )[0],
                 addDate: item.addDate,
-                stared: Boolean(
-                    item.stared &&
-                        item.stared.some(
-                            (friend: InstanceType<User>) =>
-                                friend.id === user.id,
-                        ),
+                stared: item.stared.some((id: Types.ObjectId) =>
+                    id.equals(user.id),
                 ),
             })),
         );
 
         return combineLatest(
             items.pipe(
-                map(item => classToPlain(new GetFriendDto(item))),
+                map(item => ObjectUtils.ObjectToPlain(item, GetFriendDto)),
                 toArray(),
             ),
             length,
@@ -85,7 +94,11 @@ export class FriendController {
         @Auth() user: InstanceType<User>,
         @Param('usernames', new SplitSemicolonPipe()) usernames: string[],
     ) {
-        const users = from(this.userService.getByUsernames(usernames)).pipe(
+        const users = from(
+            this.userService.getByUsernames(
+                usernames.filter(username => username !== user.username),
+            ),
+        ).pipe(
             flatMap(identity),
             filter(item => Boolean(item)),
         );
@@ -98,32 +111,27 @@ export class FriendController {
                 ),
             ),
             filter(item => Boolean(item)),
+            flatMap(item => item.populate('friends').execPopulate()),
         );
 
         const items = friends.pipe(
             map(
                 pipe(
                     item => ({
-                        user: (item.friends.filter(
+                        user: item.friends.filter(
                             (friend: InstanceType<User>) =>
-                                friend.id !== user.id,
-                        )[0] as InstanceType<User>).toObject(),
+                                !Types.ObjectId(friend.id).equals(user.id),
+                        )[0],
                         addDate: item.addDate,
-                        stared: Boolean(
-                            item.stared &&
-                                item.stared.some(
-                                    (friend: InstanceType<User>) =>
-                                        friend.id === user.id,
-                                ),
+                        stared: item.stared.some((id: Types.ObjectId) =>
+                            id.equals(user.id),
                         ),
                     }),
-                    item => classToPlain(new GetFriendDto(item)),
+                    item => ObjectUtils.ObjectToPlain(item, GetFriendDto),
                 ),
             ),
             toArray(),
         );
-
-        // TODO: query friends
 
         return items.pipe(
             map(itemList => ({
@@ -140,9 +148,14 @@ export class FriendController {
         @Auth() user: InstanceType<User>,
         @Param('username') friendUsername: string,
     ) {
-        const friend = await this.userService.getByUsername(friendUsername);
+        if (friendUsername === user.username) {
+            throw new NotFoundException('Target user is not your friend');
+        }
 
-        if (!(await this.friendService.isFriends(user.id, friend.id))) {
+        const friend = await this.userService.getByUsername(friendUsername);
+        const isFriend = await this.friendService.isFriends(user.id, friend.id);
+
+        if (!isFriend) {
             throw new NotFoundException('Target user is not your friend');
         }
 
@@ -154,9 +167,14 @@ export class FriendController {
         @Auth() user: InstanceType<User>,
         @Param('username') friendUsername: string,
     ) {
-        const friend = await this.userService.getByUsername(friendUsername);
+        if (friendUsername === user.username) {
+            throw new NotFoundException('Target user is not your friend');
+        }
 
-        if (!(await this.friendService.isFriends(user.id, friend.id))) {
+        const friend = await this.userService.getByUsername(friendUsername);
+        const isFriend = await this.friendService.isFriends(user.id, friend.id);
+
+        if (!isFriend) {
             throw new NotFoundException('Target user is not your friend');
         }
 
@@ -165,14 +183,15 @@ export class FriendController {
             friend.id,
         );
 
-        return classToPlain(
-            new GetFriendDto({
-                user: user.toObject(),
+        return ObjectUtils.ObjectToPlain(
+            {
+                user: friend.toObject(),
                 addDate: result.addDate,
-                stared: result.stared.some((item: Types.ObjectId) =>
-                    item.equals(user.id),
+                stared: result.stared.some((id: Types.ObjectId) =>
+                    id.equals(user.id),
                 ),
-            }),
+            },
+            GetFriendDto,
         );
     }
 }

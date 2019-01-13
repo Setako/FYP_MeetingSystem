@@ -74,7 +74,7 @@ export class MeetingService {
                 ...options,
                 'invitations.user': { $eq: Types.ObjectId(ownerId) },
                 'invitations.status': InvitationStatus.Waiting,
-                'owner': {
+                owner: {
                     $not: {
                         $eq: Types.ObjectId(ownerId),
                     },
@@ -225,14 +225,6 @@ export class MeetingService {
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
 
-        // edited.type = editMeetingDto.type || edited.type;
-        // edited.title = editMeetingDto.title || edited.title;
-        // edited.description = editMeetingDto.description || edited.description;
-        // edited.length = editMeetingDto.length || edited.length;
-        // edited.location = editMeetingDto.location || edited.location;
-        // edited.language = editMeetingDto.language || edited.language;
-        // edited.priority = editMeetingDto.priority || edited.priority;
-        // edited.status = editMeetingDto.status || edited.status;
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
             : edited.plannedStartTime;
@@ -248,7 +240,6 @@ export class MeetingService {
         edited.generalPermission =
             editMeetingDto.generalPermission || edited.generalPermission;
 
-        // Todo: when the meeting change to planned, add host to attendance
         if (
             edited.status !== MeetingStatus.Draft &&
             edited.attendance.some(att => att.user === edited.owner)

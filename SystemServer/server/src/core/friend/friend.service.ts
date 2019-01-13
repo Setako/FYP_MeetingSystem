@@ -33,7 +33,6 @@ export class FriendService {
                 ...options,
                 friends: userId,
             })
-            .populate('friends')
             .exec();
     }
 
@@ -50,7 +49,6 @@ export class FriendService {
             })
             .skip(pageSize * (pageNum - 1))
             .limit(pageSize)
-            .populate('friends')
             .exec();
     }
 
@@ -61,7 +59,6 @@ export class FriendService {
                     $all: [userId, friendId],
                 },
             })
-            .populate('friends')
             .exec();
     }
 
