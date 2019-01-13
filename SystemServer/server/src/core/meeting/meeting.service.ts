@@ -289,12 +289,34 @@ export class MeetingService {
         );
 
         const emails$ = from(emails.values()).pipe(
+            flatMap(email =>
+                from(this.userService.getByEmail(email)).pipe(
+                    map(user =>
+                        user
+                            ? {
+                                  user,
+                                  email,
+                              }
+                            : {
+                                  email,
+                              },
+                    ),
+                ),
+            ),
             map(item => ({
+                ...item,
                 id: uuidv4(),
-                email: item,
                 status: InvitationStatus.Waiting,
             })),
         );
+
+        // const emails$ = from(emails.values()).pipe(
+        //     map(item => ({
+        //         id: uuidv4(),
+        //         email: item,
+        //         status: InvitationStatus.Waiting,
+        //     })),
+        // );
 
         meeting.invitations = (await merge(kept$, friends$, emails$)
             .pipe(toArray())

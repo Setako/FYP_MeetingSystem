@@ -17,7 +17,7 @@ export class UserService {
 
     async getByEmail(email: string) {
         return this.userModel
-            .find({
+            .findOne({
                 email,
             })
             .exec();
