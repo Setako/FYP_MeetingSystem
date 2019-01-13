@@ -11,7 +11,11 @@ export class CreateUserDto {
     @IsString()
     readonly password: string;
 
-    @IsEmail()
+    @IsEmail({
+        allow_display_name: true,
+        allow_utf8_local_part: true,
+        require_tld: false,
+    })
     @IsString()
     readonly email: string;
 }

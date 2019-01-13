@@ -131,17 +131,20 @@ export class FriendRequestService {
         return created.save();
     }
 
-    async delete(user: string, target: string) {
+    async delete(
+        user: string,
+        target: string,
+        options = { status: FriendRequestStatus.Requested },
+    ) {
         const deleted = await this.getByUserAndTarget(user, target, {
             status: FriendRequestStatus.Requested,
         });
 
         return this.friendRequestModel.deleteMany({
+            ...options,
             user: await this.userService.getByUsername(user),
             targetUser: await this.userService.getByUsername(target),
         });
-
-        // return deleted.remove();
     }
 
     async acceptOrRejectRequest(

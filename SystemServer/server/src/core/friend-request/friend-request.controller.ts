@@ -212,8 +212,12 @@ export class FriendRequestController {
                 (result.targetUser as InstanceType<User>).id,
             );
 
-            await this.friendRequestService.delete(user.username, source);
-            await this.friendRequestService.delete(source, user.username);
+            await this.friendRequestService.delete(user.username, source, {
+                status: FriendRequestStatus.Requested,
+            });
+            await this.friendRequestService.delete(source, user.username, {
+                status: FriendRequestStatus.Requested,
+            });
 
             await this.notificationService.create({
                 type: NotificationType.FriendRequestAccepted,

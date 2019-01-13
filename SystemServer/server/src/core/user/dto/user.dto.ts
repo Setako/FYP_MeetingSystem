@@ -1,4 +1,4 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude } from 'class-transformer';
 import { Types } from 'mongoose';
 import { UserSetting } from '../user.model';
 
