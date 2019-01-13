@@ -15,7 +15,7 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from, merge, identity } from 'rxjs';
+import { from, merge, identity, of } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
@@ -298,11 +298,16 @@ export class MeetingService {
     async editInvitations(meetingId: string, invitations: InvitationsDto) {
         const meeting = await this.meetingModel
             .findById(meetingId)
-            .populate('invitations.user')
+            .populate('owner invitations.user')
             .exec();
 
         const emails = new Set(invitations.emails);
         const friends = new Set(invitations.friends);
+
+        [meeting.owner as InstanceType<User>].map(owner => {
+            emails.delete(owner.email);
+            friends.delete(owner.username);
+        });
 
         const kept$ = from(meeting.invitations).pipe(
             filter(item => {
@@ -345,14 +350,6 @@ export class MeetingService {
                 status: InvitationStatus.Waiting,
             })),
         );
-
-        // const emails$ = from(emails.values()).pipe(
-        //     map(item => ({
-        //         id: uuidv4(),
-        //         email: item,
-        //         status: InvitationStatus.Waiting,
-        //     })),
-        // );
 
         meeting.invitations = (await merge(kept$, friends$, emails$)
             .pipe(toArray())

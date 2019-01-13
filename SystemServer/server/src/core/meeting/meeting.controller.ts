@@ -34,6 +34,7 @@ import {
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
+import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -146,6 +147,7 @@ export class MeetingController {
     }
 
     @Put(':id')
+    @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async edit(
         @Param('id') id: string,
@@ -165,6 +167,7 @@ export class MeetingController {
     }
 
     @Delete(':id')
+    @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async delete(@Param('id') id: string) {
         await this.meetingService.delete(id);
@@ -190,6 +193,7 @@ export class MeetingController {
     }
 
     @Put(':id/participant')
+    @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async editInvitation(
         @Param('id') id: string,

@@ -136,7 +136,12 @@ export class FriendRequestService {
             status: FriendRequestStatus.Requested,
         });
 
-        return deleted.remove();
+        return this.friendRequestModel.deleteMany({
+            user: await this.userService.getByUsername(user),
+            targetUser: await this.userService.getByUsername(target),
+        });
+
+        // return deleted.remove();
     }
 
     async acceptOrRejectRequest(
