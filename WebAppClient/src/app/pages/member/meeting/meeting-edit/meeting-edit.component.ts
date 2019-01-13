@@ -105,7 +105,7 @@ export class MeetingEditComponent implements OnInit {
     }
   }
 
-  private deleteSelectedFriendParticipants() {
+  public deleteSelectedFriendParticipants() {
     const deletingUsers = this.selectFriend.selectedOptions.selected.map(opt => opt.value);
     if (deletingUsers.length === 0) {
       this.dialog.open(ConfirmationDialogComponent, {
@@ -120,7 +120,7 @@ export class MeetingEditComponent implements OnInit {
     }
   }
 
-  private selectFriendParticipants() {
+  public selectFriendParticipants() {
     this.dialog.open(SelectFriendsDialogComponent, {
       data: {
         title: 'Add friends as participant',
@@ -133,7 +133,7 @@ export class MeetingEditComponent implements OnInit {
     });
   }
 
-  private updateMeeting(meetingId: string) {
+  public updateMeeting(meetingId: string) {
     this.queryingAction = 'Getting meeting data';
     this.meetingService.getMeeting(meetingId).subscribe(
       meeting => {
