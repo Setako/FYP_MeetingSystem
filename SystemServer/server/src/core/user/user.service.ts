@@ -119,7 +119,9 @@ export class UserService {
 
     async edit(username: string, editUserDto: EditUserDto) {
         const edited = await this.userModel.findByUsername(username);
-        if (!edited) { return null; }
+        if (!edited) {
+            return null;
+        }
 
         if (editUserDto.password) {
             edited.password = this.userModel.encryptPassword(

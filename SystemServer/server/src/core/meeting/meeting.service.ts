@@ -230,7 +230,9 @@ export class MeetingService {
     async edit(id: string, editMeetingDto: EditMeetingDto) {
         let edited = await this.meetingModel.findById(id);
 
-        if (!edited) { return null; }
+        if (!edited) {
+            return null;
+        }
 
         // TODO: handle the attendance
         // if (editMeetingDto.attendance) {
@@ -261,7 +263,7 @@ export class MeetingService {
             'language',
             'priority',
             'status',
-            'generalPermission'
+            'generalPermission',
         ].forEach(
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
@@ -309,7 +311,9 @@ export class MeetingService {
             .populate('owner invitations.user')
             .exec();
 
-        if (!meeting) { return null; }
+        if (!meeting) {
+            return null;
+        }
 
         const emails = new Set(invitations.emails);
         const friends = new Set(invitations.friends);

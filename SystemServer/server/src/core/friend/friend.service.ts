@@ -103,7 +103,9 @@ export class FriendService {
             })
             .exec();
 
-        if (!result) { return null; }
+        if (!result) {
+            return null;
+        }
 
         const isStared = result.stared.some(item =>
             (item as Types.ObjectId).equals(userId),

@@ -152,7 +152,9 @@ export class FriendRequestService {
             status: FriendRequestStatus.Requested,
         });
 
-        if (!request) { return null; }
+        if (!request) {
+            return null;
+        }
 
         request.status = acceptDto.accept
             ? FriendRequestStatus.Accepted
