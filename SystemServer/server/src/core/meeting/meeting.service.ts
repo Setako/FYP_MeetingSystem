@@ -358,12 +358,41 @@ export class MeetingService {
         return meeting.save();
     }
 
+    async acceptOrRejectInvitation(
+        meetingId: string,
+        inviteeId: string,
+        accept: boolean,
+    ) {
+        return from(this.meetingModel.findById(meetingId).exec())
+            .pipe(
+                flatMap(item => {
+                    const inviteeIndex = item.invitations.findIndex(invitee =>
+                        Types.ObjectId(inviteeId).equals(
+                            invitee.user ? (invitee.user as Types.ObjectId) : '',
+                        ),
+                    );
+
+                    if (inviteeIndex !== -1) {
+                        item.invitations[inviteeIndex].status = accept
+                            ? InvitationStatus.Accepted
+                            : InvitationStatus.Declined;
+
+                        return item.save();
+                    }
+
+                    return of(item);
+                }),
+            )
+            .toPromise();
+    }
+
     async hasViewPermission(meetingId: string, userId: string) {
         const meetingObjectId = Types.ObjectId(meetingId);
         const userObjectId = Types.ObjectId(userId);
         const options = {
             $and: [
                 { _id: { $eq: meetingObjectId } },
+                { status: { $not: { $eq: MeetingStatus.Deleted } } },
                 {
                     $or: [
                         {

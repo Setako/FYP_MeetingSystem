@@ -1,9 +1,5 @@
 import { MeetingService } from '@commander/core/meeting/meeting.service';
-import {
-    CanActivate,
-    ExecutionContext,
-    Injectable,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Types } from 'mongoose';

@@ -14,6 +14,9 @@ import {
     Put,
     Query,
     UseGuards,
+    BadRequestException,
+    HttpStatus,
+    HttpCode,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '../user/user.model';
@@ -31,10 +34,14 @@ import {
     toArray,
     mapTo,
     switchMap,
+    tap,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
+import { Types } from 'mongoose';
+import { InvitationStatus } from './meeting.model';
+import { AcceptDto } from '@commander/shared/dto/accept.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -171,6 +178,43 @@ export class MeetingController {
     @UseGuards(MeetingGuard)
     async delete(@Param('id') id: string) {
         await this.meetingService.delete(id);
+    }
+
+    @Put(':id/invitation')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(MeetingGuard)
+    async acceptOrRejctInvitation(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Body() acceptDto: AcceptDto,
+    ) {
+        const isInvited$ = from(
+            this.meetingService.countDocuments({
+                _id: Types.ObjectId(id),
+                'invitation.user': user._id,
+                'invitation.status': { $in: [InvitationStatus.Waiting] },
+            }),
+        ).pipe(
+            tap(item => {
+                if (item === 0) {
+                    throw new BadRequestException(
+                        'You have not been invited to this meeting or have accepted or rejected this invitation.',
+                    );
+                }
+            }),
+        );
+
+        await isInvited$
+            .pipe(
+                flatMap(() =>
+                    this.meetingService.acceptOrRejectInvitation(
+                        id,
+                        user.id,
+                        acceptDto.accept,
+                    ),
+                ),
+            )
+            .toPromise();
     }
 
     @Get(':id/participant')

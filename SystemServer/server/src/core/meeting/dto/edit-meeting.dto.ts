@@ -9,7 +9,6 @@ import {
     IsString,
     MinLength,
     ValidateNested,
-    ValidateIf,
 } from 'class-validator';
 import { MeetingStatus, MeetingType, MeetingPriority } from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';

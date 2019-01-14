@@ -1,6 +1,6 @@
 import { IsBoolean } from 'class-validator';
 
-export class AcceptFriendRequestDto {
+export class AcceptDto {
     @IsBoolean()
     readonly accept: boolean;
 }

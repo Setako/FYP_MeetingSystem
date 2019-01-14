@@ -29,13 +29,13 @@ import {
 import { NotificationService } from '../notification/notification.service';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
-import { AcceptFriendRequestDto } from './dto/accept-friend-request.dto';
+import { AcceptDto } from '../../shared/dto/accept.dto';
 import { GetFriendRequestDto } from './dto/get-friend-request.dto';
 import { FriendRequestStatus } from './friend-request.model';
 import { FriendRequestService } from './friend-request.service';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
-import { defer, identity, from, combineLatest, throwError } from 'rxjs';
-import { map, flatMap, toArray, tap } from 'rxjs/operators';
+import { defer, identity, from, combineLatest } from 'rxjs';
+import { map, flatMap, toArray } from 'rxjs/operators';
 
 @Controller('friend/request')
 @UseGuards(AuthGuard('jwt'))
@@ -189,7 +189,7 @@ export class FriendRequestController {
     async acceptOrRejectRequest(
         @Auth() user: InstanceType<User>,
         @Param('username') source: string,
-        @Body() acceptDto: AcceptFriendRequestDto,
+        @Body() acceptDto: AcceptDto,
     ) {
         const isRequestExist = await this.friendRequestService.hasReqeustedRequest(
             source,

@@ -13,22 +13,13 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { classToPlain } from 'class-transformer';
 import { Types } from 'mongoose';
 import { InstanceType } from 'typegoose';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { GetFriendDto } from './dto/get-friend.dto';
 import { FriendService } from './friend.service';
-import {
-    from,
-    identity,
-    defer,
-    combineLatest,
-    pipe,
-    empty,
-    throwError,
-} from 'rxjs';
+import { from, identity, defer, combineLatest, pipe } from 'rxjs';
 import { flatMap, map, toArray, filter } from 'rxjs/operators';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
