@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
-import { ModelType } from 'typegoose';
+import { ModelType, InstanceType } from 'typegoose';
 import { Device } from './device.model';
 import { CreateDeviceDto } from './dto/create-device.dto';
+import { from, of, empty } from 'rxjs';
+import { flatMap, defaultIfEmpty } from 'rxjs/operators';
 
 @Injectable()
 export class DeviceService {
@@ -31,7 +33,12 @@ export class DeviceService {
     }
 
     async delete(id: string) {
-        const device = await this.deviceModel.findById(id).exec();
-        return device.remove();
+        return from(this.deviceModel.findById(id).exec())
+            .pipe(
+                flatMap(device => (device ? of(device) : empty())),
+                flatMap(device => device.remove()),
+                defaultIfEmpty(null as null | InstanceType<Device>),
+            )
+            .toPromise();
     }
 }

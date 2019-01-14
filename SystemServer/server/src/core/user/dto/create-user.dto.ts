@@ -5,17 +5,13 @@ export class CreateUserDto {
     @IsUsername()
     @Length(2, 20)
     @IsString()
-    readonly username: string;
+    readonly username!: string;
 
     @Length(8, 60)
     @IsString()
-    readonly password: string;
+    readonly password!: string;
 
-    @IsEmail({
-        allow_display_name: true,
-        allow_utf8_local_part: true,
-        require_tld: false,
-    })
+    @IsEmail()
     @IsString()
-    readonly email: string;
+    readonly email!: string;
 }

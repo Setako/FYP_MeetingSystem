@@ -23,28 +23,29 @@ export class Notification extends Typegoose {
         required: true,
         enum: NotificationType,
     })
-    public type: NotificationType;
+    public type!: NotificationType;
 
     @prop({
         required: true,
     })
-    public time: Date;
+    public time!: Date;
 
     @prop({
         required: true,
         ref: User,
         index: true,
     })
-    public receiver: Ref<User>;
+    public receiver!: Ref<User>;
 
     @prop({
+        required: true,
         refPath: 'objectModel',
     } as any)
-    public object: Types.ObjectId;
+    public object!: Types.ObjectId;
 
     @prop({
         required: true,
         enum: NotificationObjectModel,
     })
-    public objectModel: NotificationObjectModel;
+    public objectModel!: NotificationObjectModel;
 }

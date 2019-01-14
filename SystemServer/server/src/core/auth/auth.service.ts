@@ -8,6 +8,8 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { JwtPayload } from './dto/jwt-payload.dto';
 import { LoginDto } from './dto/login.dto';
+import { from, of, empty } from 'rxjs';
+import { flatMap, defaultIfEmpty } from 'rxjs/operators';
 
 @Injectable()
 export class AuthService {
@@ -55,8 +57,17 @@ export class AuthService {
     }
 
     async logout(user: User) {
-        const updated = await this.userService.getByUsername(user.username);
-        updated.tokenVerificationCode = uuidv4();
-        return updated.save();
+        const user$ = from(this.userService.getByUsername(user.username)).pipe(
+            flatMap(item => (item ? of(item) : empty())),
+        );
+
+        return user$
+            .pipe(
+                flatMap(item => {
+                    item.tokenVerificationCode = uuidv4();
+                    return item.save();
+                }),
+            )
+            .toPromise();
     }
 }

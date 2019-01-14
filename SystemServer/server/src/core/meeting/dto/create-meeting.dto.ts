@@ -10,18 +10,18 @@ import { MeetingType, MeetingPriority } from '../meeting.model';
 
 export class CreateMeetingDto {
     @IsEnum(MeetingType)
-    readonly type: MeetingType;
+    readonly type!: MeetingType;
 
     @IsString()
     @MinLength(1)
-    readonly title: string;
+    readonly title!: string;
 
     @IsString()
-    readonly description: string;
+    readonly description!: string;
 
     @IsInt()
     @IsPositive()
-    readonly length: number;
+    readonly length!: number;
 
     @IsString()
     @IsOptional()
@@ -32,5 +32,5 @@ export class CreateMeetingDto {
     readonly language?: string;
 
     @IsEnum(MeetingPriority)
-    readonly priority: number;
+    readonly priority!: number;
 }

@@ -1,17 +1,19 @@
-import { Type } from 'class-transformer';
+import { Type, Exclude, Expose } from 'class-transformer';
 import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 
+@Exclude()
 export class GetFriendDto {
+    @Expose()
     @Type(() => SimpleUserDto)
-    user: SimpleUserDto;
+    user!: SimpleUserDto;
 
-    addDate: Date;
+    @Expose()
+    addDate!: Date;
 
-    stared: boolean;
+    @Expose()
+    stared!: boolean;
 
     constructor(partial: Partial<GetFriendDto>) {
-        this.user = partial.user;
-        this.addDate = partial.addDate;
-        this.stared = partial.stared;
+        Object.assign(this, partial);
     }
 }

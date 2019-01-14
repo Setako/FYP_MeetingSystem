@@ -2,7 +2,7 @@ import { IsArray, IsEmail } from 'class-validator';
 
 export class InvitationsDto {
     @IsArray()
-    readonly friends: string[];
+    readonly friends!: string[];
 
     @IsArray()
     @IsEmail(
@@ -11,5 +11,5 @@ export class InvitationsDto {
             each: true,
         },
     )
-    readonly emails: string[];
+    readonly emails!: string[];
 }

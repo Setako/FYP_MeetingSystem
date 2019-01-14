@@ -9,10 +9,10 @@ export class DocumentDto {
     }
 
     @Exclude()
-    _id: Types.ObjectId;
+    _id!: Types.ObjectId;
 
     @Exclude()
-    __v: number;
+    __v!: number;
 
     constructor(partial: Partial<DocumentDto>) {
         Object.assign(this, partial);

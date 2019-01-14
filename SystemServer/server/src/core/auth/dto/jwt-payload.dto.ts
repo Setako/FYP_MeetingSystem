@@ -1,5 +1,5 @@
 export class JwtPayload {
-    readonly username: string;
+    readonly username!: string;
 
-    readonly tokenVerificationCode: string;
+    readonly tokenVerificationCode!: string;
 }

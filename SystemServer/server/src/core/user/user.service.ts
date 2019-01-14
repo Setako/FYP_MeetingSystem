@@ -7,6 +7,8 @@ import uuidv4 from 'uuid/v4';
 import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
 import { User } from './user.model';
+import { from, of, empty } from 'rxjs';
+import { flatMap, map } from 'rxjs/operators';
 
 @Injectable()
 export class UserService {
@@ -117,6 +119,7 @@ export class UserService {
 
     async edit(username: string, editUserDto: EditUserDto) {
         const edited = await this.userModel.findByUsername(username);
+        if (!edited) { return null; }
 
         if (editUserDto.password) {
             edited.password = this.userModel.encryptPassword(
@@ -148,13 +151,23 @@ export class UserService {
     }
 
     async delete(username: string) {
-        const deleted = await this.userModel.findByUsername(username);
-        return deleted.remove();
+        return from(this.userModel.findByUsername(username))
+            .pipe(
+                flatMap(item => (item ? of(item) : empty())),
+                flatMap(item => item.remove()),
+            )
+            .toPromise();
     }
 
     async uploadUserAratar(username: string, dataUrl: string) {
-        const updated = await this.userModel.findByUsername(username);
-        updated.avatar = dataUrl;
-        return updated.save();
+        return from(this.userModel.findByUsername(username))
+            .pipe(
+                flatMap(item => (item ? of(item) : empty())),
+                flatMap(item => {
+                    item.avatar = dataUrl;
+                    return item.save();
+                }),
+            )
+            .toPromise();
     }
 }

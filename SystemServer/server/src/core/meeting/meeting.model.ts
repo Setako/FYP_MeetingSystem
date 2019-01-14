@@ -3,15 +3,15 @@ import { Device } from '../device/device.model';
 import { User } from '../user/user.model';
 
 export class Attendance {
-    public user: Ref<User>;
+    public user!: Ref<User>;
 
-    public priority: number;
+    public priority!: number;
 
     public arrivalTime?: Date;
 
     public status?: AttendanceStatus;
 
-    public permission: AccessPostMeetingPermission;
+    public permission!: AccessPostMeetingPermission;
 
     public googleCalendarEventId?: string;
 }
@@ -23,7 +23,7 @@ export enum InvitationStatus {
 }
 
 export class Invitation {
-    public id: string;
+    public id!: string;
 
     @prop({
         ref: User,
@@ -34,12 +34,12 @@ export class Invitation {
     public email?: string;
 
     @prop()
-    public priority: number;
+    public priority!: number;
 
     @prop({
         enum: InvitationStatus,
     })
-    public status: InvitationStatus;
+    public status!: InvitationStatus;
 }
 
 export enum AttendanceStatus {
@@ -111,24 +111,24 @@ export class Meeting extends Typegoose {
     @prop({
         required: true,
     })
-    public type: string;
+    public type!: string;
 
     @prop({
         required: true,
         minlength: 1,
     })
-    public title: string;
+    public title!: string;
 
     @prop({
         required: true,
         enum: MeetingStatus,
     })
-    public status: string;
+    public status!: string;
 
     @prop({
         required: true,
     })
-    public length: number;
+    public length!: number;
 
     @prop()
     public description?: string;
@@ -152,12 +152,12 @@ export class Meeting extends Typegoose {
         required: true,
         default: 'en-US',
     })
-    public language: string;
+    public language!: string;
 
     @prop({
         required: true,
     })
-    public priority: number;
+    public priority!: number;
 
     @prop({
         ref: Device,
@@ -168,23 +168,23 @@ export class Meeting extends Typegoose {
         ref: User,
         required: true,
     })
-    public owner: Ref<User>;
+    public owner!: Ref<User>;
 
     @arrayProp({
         items: Attendance,
         default: [],
     })
-    public attendance: Attendance[];
+    public attendance!: Attendance[];
 
     @arrayProp({
         items: Invitation,
         default: [],
     })
-    public invitations: Invitation[];
+    public invitations!: Invitation[];
 
     @prop({
         required: true,
         default: () => new AccessPostMeetingPermission(),
     })
-    public generalPermission: AccessPostMeetingPermission;
+    public generalPermission!: AccessPostMeetingPermission;
 }

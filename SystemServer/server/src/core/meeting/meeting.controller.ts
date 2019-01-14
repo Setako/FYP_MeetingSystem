@@ -49,10 +49,13 @@ export class MeetingController {
     constructor(private readonly meetingService: MeetingService) {}
 
     @Get()
-    async getAll(@Query() query: MeetingQueryDto, @Auth() user: User) {
+    async getAll(
+        @Query() query: MeetingQueryDto,
+        @Auth() user: InstanceType<User>,
+    ) {
         const options = await this.meetingService.getQueryOption(
             query,
-            user.username,
+            user.id,
         );
 
         const list = defer(() =>
@@ -161,7 +164,7 @@ export class MeetingController {
         @Body() editMeetingDto: EditMeetingDto,
     ) {
         return from(this.meetingService.edit(id, editMeetingDto)).pipe(
-            map(item => item._id),
+            map(item => item!._id),
             flatMap(_id =>
                 this.meetingService
                     .findAll({ _id: { $eq: _id } })
@@ -221,7 +224,7 @@ export class MeetingController {
     @UseGuards(MeetingGuard)
     async getInvitation(@Param('id') id: string) {
         return from(this.meetingService.getById(id)).pipe(
-            flatMap(item => item.populate('invitations.user').execPopulate()),
+            flatMap(item => item!.populate('invitations.user').execPopulate()),
             map(
                 pipe(
                     item => item.toObject(),
@@ -246,7 +249,7 @@ export class MeetingController {
         return from(
             this.meetingService.editInvitations(id, invitationDto),
         ).pipe(
-            flatMap(item => item.populate('invitations.user').execPopulate()),
+            flatMap(item => item!.populate('invitations.user').execPopulate()),
             map(
                 pipe(
                     item => item.toObject(),

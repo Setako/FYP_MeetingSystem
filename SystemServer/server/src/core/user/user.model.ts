@@ -32,14 +32,14 @@ export class Relation {
 }
 
 export class CalendarImportance {
-    public carlendarId: string;
+    public carlendarId!: string;
 
-    public importance: number;
+    public importance!: number;
 }
 
 export class NotificationSetting {
-    email: boolean;
-    notification: boolean;
+    email!: boolean;
+    notification!: boolean;
 }
 
 export class UserSetting {
@@ -137,37 +137,37 @@ export class User extends Typegoose {
         minlength: 2,
         lowercase: true,
     } as any)
-    public username: string;
+    public username!: string;
 
     @prop({
         required: true,
         minlength: 8,
         maxlength: 60,
     })
-    public password: string;
+    public password!: string;
 
     @prop({
         required: true,
     })
-    public salt: string;
+    public salt!: string;
 
     @prop({
         required: true,
         minlength: 2,
         maxlength: 20,
     })
-    public displayName: string;
+    public displayName!: string;
 
     @prop({
         required: true,
         unique: true,
     })
-    public email: string;
+    public email!: string;
 
     @prop({
         required: true,
     })
-    public tokenVerificationCode: string;
+    public tokenVerificationCode!: string;
 
     @prop()
     public googleAccessToken?: string;
@@ -179,11 +179,11 @@ export class User extends Typegoose {
         items: Relation,
         default: [],
     })
-    public userMeetingRelation: Relation[];
+    public userMeetingRelation!: Relation[];
 
     @prop({
         required: true,
         default: new UserSetting(),
     })
-    public setting: UserSetting;
+    public setting!: UserSetting;
 }

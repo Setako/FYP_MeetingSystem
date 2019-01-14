@@ -17,7 +17,16 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { classToPlain } from 'class-transformer';
 import { Types } from 'mongoose';
-import { combineLatest, defer, from, identity, Observable, pipe } from 'rxjs';
+import {
+    combineLatest,
+    defer,
+    from,
+    identity,
+    Observable,
+    pipe,
+    of,
+    empty,
+} from 'rxjs';
 import { filter, flatMap, map, toArray } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetFriendRequestDto } from '../friend-request/dto/get-friend-request.dto';
@@ -69,7 +78,7 @@ export class NotificationController {
                         filter(item => Boolean(item)),
                         map(
                             pipe(
-                                item => item.toObject(),
+                                item => item!.toObject(),
                                 item => new GetFriendRequestDto(item),
                                 item => classToPlain(item),
                             ),

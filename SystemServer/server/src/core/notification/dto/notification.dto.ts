@@ -10,19 +10,19 @@ export class NotificationDto {
     }
 
     @Expose()
-    type: string;
+    type!: string;
 
     @Expose()
-    time: Date;
+    time!: Date;
 
     @Expose()
     object: any;
 
-    _id: Types.ObjectId;
+    _id!: Types.ObjectId;
 
-    objectModel: NotificationObjectModel;
+    objectModel!: NotificationObjectModel;
 
-    receiver: Types.ObjectId;
+    receiver!: Types.ObjectId;
 
     constructor(partial: Partial<NotificationDto>) {
         Object.assign(this, partial);

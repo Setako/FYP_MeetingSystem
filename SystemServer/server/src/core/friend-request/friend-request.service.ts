@@ -136,10 +136,6 @@ export class FriendRequestService {
         target: string,
         options = { status: FriendRequestStatus.Requested },
     ) {
-        const deleted = await this.getByUserAndTarget(user, target, {
-            status: FriendRequestStatus.Requested,
-        });
-
         return this.friendRequestModel.deleteMany({
             ...options,
             user: await this.userService.getByUsername(user),
@@ -155,6 +151,8 @@ export class FriendRequestService {
         const request = await this.getByUserAndTarget(user, target, {
             status: FriendRequestStatus.Requested,
         });
+
+        if (!request) { return null; }
 
         request.status = acceptDto.accept
             ? FriendRequestStatus.Accepted

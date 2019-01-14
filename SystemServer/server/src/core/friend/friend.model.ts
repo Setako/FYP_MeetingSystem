@@ -8,16 +8,16 @@ export class Friend extends Typegoose {
         unique: true,
         index: true,
     })
-    public friends: Array<Ref<User>>;
+    public friends!: Array<Ref<User>>;
 
     @prop({
         required: true,
     })
-    public addDate: Date;
+    public addDate!: Date;
 
     @arrayProp({
         required: true,
         itemsRef: User,
     })
-    public stared: Array<Ref<User>>;
+    public stared!: Array<Ref<User>>;
 }

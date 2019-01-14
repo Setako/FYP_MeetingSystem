@@ -2,20 +2,20 @@ import { IsBoolean } from 'class-validator';
 
 export class PermissionDto {
     @IsBoolean()
-    readonly accessShareResources: boolean;
+    readonly accessShareResources!: boolean;
 
     @IsBoolean()
-    readonly accessRecordedVoice: boolean;
+    readonly accessRecordedVoice!: boolean;
 
     @IsBoolean()
-    readonly accessTextRecordOfSpeech: boolean;
+    readonly accessTextRecordOfSpeech!: boolean;
 
     @IsBoolean()
-    readonly accessAttendanceRecord: boolean;
+    readonly accessAttendanceRecord!: boolean;
 
     @IsBoolean()
-    readonly makeMeetingMinute: boolean;
+    readonly makeMeetingMinute!: boolean;
 
     @IsBoolean()
-    readonly reviewMeetingMinute: boolean;
+    readonly reviewMeetingMinute!: boolean;
 }

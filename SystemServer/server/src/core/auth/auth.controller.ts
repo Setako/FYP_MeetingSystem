@@ -5,6 +5,8 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { User } from '../user/user.model';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { from, pipe } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Controller('auth')
 export class AuthController {
@@ -36,6 +38,6 @@ export class AuthController {
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
     async logout(@Auth() user: User) {
-        this.authService.logout(user);
+        await this.authService.logout(user);
     }
 }

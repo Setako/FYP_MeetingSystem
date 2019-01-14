@@ -31,7 +31,7 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { AcceptDto } from '../../shared/dto/accept.dto';
 import { GetFriendRequestDto } from './dto/get-friend-request.dto';
-import { FriendRequestStatus } from './friend-request.model';
+import { FriendRequestStatus, FriendRequest } from './friend-request.model';
 import { FriendRequestService } from './friend-request.service';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { defer, identity, from, combineLatest } from 'rxjs';
@@ -200,11 +200,11 @@ export class FriendRequestController {
             throw new NotFoundException('No requests sent');
         }
 
-        const result = await this.friendRequestService.acceptOrRejectRequest(
+        const result = (await this.friendRequestService.acceptOrRejectRequest(
             source,
             user.username,
             acceptDto,
-        );
+        )) as InstanceType<FriendRequest>;
 
         if (result.status === FriendRequestStatus.Accepted) {
             const friendship = await this.friendService.create(

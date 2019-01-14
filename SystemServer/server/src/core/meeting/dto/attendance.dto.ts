@@ -16,11 +16,11 @@ export class AttendanceDto {
     @IsString()
     @Length(2, 20)
     @IsUsername()
-    readonly user: string;
+    readonly user!: string;
 
     @IsInt()
     @IsIn([1, 2, 3])
-    readonly priority: number;
+    readonly priority!: number;
 
     @IsOptional()
     @IsISO8601()

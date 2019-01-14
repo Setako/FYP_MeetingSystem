@@ -15,7 +15,7 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from, merge, identity, of } from 'rxjs';
+import { from, merge, identity, of, empty } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
@@ -53,9 +53,7 @@ export class MeetingService {
             .exec();
     }
 
-    async getQueryOption(query: MeetingQueryDto, owner: string) {
-        const ownerId = (await this.userService.getByUsername(owner)).id;
-
+    async getQueryOption(query: MeetingQueryDto, ownerId: string) {
         let options = {} as any;
 
         if (query.status) {
@@ -90,7 +88,10 @@ export class MeetingService {
                             flatMap(identity),
                             flatMap(item =>
                                 item.friends.filter(
-                                    (f: Types.ObjectId) => !f.equals(ownerId),
+                                    friend =>
+                                        !(friend as Types.ObjectId).equals(
+                                            ownerId,
+                                        ),
                                 ),
                             ),
                             toArray(),
@@ -229,16 +230,19 @@ export class MeetingService {
     async edit(id: string, editMeetingDto: EditMeetingDto) {
         let edited = await this.meetingModel.findById(id);
 
-        if (editMeetingDto.attendance) {
-            edited.attendance = (await Promise.all(
-                editMeetingDto.attendance.map(async item => ({
-                    ...item,
-                    arrivalTime: new Date(item.arrivalTime),
-                    user: await this.userService.getByUsername(item.user),
-                    permission: item.permission || edited.generalPermission,
-                })),
-            )).filter(item => item.user);
-        }
+        if (!edited) { return null; }
+
+        // TODO: handle the attendance
+        // if (editMeetingDto.attendance) {
+        //     edited.attendance = (await Promise.all(
+        //         editMeetingDto.attendance.map(async item => ({
+        //             ...item,
+        //             arrivalTime: new Date(item.arrivalTime),
+        //             user: await this.userService.getByUsername(item.user),
+        //             permission: item.permission || edited.generalPermission,
+        //         })),
+        //     )).filter(item => item.user);
+        // }
 
         if (editMeetingDto.invitations) {
             await edited.save();
@@ -257,6 +261,7 @@ export class MeetingService {
             'language',
             'priority',
             'status',
+            'generalPermission'
         ].forEach(
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
@@ -273,26 +278,29 @@ export class MeetingService {
         edited.realEndTime = editMeetingDto.realEndTime
             ? new Date(editMeetingDto.realEndTime)
             : edited.realEndTime;
-        edited.generalPermission =
-            editMeetingDto.generalPermission || edited.generalPermission;
 
-        if (
-            edited.status !== MeetingStatus.Draft &&
-            edited.attendance.some(att => att.user === edited.owner)
-        ) {
-            edited.attendance.push({
-                user: edited.owner,
-                priority: 1,
-                permission: edited.generalPermission,
-            });
-        }
+        // TODO: handle the owner attendance
+        // if (
+        //     edited.status !== MeetingStatus.Draft &&
+        //     edited.attendance.some(att => att.user === edited.owner)
+        // ) {
+        //     edited.attendance.push({
+        //         user: edited.owner,
+        //         priority: 1,
+        //         permission: edited.generalPermission,
+        //     });
+        // }
 
         return edited.save();
     }
 
     async delete(id: string) {
-        const deleted = await this.meetingModel.findById(id);
-        return deleted.remove();
+        return from(this.meetingModel.findById(id).exec())
+            .pipe(
+                flatMap(item => (item ? of(item) : empty())),
+                flatMap(item => item.remove()),
+            )
+            .toPromise();
     }
 
     async editInvitations(meetingId: string, invitations: InvitationsDto) {
@@ -300,6 +308,8 @@ export class MeetingService {
             .findById(meetingId)
             .populate('owner invitations.user')
             .exec();
+
+        if (!meeting) { return null; }
 
         const emails = new Set(invitations.emails);
         const friends = new Set(invitations.friends);
@@ -312,7 +322,7 @@ export class MeetingService {
         const kept$ = from(meeting.invitations).pipe(
             filter(item => {
                 const user: InstanceType<User> = item.user as any;
-                const hasEmail = emails.delete(item.email);
+                const hasEmail = item.email && emails.delete(item.email);
                 const hasEmail2 = user && emails.delete(user.email);
                 const hasFriends = user && friends.delete(user.username);
                 return hasEmail || hasEmail2 || hasFriends;
@@ -365,10 +375,13 @@ export class MeetingService {
     ) {
         return from(this.meetingModel.findById(meetingId).exec())
             .pipe(
+                flatMap(item => (item ? of(item) : empty())),
                 flatMap(item => {
                     const inviteeIndex = item.invitations.findIndex(invitee =>
                         Types.ObjectId(inviteeId).equals(
-                            invitee.user ? (invitee.user as Types.ObjectId) : '',
+                            invitee.user
+                                ? (invitee.user as Types.ObjectId)
+                                : '',
                         ),
                     );
 
