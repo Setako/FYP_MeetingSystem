@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {MatBottomSheet, PageEvent} from '@angular/material';
-import {Meeting, MeetingSearchingFilter, MeetingStatus} from '../../../../shared/models/meeting';
+import {Meeting, MeetingSearchingFilter, MeetingStatus, priorityDisplay} from '../../../../shared/models/meeting';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ql} from '@angular/core/src/render3';
 import {Observable, Subscription} from 'rxjs';
@@ -23,12 +23,13 @@ export class MeetingListComponent implements OnInit {
   public meetingsLength = 0;
   public meetingList: Meeting[];
   public meetingListQuerySubscription: Subscription = null;
+  public priorityDisplay = priorityDisplay;
 
-  public availableStatus = ['draft', 'planned', 'confirmed', 'cancelled', 'started', 'ended'];
+  public availableStatus = ['Draft', 'Planned', 'Confirmed', 'Cancelled', 'Started', 'Ended'];
 
   public hostedByMe = true;
   public hostedByOther = true;
-  public status: MeetingStatus[] = this.availableStatus as MeetingStatus[];
+  public status: MeetingStatus[] = this.availableStatus.map(s => s.toLowerCase()) as MeetingStatus[];
 
   constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet) {
   }
@@ -39,11 +40,11 @@ export class MeetingListComponent implements OnInit {
 
   public changeStatus(status: string) {
     switch (status) {
-      case 'all':
-        this.status = this.availableStatus as MeetingStatus[];
+      case 'All':
+        this.status = this.availableStatus.map(s => s.toLowerCase()) as MeetingStatus[];
         break;
       default:
-        this.status = [status] as MeetingStatus[];
+        this.status = [status.toLowerCase()] as MeetingStatus[];
     }
     this.updateList();
   }

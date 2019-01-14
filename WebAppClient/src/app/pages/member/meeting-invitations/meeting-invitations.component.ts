@@ -56,6 +56,8 @@ export class MeetingInvitationsComponent implements OnInit {
       case 'From strangers':
         this.invitingFromFriend = false;
         break;
+      case 'All':
+        this.invitingFromFriend = undefined;
     }
     this.updateList();
   }

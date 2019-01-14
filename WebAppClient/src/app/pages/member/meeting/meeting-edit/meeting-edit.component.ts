@@ -34,6 +34,12 @@ export class MeetingEditComponent implements OnInit {
   public meetingParticipantFriends: User[] = [];
   public meetingParticipantEmails = '';
 
+  public timeSlotSuggestions: Date[] = [
+    new Date('2019-01-15 10:00'),
+    new Date('2019-01-16 14:30'),
+    new Date('2019-01-17 16:30'),
+  ];
+
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
     length: new FormControl('', [Validators.required]),
