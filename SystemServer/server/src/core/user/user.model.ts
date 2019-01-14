@@ -95,7 +95,7 @@ export class User extends Typegoose {
         this: ModelType<User> & typeof User,
         username: string,
     ) {
-        return await this.findOne({
+        return this.findOne({
             username,
         });
     }

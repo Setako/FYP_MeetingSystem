@@ -24,8 +24,6 @@ import {
     identity,
     Observable,
     pipe,
-    of,
-    empty,
 } from 'rxjs';
 import { filter, flatMap, map, toArray } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';

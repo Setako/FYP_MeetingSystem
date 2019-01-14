@@ -8,7 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
 import { User } from './user.model';
 import { from, of, empty } from 'rxjs';
-import { flatMap, map } from 'rxjs/operators';
+import { flatMap } from 'rxjs/operators';
 
 @Injectable()
 export class UserService {

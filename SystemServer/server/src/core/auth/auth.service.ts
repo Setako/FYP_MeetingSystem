@@ -9,7 +9,7 @@ import { UserService } from '../user/user.service';
 import { JwtPayload } from './dto/jwt-payload.dto';
 import { LoginDto } from './dto/login.dto';
 import { from, of, empty } from 'rxjs';
-import { flatMap, defaultIfEmpty } from 'rxjs/operators';
+import { flatMap } from 'rxjs/operators';
 
 @Injectable()
 export class AuthService {
