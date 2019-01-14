@@ -1,0 +1,15 @@
+.setting-table {
+  td, th {
+    padding: 10px 0;
+    height: 50px;
+  }
+
+  .type-row:hover {
+    color: #009688;
+  }
+
+  ::ng-deep .mat-form-field-infix {
+    border: 0;
+  }
+
+}

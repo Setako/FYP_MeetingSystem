@@ -1,0 +1,51 @@
+<mat-nav-list>
+  <a *ngIf="attendance!=null && attendance.status==null"
+     href="#" mat-list-item (click)="toggleMarkCalendar($event)">
+
+    <span mat-line *ngIf="attendance.googleCalendarEventId == null">
+      Mark on my calendar
+    </span>
+    <span mat-line *ngIf="attendance.googleCalendarEventId != null">
+      Unmark on my calendar
+    </span>
+  </a>
+
+  <a *ngIf="isOwner && meeting.status == 'draft'"
+     href="#" mat-list-item (click)="delete($event)">
+    <mat-icon matListIcon>delete</mat-icon>
+    <span mat-line>
+      Delete draft
+    </span>
+  </a>
+
+  <a *ngIf="isOwner && cancelableStatus.includes(meeting.status)"
+     href="#" mat-list-item (click)="cancel($event)">
+    <mat-icon matListIcon>delete</mat-icon>
+    <span mat-line>
+      Cancel meeting
+    </span>
+  </a>
+
+  <a *ngIf="isOwner && Object.keys(pushStatusProgressMap).indexOf(meeting.status)!=-1"
+     href="#" mat-list-item (click)="pushStatusProgress($event)">
+    <mat-icon matListIcon>
+      {{pushStatusProgressMap[meeting.status].icon}}
+    </mat-icon>
+    <span mat-line>
+      {{pushStatusProgressMap[meeting.status].action}}
+    </span>
+    <span *ngIf="pushStatusProgressMap[meeting.status].hints != null" mat-line>
+      {{pushStatusProgressMap[meeting.status].hints}}
+    </span>
+  </a>
+
+  <a *ngIf="isOwner && editAvailableStatus.indexOf(meeting.status)!=-1"
+     [routerLink]="'/member/meeting/'+meeting.id+'/edit'"
+     (click)="bottomSheetRef.dismiss()"
+     mat-list-item>
+    <mat-icon matListIcon>edit</mat-icon>
+    <span mat-line>Edit meeting</span>
+  </a>
+
+</mat-nav-list>
+

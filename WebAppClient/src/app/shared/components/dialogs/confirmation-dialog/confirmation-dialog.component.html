@@ -1,0 +1,8 @@
+<h2 mat-dialog-title>{{title}}</h2>
+<div mat-dialog-content class="mb-2">
+  {{content}}
+</div>
+<div mat-dialog-actions class="float-right">
+  <button mat-button (click)="$event.preventDefault();dialogRef.close(false)">CANCEL</button>
+  <button mat-button color="primary" (click)="$event.preventDefault();dialogRef.close(true)">CONFIRM</button>
+</div>

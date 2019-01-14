@@ -1,0 +1,17 @@
+.auth-frame-loading-spinner {
+  position: absolute;
+  display: inline-block;
+  z-index: 10;
+}
+
+.mat-tab-body-wrapper {
+  height: 100%;
+}
+
+.login-frame {
+  max-width: 800px;
+  height: 400px;
+  @media all and (max-width: 768px) {
+    height: 100%;
+  }
+}

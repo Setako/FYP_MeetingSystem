@@ -1,0 +1,131 @@
+<div class="h-100">
+  <div class="d-flex h-100 w-100" *ngIf="querying">
+    <div class="d-inline-block align-self-center mx-auto text-center">
+      <mat-spinner>
+      </mat-spinner>
+    </div>
+  </div>
+  <mat-card class="my-3" *ngIf="!querying">
+    <mat-card-title>{{meeting.title}}
+      <mat-chip-list style="float: right">
+        <mat-chip style="background: #ffca68">{{meeting.status}}</mat-chip>
+      </mat-chip-list>
+    </mat-card-title>
+    <mat-card-subtitle>
+      <div class="d-flex justify-content-between">
+        <div class="d-inline-flex align-items-center">
+          <mat-icon>flag</mat-icon>
+          Host by <span class="ml-1">{{meeting.owner.username}}</span>
+        </div>
+        <div class="d-inline-flex align-items-center">
+          <mat-icon> priority_high</mat-icon>
+          <span>Priority: {{meeting.priority}}</span>
+        </div>
+      </div>
+    </mat-card-subtitle>
+    <mat-card-content>
+      <div class="mt-2 mb-3">
+        <div class="d-flex py-1">
+          <div class="d-flex align-items-center pr-2">
+            <mat-icon> location_on</mat-icon>
+            <span>Location: {{meeting.location}}</span>
+          </div>
+        </div>
+        <div class="d-flex py-1">
+          <div class="d-flex align-items-center pr-2">
+            <mat-icon>date_range</mat-icon>
+            <span>Date: 05/12/2018 08:30</span>
+          </div>
+          <div class="d-flex align-items-center pr-2">
+            <mat-icon>av_timer</mat-icon>
+            <span>Length: 1.5 hours</span>
+          </div>
+        </div>
+
+
+      </div>
+      <mat-divider class="mt-2"></mat-divider>
+      <div class="mt-5 mb-4 pl-3">
+        <pre>{{meeting.description}}</pre>
+      </div>
+      <mat-accordion>
+        <mat-expansion-panel style="background: #ecfbde">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Confirmed attendee list
+            </mat-panel-title>
+            <mat-panel-description>
+              People who will attend this meeting
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="p-3">
+            <mat-chip-list>
+              <mat-chip color="primary" selected>FishWW.661</mat-chip>
+              <mat-chip color="primary" selected>ArPo</mat-chip>
+              <mat-chip color="primary" selected>Kate</mat-chip>
+              <mat-chip color="primary" selected>AppleTree_</mat-chip>
+              <mat-chip color="primary" selected>blue_rainbow</mat-chip>
+            </mat-chip-list>
+          </div>
+        </mat-expansion-panel>
+        <mat-expansion-panel style="background: #fbf6d6">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Not confirmed yet attendee list
+            </mat-panel-title>
+            <mat-panel-description>
+              People who haven't responded yet
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="p-3">
+            <mat-chip-list>
+              <mat-chip color="primary" selected>Runner_life</mat-chip>
+              <mat-chip color="primary" selected>Chan_Tai_Man</mat-chip>
+              <mat-chip>chanpeter12345@gmail.com</mat-chip>
+              <mat-chip>charlie2liu@outlook.com</mat-chip>
+              <mat-chip>mrjamestang@outlook.com</mat-chip>
+            </mat-chip-list>
+          </div>
+        </mat-expansion-panel>
+        <mat-expansion-panel style="background: #fbe4e4">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Not attend list
+            </mat-panel-title>
+            <mat-panel-description>
+              People who declined to attend
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <div class="p-3">
+            <mat-chip-list>
+              <mat-chip color="primary" selected>CmOscar</mat-chip>
+            </mat-chip-list>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+
+      <div class="mt-4">
+        <mat-chip-list>
+          <mat-chip-list class="d-flex">
+            <mat-chip class="d-flex align-items-center mr-2">
+              <mat-icon color="primary">attach_file</mat-icon>
+              File shared
+            </mat-chip>
+            <mat-chip class="d-flex align-items-center mr-2">
+              <mat-icon color="primary">list_alt</mat-icon>
+              Agenda shared
+            </mat-chip>
+          </mat-chip-list>
+        </mat-chip-list>
+      </div>
+    </mat-card-content>
+    <mat-card-actions>
+      <div>
+        <button mat-flat-button class="mr-2" (click)="moreOperation(meeting)">
+          <mat-icon>more_horiz</mat-icon>
+        </button>
+      </div>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

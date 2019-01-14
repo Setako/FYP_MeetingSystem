@@ -1,0 +1,239 @@
+<mat-card>
+  <mat-card-title>
+    Edit Meeting Draft
+  </mat-card-title>
+  <mat-card-content>
+
+    <app-querying-content-hider [querying]="queryingAction!=null" [queryingAction]="queryingAction">
+      <mat-vertical-stepper #stepper (selectionChange)="saveStepState($event,Step.Basic)">
+        <mat-step>
+          <ng-template matStepLabel>Basic information</ng-template>
+
+          <form [formGroup]="basicForm">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Meeting Title</mat-label>
+              <input matInput formControlName="title" placeholder="Title"/>
+            </mat-form-field>
+            <div class="row">
+
+              <mat-form-field class="col-12 col-md-4">
+                <mat-label>
+                  <mat-icon>av_timer</mat-icon>
+                  Length
+                </mat-label>
+                <input matInput formControlName="length" type="number" step="0.5" placeholder="Length"/>
+                <span matSuffix>Hours</span>
+              </mat-form-field>
+
+              <mat-form-field class="col-12 col-md-4">
+                <mat-label>
+                  <mat-icon>priority_high</mat-icon>
+                  Priority
+                </mat-label>
+                <mat-select formControlName="priority" placeholder="Priority">
+                  <mat-option value="1">High</mat-option>
+                  <mat-option value="2">Medium</mat-option>
+                  <mat-option value="3">Low</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="col-12 col-md-4">
+                <mat-select formControlName="type" placeholder="Model Type">
+                  <mat-option value="speech">Speech</mat-option>
+                  <mat-option value="group_discussion">Group Discussion</mat-option>
+                  <mat-option value="presentation">Presentation</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+            </div>
+
+            <mat-form-field class="w-100">
+              <mat-label>
+                <mat-icon>location_on</mat-icon>
+                Location
+              </mat-label>
+              <input matInput formControlName="location" placeholder="Location"/>
+            </mat-form-field>
+
+            <mat-form-field class="w-100">
+              <textarea matInput formControlName="description" placeholder="Description" rows="8"></textarea>
+            </mat-form-field>
+            <div class="d-flex justify-content-end">
+              <button mat-flat-button matStepperNext color="primary">Next</button>
+            </div>
+          </form>
+        </mat-step>
+
+
+        <mat-step>
+          <ng-template matStepLabel>Select participants</ng-template>
+          <div class="row">
+            <div class="col-12 col-lg-6 mb-4">
+              <mat-card style="background: #e5f2e7">
+                <mat-card-title>Friends ({{meetingParticipantFriends.length}})</mat-card-title>
+                <mat-card-content>
+                  <mat-selection-list style="height: 300px; overflow: auto" #selectFriend>
+                    <!--<mat-list-option>Tommy.Chan</mat-list-option>-->
+                    <!--<mat-list-option>Jackkk</mat-list-option>-->
+                    <mat-list-option *ngFor="let user of meetingParticipantFriends" [value]="user">
+                      {{user.displayName}} (@{{user.username}})
+                    </mat-list-option>
+                  </mat-selection-list>
+                </mat-card-content>
+                <div class="d-flex justify-content-between">
+                  <button mat-button color="primary" (click)="selectFriendParticipants()">
+                    <mat-icon>add</mat-icon>
+                    Add...
+                  </button>
+                  <button mat-button color="warn" (click)="deleteSelectedFriendParticipants()">
+                    <mat-icon>delete</mat-icon>
+                    Delete
+                  </button>
+                </div>
+              </mat-card>
+            </div>
+            <div class="col-12 col-lg-6 mb-4">
+              <mat-card style="background: #e2e2e2; height: 100%; min-height: 420px ">
+                <mat-card-title>Through email</mat-card-title>
+                <mat-card-content style="height: 100%;">
+                  <mat-form-field class="w-100 h-100">
+                    <textarea matInput placeholder="Emails"
+                              style="resize: none;" rows="18" [(ngModel)]="meetingParticipantEmails"></textarea>
+                  </mat-form-field>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button mat-flat-button matStepperNext color="primary">Next</button>
+          </div>
+        </mat-step>
+
+
+        <mat-step>
+          <ng-template matStepLabel>Meeting resources</ng-template>
+
+
+          <div class="row">
+            <div class="col-6">
+              <mat-card class="mb-4" style="background: #f2e5cd">
+                <mat-card-title> Sharing google drive folder</mat-card-title>
+                <mat-card-content>
+                  <mat-selection-list style="height: 300px; overflow: auto">
+                    <mat-list-option>
+                      <mat-icon mat-list-icon>folder</mat-icon>
+                      UI Design drafts
+                    </mat-list-option>
+                    <mat-list-option>
+                      <mat-icon mat-list-icon>folder</mat-icon>
+                      Document Draft
+                    </mat-list-option>
+                  </mat-selection-list>
+                </mat-card-content>
+                <div class="d-flex justify-content-between">
+                  <button mat-button color="primary">
+                    <mat-icon>add</mat-icon>
+                    Add...
+                  </button>
+                  <button mat-button color="warn">
+                    <mat-icon>delete</mat-icon>
+                    Delete
+                  </button>
+                </div>
+              </mat-card>
+            </div>
+            <div class="col-6">
+              <mat-card class="mb-4" style="background: #dcd1e2">
+                <mat-card-title>Agenda</mat-card-title>
+                <mat-card-content>
+                  <mat-selection-list style="height: 300px; overflow: auto">
+                    <mat-list-option>
+                      <mat-icon mat-list-icon>insert_drive_file</mat-icon>
+                      Agenda for the group meeting v1
+                    </mat-list-option>
+                  </mat-selection-list>
+                </mat-card-content>
+                <div class="d-flex justify-content-between">
+                  <button mat-button color="primary">
+                    <mat-icon>add</mat-icon>
+                    Add...
+                  </button>
+                  <button mat-button color="warn">
+                    <mat-icon>delete</mat-icon>
+                    Delete
+                  </button>
+                </div>
+              </mat-card>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end">
+            <button mat-flat-button matStepperNext color="primary">Next</button>
+          </div>
+        </mat-step>
+
+        <mat-step>
+          <ng-template matStepLabel>Select time</ng-template>
+
+          <mat-card>
+            <mat-card-title>Condition</mat-card-title>
+            <mat-card-content>
+              <div class="d-flex flex-wrap">
+                <mat-checkbox class="pr-3">Mon</mat-checkbox>
+                <mat-checkbox class="pr-3">Tue</mat-checkbox>
+                <mat-checkbox class="pr-3">Wed</mat-checkbox>
+                <mat-checkbox class="pr-3">Thur</mat-checkbox>
+                <mat-checkbox class="pr-3">Fri</mat-checkbox>
+                <mat-checkbox class="pr-3">Sat</mat-checkbox>
+                <mat-checkbox class="pr-3"><span style="color: darkred">Sun</span></mat-checkbox>
+              </div>
+              <div>
+                <div>
+                  Pick date from range:
+                  <mat-form-field class="pr-3">
+                    <input matInput [min]="today" [matDatepicker]="fromPicker" placeholder="From">
+                    <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #fromPicker></mat-datepicker>
+                  </mat-form-field>
+                  <mat-form-field>
+                    <input matInput [min]="today" [matDatepicker]="toPicker" placeholder="To">
+                    <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #toPicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                <div>
+                  Pick time from range:
+                  <mat-form-field class="pr-3">
+                    <input matInput placeholder="From" aria-label="State" [matAutocomplete]="fromTimeAuto">
+                    <mat-autocomplete #fromTimeAuto="matAutocomplete">
+                      <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
+                        {{time}}
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                  <mat-form-field class="pr-3">
+                    <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto">
+                    <mat-autocomplete #toTimeAuto="matAutocomplete">
+                      <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
+                        {{time}}
+                      </mat-option>
+                    </mat-autocomplete>
+                  </mat-form-field>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <app-week-freetime [dayStartHour]="10.5" [dayEndHour]="19"></app-week-freetime>
+
+          <div class="d-flex justify-content-end">
+            <button mat-flat-button matStepperNext color="primary">Complete, Send all invitation</button>
+          </div>
+        </mat-step>
+
+
+      </mat-vertical-stepper>
+    </app-querying-content-hider>
+  </mat-card-content>
+</mat-card>
+
