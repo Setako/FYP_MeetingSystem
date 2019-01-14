@@ -1,5 +1,6 @@
 # Compiled Files
 build/
+dist/
 *.class
 
 #Logs
@@ -16,3 +17,11 @@ node_modules/
 # Python
 __pycache__/
 
+# Vscode
+.vscode/
+
+# Environment
+.env
+
+# User Data
+data/

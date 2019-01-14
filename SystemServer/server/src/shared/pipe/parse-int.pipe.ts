@@ -1,0 +1,13 @@
+import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
+import { ValidationException } from '../exception/validation.exception';
+
+@Injectable()
+export class ParseIntPipe implements PipeTransform<string> {
+    transform(value: string, metadata: ArgumentMetadata) {
+        const val = parseInt(value, 10);
+        if (isNaN(val)) {
+            throw new ValidationException(`${metadata.data} must be number`);
+        }
+        return val;
+    }
+}
