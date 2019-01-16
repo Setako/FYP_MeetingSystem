@@ -296,6 +296,18 @@ export class MeetingService {
         return edited.save();
     }
 
+    async editStatus(id: string, status: MeetingStatus) {
+        return from(this.meetingModel.findById(id).exec())
+            .pipe(
+                filter(item => Boolean(item)),
+                flatMap(item => {
+                    item.status = status;
+                    return item.save();
+                }),
+            )
+            .toPromise();
+    }
+
     async delete(id: string) {
         return from(this.meetingModel.findById(id).exec())
             .pipe(

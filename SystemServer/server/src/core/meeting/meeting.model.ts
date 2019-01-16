@@ -123,7 +123,7 @@ export class Meeting extends Typegoose {
         required: true,
         enum: MeetingStatus,
     })
-    public status!: string;
+    public status!: MeetingStatus;
 
     @prop({
         required: true,

@@ -17,8 +17,7 @@
         "baseUrl": "./src",
         "paths": {
             "@commander/*": ["./*"]
-        },
-        "noUnusedLocals": true
+        }
     },
     "exclude": ["node_modules"],
     "include": ["src/**/*"]

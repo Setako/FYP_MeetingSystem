@@ -17,14 +17,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { classToPlain } from 'class-transformer';
 import { Types } from 'mongoose';
-import {
-    combineLatest,
-    defer,
-    from,
-    identity,
-    Observable,
-    pipe,
-} from 'rxjs';
+import { combineLatest, defer, from, identity, Observable, pipe } from 'rxjs';
 import { filter, flatMap, map, toArray } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetFriendRequestDto } from '../friend-request/dto/get-friend-request.dto';

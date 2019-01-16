@@ -40,13 +40,20 @@ import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
 import { Types } from 'mongoose';
-import { InvitationStatus } from './meeting.model';
+import { InvitationStatus, MeetingStatus, Meeting } from './meeting.model';
 import { AcceptDto } from '@commander/shared/dto/accept.dto';
+import { EditMeetingStatusDto } from './dto/edit-meeting.status.dto';
+import { ValidationPipe } from '@commander/shared/pipe/validation.pipe';
+import { ReadyToPlannedMeetingDto } from './dto/ready-to-planned-meeting.dto';
+import { NotificationService } from '../notification/notification.service';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
 export class MeetingController {
-    constructor(private readonly meetingService: MeetingService) {}
+    constructor(
+        private readonly meetingService: MeetingService,
+        private readonly notificationService: NotificationService,
+    ) {}
 
     @Get()
     async getAll(
@@ -174,6 +181,81 @@ export class MeetingController {
             flatMap(identity),
             map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
+    }
+
+    @Put(':id/status')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(MeetingOwnerGuard)
+    @UseGuards(MeetingGuard)
+    async editStatus(
+        @Param('id') id: string,
+        @Body() { status }: EditMeetingStatusDto,
+    ) {
+        const meeting = await this.meetingService.getById(id);
+
+        const allowDraftTo = [
+            MeetingStatus.Planned,
+            MeetingStatus.Cancelled,
+            MeetingStatus.Deleted,
+        ];
+
+        if (
+            meeting.status === MeetingStatus.Draft &&
+            !allowDraftTo.includes(status)
+        ) {
+            throw new BadRequestException(
+                'The Draft status are not allowed to be updated to the desired state',
+            );
+        }
+
+        const checkIsAllowedStatusOrder = (
+            nowStatus: MeetingStatus,
+            editedStatus: MeetingStatus,
+        ) => {
+            const statusOrder = [
+                MeetingStatus.Draft,
+                MeetingStatus.Planned,
+                MeetingStatus.Confirmed,
+                MeetingStatus.Cancelled,
+                MeetingStatus.Deleted,
+            ];
+
+            const nowStatusIndex = statusOrder.findIndex(
+                order => order === nowStatus,
+            );
+
+            const editedStatusIndex = statusOrder.findIndex(
+                order => order === editedStatus,
+            );
+
+            if (nowStatusIndex >= editedStatusIndex) {
+                throw new BadRequestException(
+                    'Roll back meeting status is not allowed',
+                );
+            }
+        };
+
+        checkIsAllowedStatusOrder(meeting.status, status);
+
+        const checkIsMeetingValidate = async (
+            meetingInstance: InstanceType<Meeting>,
+            editedStatus: MeetingStatus,
+        ) => {
+            switch (editedStatus) {
+                case MeetingStatus.Planned:
+                    await new ValidationPipe({
+                        transform: true,
+                    }).transformDocument(
+                        meetingInstance,
+                        ReadyToPlannedMeetingDto,
+                    );
+            }
+        };
+
+        await checkIsMeetingValidate(meeting, status);
+        await this.meetingService.editStatus(id, status);
+
+        // todo: handle the notification
     }
 
     @Delete(':id')
