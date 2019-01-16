@@ -1,1 +1,72 @@
-/* You can add global styles to this file, and also import other style files */
+@import "~bootstrap/dist/css/bootstrap-grid.css";
+@import "assets/css/bootstrap-spacing.css";
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
+@import "../node_modules/angular-calendar/css/angular-calendar.css";
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+
+/*Global css*/
+.cc-bg-secondary {
+  background: #fafafa;
+}
+
+.cc-bg-dark-secondary {
+  background: #e2e2e2;
+}
+
+.cc-text-color-secondary {
+  color: #e5e5e5;
+}
+
+.cc-bg-primary {
+  background: #009688;
+}
+
+.cc-bg-dark-primary {
+  background: #00675b;
+}
+
+.cc-text-color-primary {
+  color: #FFF;
+}
+
+.cc-color-primary {
+
+}
+
+.right-bottom-fab {
+  position: fixed !important;
+  bottom: 25px;
+  right: 25px;
+  z-index: 20;
+}
+
+mwl-calendar-month-cell,
+mwl-calendar-day-view-hour-segment,
+mwl-calendar-week-view-hour-segment {
+  touch-action: auto !important;
+}
+
+
+/*Calendar*/
+
+.cal-header, .cal-header:hover {
+  background: #009688 !important;
+  color: white;
+}
+
+.cal-header .cal-cell:hover {
+  background: #52c7b8 !important;
+}

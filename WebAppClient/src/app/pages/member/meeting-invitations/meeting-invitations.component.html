@@ -1,0 +1,38 @@
+<div class="h-100 p-3 mat-elevation-z4" style="background: white">
+  <h2>Received meeting invitations</h2>
+  <mat-tab-group class="no-content-tab" (selectedTabChange)="changeFrom($event.tab.textLabel)">
+    <mat-tab label="All"></mat-tab>
+    <mat-tab label="From friends"></mat-tab>
+    <mat-tab label="From stranger"></mat-tab>
+  </mat-tab-group>
+  <mat-paginator [length]="meetingsLength"
+                 [pageIndex]="pageIndex"
+                 [pageSize]="pageSize"
+                 [pageSizeOptions]="pageSizeOptions"
+                 (page)="updatePageNum($event)">
+  </mat-paginator>
+  <div class="p-2">
+    <app-querying-content-hider [querying]="meetingListQuerySubscription!=null">
+      <div class="mat-elevation-z2 p-2" *ngFor="let meeting of meetingList">
+        <div class="d-flex">
+          <div class="flex-shrink-1 flex-grow-1">
+            <div style="font-size: 24px; font-weight: 500">{{meeting.title}}</div>
+            Hosted by {{meeting.owner.displayName}} (@{{meeting.owner.username}})
+          </div>
+          <div class="flex-shrink-0 flex-grow-0 d-flex justify-content-center align-items-center">
+            <button mat-icon-button>
+              <mat-icon class="cc-color-no">close</mat-icon>
+            </button>
+            <button mat-icon-button>
+              <mat-icon class="cc-color-yes">check</mat-icon>
+            </button>
+            <button mat-icon-button>
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </app-querying-content-hider>
+  </div>
+</div>
+
