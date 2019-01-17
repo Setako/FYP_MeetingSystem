@@ -255,6 +255,20 @@ export class MeetingController {
         await checkIsMeetingValidate(meeting, status);
         await this.meetingService.editStatus(id, status);
 
+        const afterUpdateAction = async (
+            meetingInstance: InstanceType<Meeting>,
+            editedStatus: MeetingStatus,
+        ) => {
+            switch (editedStatus) {
+                case MeetingStatus.Confirmed:
+                    this.meetingService.treatAllWaitingInviationToReject(
+                        meetingInstance.id,
+                    );
+            }
+        };
+
+        afterUpdateAction(meeting, status);
+
         // todo: handle the notification
     }
 

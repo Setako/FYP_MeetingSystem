@@ -172,13 +172,11 @@ export class Meeting extends Typegoose {
 
     @arrayProp({
         items: Attendance,
-        default: [],
     })
     public attendance!: Attendance[];
 
     @arrayProp({
         items: Invitation,
-        default: [],
     })
     public invitations!: Invitation[];
 

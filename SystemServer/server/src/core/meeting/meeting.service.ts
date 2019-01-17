@@ -308,6 +308,27 @@ export class MeetingService {
             .toPromise();
     }
 
+    async treatAllWaitingInviationToReject(id: string) {
+        return this.meetingModel
+            .updateOne(
+                {
+                    _id: { $eq: Types.ObjectId(id) },
+                },
+                {
+                    $set: {
+                        'invitations.$[waiting].status':
+                            InvitationStatus.Declined,
+                    },
+                },
+                {
+                    arrayFilters: [
+                        { 'waiting.status': InvitationStatus.Waiting },
+                    ],
+                },
+            )
+            .exec();
+    }
+
     async delete(id: string) {
         return from(this.meetingModel.findById(id).exec())
             .pipe(

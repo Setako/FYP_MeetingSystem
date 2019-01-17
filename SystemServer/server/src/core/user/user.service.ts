@@ -132,8 +132,6 @@ export class UserService {
 
         edited.email = editUserDto.email || edited.email;
         edited.displayName = editUserDto.displayName || edited.displayName;
-        // edited.googleAccessToken =
-        //     editUserDto.googleAccessToken || edited.googleAccessToken;
         if (editUserDto.setting) {
             edited.setting = {
                 ...edited.setting,
