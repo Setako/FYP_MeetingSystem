@@ -275,9 +275,19 @@ export class MeetingController {
     ) {
         const isInvited$ = from(
             this.meetingService.countDocuments({
-                _id: Types.ObjectId(id),
-                'invitation.user': user._id,
-                'invitation.status': { $in: [InvitationStatus.Waiting] },
+                $and: [
+                    { _id: { $eq: Types.ObjectId(id) } },
+                    {
+                        'invitations.user': {
+                            $eq: Types.ObjectId(user.id),
+                        },
+                    },
+                    {
+                        'invitations.status': {
+                            $in: [InvitationStatus.Waiting],
+                        },
+                    },
+                ],
             }),
         ).pipe(
             tap(item => {
