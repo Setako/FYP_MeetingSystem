@@ -4,6 +4,9 @@ import {
     UseGuards,
     Query,
     BadRequestException,
+    Res,
+    HttpCode,
+    HttpStatus,
 } from '@nestjs/common';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -26,6 +29,8 @@ import {
 } from 'rxjs/operators';
 import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
+import { Response } from 'express';
+import { GetAuthUrlQueryDto } from './dto/get-auth-url-query.dto';
 
 @Controller('google')
 export class GoogleController {
@@ -36,7 +41,10 @@ export class GoogleController {
 
     @Get('auth/url')
     @UseGuards(AuthGuard('jwt'))
-    async getAuthUrl(@Auth() user: InstanceType<User>) {
+    async getAuthUrl(
+        @Auth() user: InstanceType<User>,
+        @Query() query: GetAuthUrlQueryDto,
+    ) {
         const isTokenAvailable$ = of(user.googleRefreshToken).pipe(
             filter(Boolean),
             flatMap(token => this.authService.isRefreshTokenAvailable(token)),
@@ -55,7 +63,7 @@ export class GoogleController {
         );
 
         const authUrl$ = clearUserToken$.pipe(
-            mapTo(this.authService.getAuthUrl(user.id)),
+            mapTo(this.authService.getAuthUrl(user.id, query.successRedirect)),
         );
 
         return authUrl$.pipe(
@@ -64,7 +72,11 @@ export class GoogleController {
     }
 
     @Get('auth/receive')
-    async handleRedireToken(@Query() authDto: GoogleAuthDto) {
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async handleRedireToken(
+        @Query() authDto: GoogleAuthDto,
+        @Res() res: Response,
+    ) {
         const verify$ = of(authDto.state).pipe(
             map(item => this.authService.verifyAuthState(item)),
             catchError(e => {
@@ -75,9 +87,11 @@ export class GoogleController {
             }),
         );
 
-        const userId$ = verify$.pipe(
-            mapTo(this.authService.decodeAuthState(authDto.state).userId),
+        const state$ = verify$.pipe(
+            map(() => this.authService.decodeAuthState(authDto.state)),
         );
+        const userId$ = state$.pipe(map(item => item.userId));
+        const successRedirect$ = state$.pipe(map(item => item.successRedirect));
 
         const refreshToken$ = verify$.pipe(
             mergeMapTo(this.authService.getRefreshToken(authDto.code)),
@@ -89,7 +103,9 @@ export class GoogleController {
             ),
         );
 
-        return updateUserToken$.pipe(mergeMapTo(empty()));
+        return combineLatest(updateUserToken$, successRedirect$)
+            .pipe(flatMap(([, url]) => (url ? of(res.redirect(url)) : of())))
+            .toPromise();
     }
 
     @Get('auth/access-token')

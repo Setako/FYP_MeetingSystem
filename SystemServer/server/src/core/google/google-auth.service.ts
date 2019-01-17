@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 import { JwtService } from '@nestjs/jwt';
-import { of, from } from 'rxjs';
+import { of } from 'rxjs';
 import { flatMap, map, tap, catchError } from 'rxjs/operators';
-import { token } from 'morgan';
 
 interface GoogleAuthState {
     userId: string;
+    successRedirect?: string;
 }
 
 @Injectable()
@@ -49,18 +49,20 @@ export class GoogleAuthService {
     }
 
     decodeAuthState(state: string): GoogleAuthState {
+        const decode = this.jwtService.decode(state) as any;
         return {
-            userId: (this.jwtService.decode(state) as any).userId,
+            userId: decode.userId,
+            successRedirect: decode.successRedirect,
         };
     }
 
-    getAuthUrl(userId: string) {
+    getAuthUrl(userId: string, successRedirect?: string) {
         const client = this.getClient();
 
         return client.generateAuthUrl({
             access_type: 'offline',
             scope: this.SCOPES,
-            state: this.signAuthState({ userId }),
+            state: this.signAuthState({ userId, successRedirect }),
             prompt: 'consent',
         });
     }
