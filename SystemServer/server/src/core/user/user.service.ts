@@ -8,7 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
 import { User } from './user.model';
 import { from, of, empty } from 'rxjs';
-import { flatMap } from 'rxjs/operators';
+import { flatMap, map } from 'rxjs/operators';
 
 @Injectable()
 export class UserService {
@@ -132,8 +132,8 @@ export class UserService {
 
         edited.email = editUserDto.email || edited.email;
         edited.displayName = editUserDto.displayName || edited.displayName;
-        edited.googleAccessToken =
-            editUserDto.googleAccessToken || edited.googleAccessToken;
+        // edited.googleAccessToken =
+        //     editUserDto.googleAccessToken || edited.googleAccessToken;
         if (editUserDto.setting) {
             edited.setting = {
                 ...edited.setting,
@@ -150,6 +150,27 @@ export class UserService {
         }
 
         return edited.save();
+    }
+
+    async editGoogleRefreshToken(userId: string, refreshToken?: string) {
+        // const edited = await this.userModel.findByUsername(username);
+        // if (!edited) {
+        //     return null;
+        // }
+
+        return from(this.userModel.findById(userId).exec())
+            .pipe(
+                flatMap(item => (item ? of(item) : empty())),
+                flatMap(item => {
+                    item.googleRefreshToken = refreshToken;
+                    return item.save();
+                }),
+            )
+            .toPromise();
+
+        // edited.googleRefreshToken = refreshToken;
+
+        // return edited.save();
     }
 
     async delete(username: string) {

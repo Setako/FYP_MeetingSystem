@@ -1,0 +1,121 @@
+import {
+    Controller,
+    Get,
+    UseGuards,
+    Query,
+    BadRequestException,
+} from '@nestjs/common';
+import { GoogleAuthService } from './google-auth.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { User } from '../user/user.model';
+import { InstanceType } from 'typegoose';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
+import { GoogleAuthUrlDto } from './dto/google-auth-url.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
+import { of, empty, combineLatest, from } from 'rxjs';
+import {
+    catchError,
+    map,
+    tap,
+    mapTo,
+    mergeMapTo,
+    flatMap,
+    filter,
+    defaultIfEmpty,
+} from 'rxjs/operators';
+import { UserService } from '../user/user.service';
+import { GetAccessTokenDto } from './dto/get-access-token.dto';
+
+@Controller('google')
+export class GoogleController {
+    constructor(
+        private readonly authService: GoogleAuthService,
+        private readonly userService: UserService,
+    ) {}
+
+    @Get('auth/url')
+    @UseGuards(AuthGuard('jwt'))
+    async getAuthUrl(@Auth() user: InstanceType<User>) {
+        const isTokenAvailable$ = of(user.googleRefreshToken).pipe(
+            filter(Boolean),
+            flatMap(token => this.authService.isRefreshTokenAvailable(token)),
+            tap(available => {
+                if (available) {
+                    throw new BadRequestException(
+                        'User has enabled Google services',
+                    );
+                }
+            }),
+        );
+
+        const clearUserToken$ = isTokenAvailable$.pipe(
+            defaultIfEmpty(null),
+            mergeMapTo(this.userService.editGoogleRefreshToken(user.id)),
+        );
+
+        const authUrl$ = clearUserToken$.pipe(
+            mapTo(this.authService.getAuthUrl(user.id)),
+        );
+
+        return authUrl$.pipe(
+            map(url => ObjectUtils.ObjectToPlain({ url }, GoogleAuthUrlDto)),
+        );
+    }
+
+    @Get('auth/receive')
+    async handleRedireToken(@Query() authDto: GoogleAuthDto) {
+        const verify$ = of(authDto.state).pipe(
+            map(item => this.authService.verifyAuthState(item)),
+            catchError(e => {
+                const message = e.message
+                    .replace('token', 'state')
+                    .replace('jwt', 'state');
+                throw new BadRequestException(message);
+            }),
+        );
+
+        const userId$ = verify$.pipe(
+            mapTo(this.authService.decodeAuthState(authDto.state).userId),
+        );
+
+        const refreshToken$ = verify$.pipe(
+            mergeMapTo(this.authService.getRefreshToken(authDto.code)),
+        );
+
+        const updateUserToken$ = combineLatest(userId$, refreshToken$).pipe(
+            flatMap(([id, { tokens: { refresh_token } }]) =>
+                this.userService.editGoogleRefreshToken(id, refresh_token),
+            ),
+        );
+
+        return updateUserToken$.pipe(mergeMapTo(empty()));
+    }
+
+    @Get('auth/access-token')
+    @UseGuards(AuthGuard('jwt'))
+    async getAccessToken(@Auth() user: InstanceType<User>) {
+        if (!user.googleRefreshToken) {
+            throw new BadRequestException(
+                'Please enable Google services first',
+            );
+        }
+
+        const accessToken$ = from(
+            this.authService.getAccessToken(user.googleRefreshToken),
+        ).pipe(
+            catchError(async () => {
+                await this.userService.editGoogleRefreshToken(user.id);
+                throw new BadRequestException(
+                    'The authorization grant provided is invalid. Please try re-enabling Google services.',
+                );
+            }),
+        );
+
+        return accessToken$.pipe(
+            map(token =>
+                ObjectUtils.ObjectToPlain({ token }, GetAccessTokenDto),
+            ),
+        );
+    }
+}

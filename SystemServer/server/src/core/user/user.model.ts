@@ -170,7 +170,7 @@ export class User extends Typegoose {
     public tokenVerificationCode!: string;
 
     @prop()
-    public googleAccessToken?: string;
+    public googleRefreshToken?: string;
 
     @prop()
     public avatar?: string;

@@ -24,7 +24,7 @@ export class UserDto {
     tokenVerificationCode!: string;
 
     @Exclude()
-    googleAccessToken?: string;
+    googleRefreshToken?: string;
 
     @Exclude()
     __v!: number;

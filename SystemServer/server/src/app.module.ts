@@ -7,10 +7,11 @@ import { FriendModule } from './core/friend/friend.module';
 import { MeetingModule } from './core/meeting/meeting.module';
 import { NotificationModule } from './core/notification/notification.module';
 import { UserModule } from './core/user/user.module';
+import { GoogleModule } from './core/google/google.module';
 
 @Module({
     imports: [
-        TypegooseModule.forRoot(process.env.dbUrl, {
+        TypegooseModule.forRoot(process.env.DB_URL, {
             useNewUrlParser: true,
             useCreateIndex: true,
         }),
@@ -21,6 +22,7 @@ import { UserModule } from './core/user/user.module';
         FriendRequestModule,
         NotificationModule,
         FriendModule,
+        GoogleModule,
     ],
     controllers: [],
     providers: [],

@@ -36,6 +36,7 @@
         "dotenv": "^6.2.0",
         "fastify": "^1.13.3",
         "fastify-formbody": "^2.0.3",
+        "googleapis": "^36.0.0",
         "mongoose": "^5.4.0",
         "morgan": "^1.9.1",
         "nestjs-typegoose": "^5.1.2",
