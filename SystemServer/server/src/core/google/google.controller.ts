@@ -17,7 +17,7 @@ import { InstanceType } from 'typegoose';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GoogleAuthUrlDto } from './dto/google-auth-url.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
-import { of, combineLatest, from, defer, zip, empty } from 'rxjs';
+import { of, from, defer, zip, empty } from 'rxjs';
 import {
     catchError,
     map,
@@ -32,11 +32,13 @@ import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
 import { Response } from 'express';
 import { GetAuthUrlQueryDto } from './dto/get-auth-url-query.dto';
+import { GoogleEventService } from './google-event.service';
 
 @Controller('google')
 export class GoogleController {
     constructor(
         private readonly authService: GoogleAuthService,
+        private readonly eventService: GoogleEventService,
         private readonly userService: UserService,
     ) {}
 

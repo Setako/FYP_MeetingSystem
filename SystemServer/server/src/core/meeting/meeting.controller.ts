@@ -26,7 +26,7 @@ import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
-import { defer, identity, from, combineLatest, pipe } from 'rxjs';
+import { defer, identity, from, combineLatest, pipe, zip } from 'rxjs';
 import {
     flatMap,
     filter,
@@ -36,6 +36,8 @@ import {
     switchMap,
     tap,
     mergeMapTo,
+    groupBy,
+    reduce,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
@@ -51,13 +53,23 @@ import {
     NotificationType,
     NotificationObjectModel,
 } from '../notification/notification.model';
+import { UserService } from '../user/user.service';
+import { MeetingBusyTimeQueryDto } from './dto/meeting-busy-time-query.dto';
+import { GoogleAuthService } from '../google/google-auth.service';
+import { GoogleEventService } from '../google/google-event.service';
+import { GoogleCalendarService } from '../google/google-calendar.service';
+import { BusyTimeDto } from './dto/busy-time.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
 export class MeetingController {
     constructor(
         private readonly meetingService: MeetingService,
+        private readonly userService: UserService,
         private readonly notificationService: NotificationService,
+        private readonly googleAuthService: GoogleAuthService,
+        private readonly googleEventService: GoogleEventService,
+        private readonly googleCalendarService: GoogleCalendarService,
     ) {}
 
     @Get()
@@ -331,6 +343,7 @@ export class MeetingController {
 
     @Put(':id/invitation')
     @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async acceptOrRejctInvitation(
         @Auth() user: InstanceType<User>,
@@ -374,6 +387,107 @@ export class MeetingController {
                 ),
             )
             .toPromise();
+    }
+
+    @Get(':id/busy-time')
+    @UseGuards(MeetingOwnerGuard)
+    @UseGuards(MeetingGuard)
+    async getBusyTime(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Query() query: MeetingBusyTimeQueryDto,
+    ) {
+        const friendsId$ = from(
+            this.meetingService.getAllFriendIdsInInvitations(id, user.id),
+        ).pipe(
+            map(list => [...new Set(list).add(user.id)]),
+            flatMap(identity),
+        );
+
+        const friend$ = friendsId$.pipe(
+            flatMap(friendId => this.userService.getById(friendId)),
+            filter(item => Boolean(item)),
+        );
+
+        const whoHasGoogleService$ = friend$.pipe(
+            filter(({ googleRefreshToken }) => Boolean(googleRefreshToken)),
+            flatMap(friend =>
+                from(
+                    this.googleAuthService.isRefreshTokenAvailable(
+                        friend.googleRefreshToken,
+                    ),
+                ).pipe(
+                    filter(identity),
+                    mapTo(friend),
+                ),
+            ),
+        );
+
+        const userRefreshToken$ = whoHasGoogleService$.pipe(
+            map(friend => friend.googleRefreshToken),
+        );
+
+        const userCalendarIdList$ = userRefreshToken$.pipe(
+            flatMap(token => this.googleCalendarService.getAllCalendars(token)),
+            map(calendar => calendar.id),
+            toArray(),
+        );
+
+        const userBusyEventCalendar$ = zip(
+            userRefreshToken$,
+            userCalendarIdList$,
+        ).pipe(
+            flatMap(([refreshToken, calendarIds]) =>
+                this.googleEventService.getAllBusyEvent({
+                    refreshToken,
+                    calendarIds,
+                    timeMax: query.toDate,
+                    timeMin: query.fromDate,
+                }),
+            ),
+            toArray(),
+        );
+
+        const busyTime$ = zip(
+            whoHasGoogleService$,
+            userBusyEventCalendar$,
+        ).pipe(
+            flatMap(([userInstance, eventCalendar]) =>
+                from(eventCalendar).pipe(
+                    flatMap(item => Object.values(item)),
+                    filter(item => !item.errors),
+                    flatMap(item => item.busy),
+                    map(({ start, end }) => ({
+                        fromDate: new Date(start),
+                        toDate: new Date(end),
+                        user: userInstance,
+                    })),
+                ),
+            ),
+        );
+
+        const groupedBusyTime$ = busyTime$.pipe(
+            groupBy(time => time.fromDate.getTime() - time.toDate.getTime()),
+            flatMap(group => group.pipe(toArray())),
+        );
+
+        const result$ = groupedBusyTime$.pipe(
+            map(group => ({
+                fromDate: group.length !== 0 ? group[0].fromDate : undefined,
+                toDate: group.length !== 0 ? group[0].toDate : undefined,
+                users: group.reduce(
+                    (acc, xs) => acc.concat(xs.user),
+                    [] as Array<InstanceType<User>>,
+                ),
+            })),
+            filter(item => Boolean(item.fromDate) && Boolean(item.toDate)),
+        );
+
+        return result$.pipe(
+            map(item => ObjectUtils.ObjectToPlain(item, BusyTimeDto)),
+            toArray(),
+            map(items => ({ items })),
+        );
     }
 
     @Get(':id/participant')

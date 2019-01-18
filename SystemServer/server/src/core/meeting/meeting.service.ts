@@ -456,6 +456,21 @@ export class MeetingService {
         return meeting.save();
     }
 
+    async getAllFriendIdsInInvitations(id: string, userId: string) {
+        const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
+            filter(item => Boolean(item)),
+        );
+
+        const invitations$ = meeting$.pipe(flatMap(item => item.invitations));
+
+        const friends$ = invitations$.pipe(
+            filter(item => Boolean(item.user) && !Boolean(item.email)),
+            map(item => (item.user as Types.ObjectId).toHexString()),
+        );
+
+        return friends$.pipe(toArray()).toPromise();
+    }
+
     async acceptOrRejectInvitation(
         meetingId: string,
         inviteeId: string,
