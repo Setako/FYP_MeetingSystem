@@ -7,6 +7,7 @@ import {
     Res,
     HttpCode,
     HttpStatus,
+    Delete,
 } from '@nestjs/common';
 import { GoogleAuthService } from './google-auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -16,7 +17,7 @@ import { InstanceType } from 'typegoose';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GoogleAuthUrlDto } from './dto/google-auth-url.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
-import { of, empty, combineLatest, from } from 'rxjs';
+import { of, combineLatest, from } from 'rxjs';
 import {
     catchError,
     map,
@@ -133,5 +134,11 @@ export class GoogleController {
                 ObjectUtils.ObjectToPlain({ token }, GetAccessTokenDto),
             ),
         );
+    }
+
+    @Delete('auth/refresh-token')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async getRefreshToken(@Auth() user: InstanceType<User>) {
+        await this.userService.editGoogleRefreshToken(user.id);
     }
 }
