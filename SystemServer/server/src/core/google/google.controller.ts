@@ -17,7 +17,7 @@ import { InstanceType } from 'typegoose';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GoogleAuthUrlDto } from './dto/google-auth-url.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
-import { of, combineLatest, from } from 'rxjs';
+import { of, combineLatest, from, defer, zip, empty } from 'rxjs';
 import {
     catchError,
     map,
@@ -73,7 +73,6 @@ export class GoogleController {
     }
 
     @Get('auth/receive')
-    @HttpCode(HttpStatus.NO_CONTENT)
     async handleRedireToken(
         @Query() authDto: GoogleAuthDto,
         @Res() res: Response,
@@ -88,25 +87,31 @@ export class GoogleController {
             }),
         );
 
-        const state$ = verify$.pipe(
-            map(() => this.authService.decodeAuthState(authDto.state)),
+        const state$ = defer(() =>
+            of(this.authService.decodeAuthState(authDto.state)),
         );
         const userId$ = state$.pipe(map(item => item.userId));
-        const successRedirect$ = state$.pipe(map(item => item.successRedirect));
-
-        const refreshToken$ = verify$.pipe(
-            mergeMapTo(this.authService.getRefreshToken(authDto.code)),
-        );
-
-        const updateUserToken$ = combineLatest(userId$, refreshToken$).pipe(
-            flatMap(([id, { tokens: { refresh_token } }]) =>
-                this.userService.editGoogleRefreshToken(id, refresh_token),
+        const successRedirect$ = state$.pipe(
+            flatMap(({ successRedirect }) =>
+                successRedirect ? of(successRedirect) : empty(),
             ),
         );
 
-        return combineLatest(updateUserToken$, successRedirect$)
-            .pipe(flatMap(([, url]) => (url ? of(res.redirect(url)) : of())))
-            .toPromise();
+        const refreshToken$ = defer(() =>
+            this.authService.getRefreshToken(authDto.code),
+        );
+
+        const flow$ = verify$.pipe(
+            flatMap(() => zip(userId$, refreshToken$)),
+            flatMap(([id, { tokens: { refresh_token } }]) =>
+                this.userService.editGoogleRefreshToken(id, refresh_token),
+            ),
+            flatMap(() => successRedirect$),
+            tap(url => (url ? res.redirect(url) : res.end())),
+        );
+
+        await flow$.toPromise();
+        res.end();
     }
 
     @Get('auth/access-token')
@@ -138,6 +143,7 @@ export class GoogleController {
 
     @Delete('auth/refresh-token')
     @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(AuthGuard('jwt'))
     async getRefreshToken(@Auth() user: InstanceType<User>) {
         await this.userService.editGoogleRefreshToken(user.id);
     }
