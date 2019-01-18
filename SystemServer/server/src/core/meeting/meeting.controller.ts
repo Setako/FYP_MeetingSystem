@@ -193,49 +193,44 @@ export class MeetingController {
     ) {
         const meeting = await this.meetingService.getById(id);
 
-        const allowDraftTo = [
-            MeetingStatus.Planned,
-            MeetingStatus.Cancelled,
-            MeetingStatus.Deleted,
-        ];
+        const allowStatusTo = new Map([
+            [
+                MeetingStatus.Draft,
+                [
+                    MeetingStatus.Planned,
+                    MeetingStatus.Cancelled,
+                    MeetingStatus.Deleted,
+                ],
+            ],
+            [
+                MeetingStatus.Planned,
+                [
+                    MeetingStatus.Confirmed,
+                    MeetingStatus.Cancelled,
+                    MeetingStatus.Deleted,
+                ],
+            ],
+            [
+                MeetingStatus.Confirmed,
+                [
+                    MeetingStatus.Planned,
+                    MeetingStatus.Cancelled,
+                    MeetingStatus.Deleted,
+                ],
+            ],
+            [MeetingStatus.Started, [MeetingStatus.Ended]],
+            [MeetingStatus.Ended, [MeetingStatus.Started]],
+            [MeetingStatus.Cancelled, []],
+            [MeetingStatus.Deleted, []],
+        ]);
 
-        if (
-            meeting.status === MeetingStatus.Draft &&
-            !allowDraftTo.includes(status)
-        ) {
+        if (!allowStatusTo.get(meeting.status).includes(status)) {
             throw new BadRequestException(
-                'The Draft status are not allowed to be updated to the desired state',
+                `The ${
+                    meeting.status
+                } meeting are not allowed to be updated as ${status}`,
             );
         }
-
-        const checkIsAllowedStatusOrder = (
-            nowStatus: MeetingStatus,
-            editedStatus: MeetingStatus,
-        ) => {
-            const statusOrder = [
-                MeetingStatus.Draft,
-                MeetingStatus.Planned,
-                MeetingStatus.Confirmed,
-                MeetingStatus.Cancelled,
-                MeetingStatus.Deleted,
-            ];
-
-            const nowStatusIndex = statusOrder.findIndex(
-                order => order === nowStatus,
-            );
-
-            const editedStatusIndex = statusOrder.findIndex(
-                order => order === editedStatus,
-            );
-
-            if (nowStatusIndex >= editedStatusIndex) {
-                throw new BadRequestException(
-                    'Roll back meeting status is not allowed',
-                );
-            }
-        };
-
-        checkIsAllowedStatusOrder(meeting.status, status);
 
         const checkIsMeetingValidate = async (
             meetingInstance: InstanceType<Meeting>,
@@ -254,22 +249,6 @@ export class MeetingController {
 
         await checkIsMeetingValidate(meeting, status);
         await this.meetingService.editStatus(id, status);
-
-        const afterUpdateAction = async (
-            meetingInstance: InstanceType<Meeting>,
-            editedStatus: MeetingStatus,
-        ) => {
-            switch (editedStatus) {
-                case MeetingStatus.Confirmed:
-                    this.meetingService.treatAllWaitingInviationToReject(
-                        meetingInstance.id,
-                    );
-            }
-        };
-
-        afterUpdateAction(meeting, status);
-
-        // todo: handle the notification
     }
 
     @Delete(':id')
