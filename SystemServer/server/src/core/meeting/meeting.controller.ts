@@ -35,6 +35,7 @@ import {
     mapTo,
     switchMap,
     tap,
+    mergeMapTo,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
@@ -46,6 +47,10 @@ import { EditMeetingStatusDto } from './dto/edit-meeting.status.dto';
 import { ValidationPipe } from '@commander/shared/pipe/validation.pipe';
 import { ReadyToPlannedMeetingDto } from './dto/ready-to-planned-meeting.dto';
 import { NotificationService } from '../notification/notification.service';
+import {
+    NotificationType,
+    NotificationObjectModel,
+} from '../notification/notification.model';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -170,6 +175,40 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() editMeetingDto: EditMeetingDto,
     ) {
+        const sendNotification$ = from(this.meetingService.getById(id))
+            .pipe(
+                filter(
+                    item =>
+                        Boolean(item) &&
+                        [
+                            MeetingStatus.Planned,
+                            MeetingStatus.Confirmed,
+                            MeetingStatus,
+                        ].includes(item.status),
+                ),
+            )
+            .pipe(
+                mergeMapTo(
+                    this.meetingService.findNewInviteeIds(
+                        id,
+                        editMeetingDto.invitations,
+                    ),
+                ),
+                flatMap(identity),
+            )
+            .pipe(
+                filter(inviteeId => Boolean(inviteeId)),
+                flatMap(inviteeId =>
+                    this.notificationService.create({
+                        receiver: Types.ObjectId(inviteeId),
+                        type: NotificationType.MeetingInviteReceived,
+                        time: new Date(),
+                        object: Types.ObjectId(id),
+                        objectModel: NotificationObjectModel.Meeting,
+                    }),
+                ),
+            );
+
         return from(this.meetingService.edit(id, editMeetingDto)).pipe(
             map(item => item!._id),
             flatMap(_id =>
@@ -180,6 +219,7 @@ export class MeetingController {
             ),
             flatMap(identity),
             map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            tap(() => sendNotification$.subscribe()),
         );
     }
 
@@ -249,6 +289,37 @@ export class MeetingController {
 
         await checkIsMeetingValidate(meeting, status);
         await this.meetingService.editStatus(id, status);
+
+        const afterUpdateAction = new Map([
+            [
+                MeetingStatus.Planned,
+                (meetingInstance: InstanceType<Meeting>) => {
+                    const inviteeInWaiting = meetingInstance.invitations.filter(
+                        item =>
+                            item.status === InvitationStatus.Waiting &&
+                            item.user,
+                    );
+
+                    return from(inviteeInWaiting).pipe(
+                        flatMap(invitee =>
+                            this.notificationService.create({
+                                receiver: invitee.user as Types.ObjectId,
+                                type: NotificationType.MeetingInviteReceived,
+                                time: new Date(),
+                                object: meetingInstance._id,
+                                objectModel: NotificationObjectModel.Meeting,
+                            }),
+                        ),
+                    );
+                },
+            ],
+        ]);
+
+        if (afterUpdateAction.has(status)) {
+            afterUpdateAction
+                .get(status)(meeting)
+                .subscribe();
+        }
     }
 
     @Delete(':id')

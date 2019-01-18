@@ -5,36 +5,27 @@ import { NumberUtils } from '@commander/shared/utils/number.utils';
 import {
     Controller,
     Delete,
-    forwardRef,
     Get,
     HttpCode,
     HttpStatus,
-    Inject,
     Param,
     Query,
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { classToPlain } from 'class-transformer';
-import { Types } from 'mongoose';
-import { combineLatest, defer, from, identity, Observable, pipe } from 'rxjs';
+import { combineLatest, defer, from, identity } from 'rxjs';
 import { filter, flatMap, map, toArray } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
-import { GetFriendRequestDto } from '../friend-request/dto/get-friend-request.dto';
-import { FriendRequestService } from '../friend-request/friend-request.service';
 import { User } from '../user/user.model';
 import { NotificationDto } from './dto/notification.dto';
 import { NotificationObjectModel } from './notification.model';
 import { NotificationService } from './notification.service';
+import { ObjectUtils } from '@commander/shared/utils/object.utils';
 
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
 export class NotificationController {
-    constructor(
-        private readonly notificationService: NotificationService,
-        @Inject(forwardRef(() => FriendRequestService))
-        private readonly friendRequestService: FriendRequestService,
-    ) {}
+    constructor(private readonly notificationService: NotificationService) {}
 
     @Get()
     async getAll(
@@ -55,56 +46,30 @@ export class NotificationController {
             this.notificationService.countDocumentsByReceiverId(user.id),
         );
 
-        const entityToPlain = (
-            type: NotificationObjectModel,
-            object: any,
-        ): Observable<object> => {
-            const types = {
-                [NotificationObjectModel.FriendRequest]: (
-                    obj: Types.ObjectId,
-                ) => {
-                    return from(
-                        this.friendRequestService.getById(obj.toHexString()),
-                    ).pipe(
-                        filter(item => Boolean(item)),
-                        map(
-                            pipe(
-                                item => item!.toObject(),
-                                item => new GetFriendRequestDto(item),
-                                item => classToPlain(item),
-                            ),
-                        ),
-                    );
-                },
-            };
+        const populated$ = list.pipe(
+            flatMap(item => {
+                return item
+                    .populate({
+                        path: 'object',
+                        populate: {
+                            path:
+                                item.objectModel ===
+                                NotificationObjectModel.FriendRequest
+                                    ? 'user targetUser'
+                                    : 'owner invitations.user',
+                        },
+                    })
+                    .execPopulate();
+            }),
+        );
 
-            return types[type] ? types[type](object) : null;
-        };
-
-        const items = list.pipe(
-            flatMap(
-                pipe(
-                    async item => ({
-                        ...item.toObject(),
-                        object: await entityToPlain(
-                            item.objectModel,
-                            item.object,
-                        ).toPromise(),
-                    }),
-                    item => from(item),
-                ),
-            ),
+        const items$ = populated$.pipe(
             filter(item => Boolean(item.object)),
-            map(
-                pipe(
-                    item => new NotificationDto(item),
-                    item => classToPlain(item),
-                ),
-            ),
+            map(item => ObjectUtils.DocumentToPlain(item, NotificationDto)),
             toArray(),
         );
 
-        return combineLatest(items, length).pipe(
+        return combineLatest(items$, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,

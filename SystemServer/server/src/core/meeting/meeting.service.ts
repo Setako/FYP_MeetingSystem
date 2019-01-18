@@ -16,7 +16,7 @@ import {
     MeetingStatus,
 } from './meeting.model';
 import { from, merge, identity, of, empty } from 'rxjs';
-import { map, flatMap, filter, toArray } from 'rxjs/operators';
+import { map, flatMap, filter, toArray, tap, mergeMapTo } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
 @Injectable()
@@ -335,6 +335,57 @@ export class MeetingService {
                 flatMap(item => (item ? of(item) : empty())),
                 flatMap(item => item.remove()),
             )
+            .toPromise();
+    }
+
+    async findNewInviteeIds(meetingId: string, invitations: InvitationsDto) {
+        const emails = new Set(invitations.emails);
+        const friends = new Set(invitations.friends);
+
+        const meeting = await this.meetingModel
+            .findById(meetingId)
+            .populate('owner invitations.user')
+            .exec();
+
+        const meeting$ = from(
+            this.meetingModel
+                .findById(meetingId)
+                .populate('owner invitations.user')
+                .exec(),
+        ).pipe(filter(item => Boolean(item)));
+
+        [meeting.owner as InstanceType<User>].map(owner => {
+            emails.delete(owner.email);
+            friends.delete(owner.username);
+        });
+
+        const kept$ = from(meeting.invitations).pipe(
+            filter(item => {
+                const user: InstanceType<User> = item.user as any;
+                const hasEmail = item.email && emails.delete(item.email);
+                const hasEmail2 = user && emails.delete(user.email);
+                const hasFriends = user && friends.delete(user.username);
+                return hasEmail || hasEmail2 || hasFriends;
+            }),
+        );
+
+        const friendIds$ = from(friends.values()).pipe(
+            flatMap(item => from(this.userService.getByUsername(item))),
+            filter(Boolean.bind(Boolean)),
+            map(item => item.id),
+        );
+
+        const emailOnwerId$ = from(emails.values()).pipe(
+            flatMap(email =>
+                from(this.userService.getByEmail(email)).pipe(
+                    filter(item => Boolean(item)),
+                    map(item => item.id),
+                ),
+            ),
+        );
+
+        return merge(friendIds$, emailOnwerId$)
+            .pipe(toArray())
             .toPromise();
     }
 

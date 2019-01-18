@@ -20,7 +20,6 @@ export class ReadyToPlannedMeetingDto {
     @IsNotEmpty()
     readonly title!: string;
 
-    @Equals(MeetingStatus.Draft)
     @IsNotEmpty()
     readonly status!: MeetingStatus;
 
@@ -31,10 +30,6 @@ export class ReadyToPlannedMeetingDto {
     @IsDate()
     @IsNotEmpty()
     readonly plannedStartTime!: Date;
-
-    // @IsDate()
-    // @IsNotEmpty()
-    // readonly plannedEndTime!: Date;
 
     @ArrayMinSize(1)
     @ArrayNotEmpty()
