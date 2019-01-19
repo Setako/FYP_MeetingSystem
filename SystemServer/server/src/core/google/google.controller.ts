@@ -32,13 +32,11 @@ import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
 import { Response } from 'express';
 import { GetAuthUrlQueryDto } from './dto/get-auth-url-query.dto';
-import { GoogleEventService } from './google-event.service';
 
 @Controller('google')
 export class GoogleController {
     constructor(
         private readonly authService: GoogleAuthService,
-        private readonly eventService: GoogleEventService,
         private readonly userService: UserService,
     ) {}
 

@@ -35,6 +35,9 @@ import {
     zip,
     concat,
     merge,
+    empty,
+    Observable,
+    of,
 } from 'rxjs';
 import {
     flatMap,
@@ -47,6 +50,7 @@ import {
     mergeMapTo,
     groupBy,
     reduce,
+    catchError,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
@@ -68,6 +72,7 @@ import { GoogleAuthService } from '../google/google-auth.service';
 import { GoogleEventService } from '../google/google-event.service';
 import { GoogleCalendarService } from '../google/google-calendar.service';
 import { BusyTimeDto } from './dto/busy-time.dto';
+import { DeviceService } from '../device/device.service';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -79,6 +84,7 @@ export class MeetingController {
         private readonly googleAuthService: GoogleAuthService,
         private readonly googleEventService: GoogleEventService,
         private readonly googleCalendarService: GoogleCalendarService,
+        private readonly deviceService: DeviceService,
     ) {}
 
     @Get()
@@ -250,7 +256,7 @@ export class MeetingController {
     @UseGuards(MeetingGuard)
     async editStatus(
         @Param('id') id: string,
-        @Body() { status }: EditMeetingStatusDto,
+        @Body() { status, ...editStatusDto }: EditMeetingStatusDto,
     ) {
         const meeting = await this.meetingService.getById(id);
 
@@ -297,6 +303,7 @@ export class MeetingController {
         const checkIsMeetingValidate = async (
             meetingInstance: InstanceType<Meeting>,
             editedStatus: MeetingStatus,
+            editStatusPartial: Partial<EditMeetingStatusDto>,
         ) => {
             switch (editedStatus) {
                 case MeetingStatus.Planned:
@@ -306,42 +313,118 @@ export class MeetingController {
                         meetingInstance,
                         ReadyToPlannedMeetingDto,
                     );
+                    break;
+                case MeetingStatus.Started:
+                    await defer(() =>
+                        editStatusPartial.deviceToken
+                            ? of(editStatusPartial.deviceToken).pipe(
+                                  map(token =>
+                                      this.deviceService.verifyToken(token),
+                                  ),
+                                  catchError(e => {
+                                      const message = e.message
+                                          .replace('token', 'state')
+                                          .replace('jwt', 'token');
+                                      throw new BadRequestException(message);
+                                  }),
+                              )
+                            : empty(),
+                    ).toPromise();
             }
         };
 
-        await checkIsMeetingValidate(meeting, status);
-        await this.meetingService.editStatus(id, status);
+        await checkIsMeetingValidate(meeting, status, editStatusDto);
 
-        const afterUpdateAction = new Map([
-            [
-                MeetingStatus.Planned,
-                (meetingInstance: InstanceType<Meeting>) => {
-                    const inviteeInWaiting = meetingInstance.invitations.filter(
-                        item =>
-                            item.status === InvitationStatus.Waiting &&
-                            item.user,
+        const preUpdateAction = (
+            oldStatus: MeetingStatus,
+            newStatus: MeetingStatus,
+            meetingId: string,
+        ) => {
+            if (newStatus === MeetingStatus.Started) {
+                return defer(() => {
+                    switch (oldStatus) {
+                        case MeetingStatus.Confirmed:
+                            return this.meetingService.edit(meetingId, {
+                                realStartTime: new Date().toISOString(),
+                            });
+                        case MeetingStatus.Ended:
+                            return from(
+                                this.meetingService.isAvaialbeToBackToStart(
+                                    meetingId,
+                                    new Date(),
+                                ),
+                            ).pipe(
+                                flatMap(available => {
+                                    if (!available) {
+                                        throw new BadRequestException(
+                                            'the meeting cannot be rolled back to the started state because the end time is more than one hour',
+                                        );
+                                    }
+                                    return this.meetingService.clearRealEndTime(
+                                        meetingId,
+                                    );
+                                }),
+                            );
+                        default:
+                            return empty();
+                    }
+                });
+            }
+            return empty();
+        };
+
+        await preUpdateAction(meeting.status, status, meeting.id).toPromise();
+        const updatedMeeting = await this.meetingService.editStatus(id, status);
+
+        const afterUpdateAction = (
+            meetingStatus: MeetingStatus,
+        ): Observable<any> => {
+            switch (meetingStatus) {
+                case MeetingStatus.Planned:
+                    return defer(() => {
+                        const inviteeInWaiting = updatedMeeting.invitations.filter(
+                            item =>
+                                item.status === InvitationStatus.Waiting &&
+                                item.user,
+                        );
+
+                        return from(inviteeInWaiting).pipe(
+                            flatMap(invitee =>
+                                this.notificationService.create({
+                                    receiver: invitee.user as Types.ObjectId,
+                                    type:
+                                        NotificationType.MeetingInviteReceived,
+                                    time: new Date(),
+                                    object: updatedMeeting._id,
+                                    objectModel:
+                                        NotificationObjectModel.Meeting,
+                                }),
+                            ),
+                        );
+                    });
+                case MeetingStatus.Started:
+                    return defer(() =>
+                        editStatusDto.deviceToken
+                            ? this.meetingService.updateDevice(
+                                  updatedMeeting.id,
+                                  this.deviceService.decodeToken(
+                                      editStatusDto.deviceToken,
+                                  ),
+                              )
+                            : empty(),
                     );
-
-                    return from(inviteeInWaiting).pipe(
-                        flatMap(invitee =>
-                            this.notificationService.create({
-                                receiver: invitee.user as Types.ObjectId,
-                                type: NotificationType.MeetingInviteReceived,
-                                time: new Date(),
-                                object: meetingInstance._id,
-                                objectModel: NotificationObjectModel.Meeting,
-                            }),
-                        ),
+                case MeetingStatus.Ended:
+                    return defer(() =>
+                        this.meetingService.edit(updatedMeeting.id, {
+                            realEndTime: new Date().toISOString(),
+                        }),
                     );
-                },
-            ],
-        ]);
+                default:
+                    return empty();
+            }
+        };
 
-        if (afterUpdateAction.has(status)) {
-            afterUpdateAction
-                .get(status)(meeting)
-                .subscribe();
-        }
+        afterUpdateAction(status).subscribe();
     }
 
     @Delete(':id')

@@ -15,8 +15,8 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from, merge, identity, of, empty } from 'rxjs';
-import { map, flatMap, filter, toArray, tap, mergeMapTo } from 'rxjs/operators';
+import { from, merge, identity, of, empty, defer } from 'rxjs';
+import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
 @Injectable()
@@ -326,18 +326,6 @@ export class MeetingService {
             friends.delete(owner.username);
         });
 
-        const kept$ = await from(meeting.invitations)
-            .pipe(
-                filter(item => {
-                    const user: InstanceType<User> = item.user as any;
-                    const hasEmail = item.email && emails.delete(item.email);
-                    const hasEmail2 = user && emails.delete(user.email);
-                    const hasFriends = user && friends.delete(user.username);
-                    return hasEmail || hasEmail2 || hasFriends;
-                }),
-            )
-            .toPromise();
-
         const friendIds$ = from(friends.values()).pipe(
             flatMap(item => from(this.userService.getByUsername(item))),
             filter(Boolean.bind(Boolean)),
@@ -520,6 +508,35 @@ export class MeetingService {
                 }),
             )
             .toPromise();
+    }
+
+    async updateDevice(meetingId: string, deviceId: string) {
+        return this.meetingModel
+            .findByIdAndUpdate(meetingId, {
+                device: Types.ObjectId(deviceId),
+            })
+            .exec();
+    }
+
+    async clearRealEndTime(meetingId: string) {
+        return this.meetingModel
+            .findByIdAndUpdate(meetingId, {
+                $unset: { realEndTime: '' },
+            })
+            .exec();
+    }
+
+    async isAvaialbeToBackToStart(meetingId: string, now: Date) {
+        const oneHour = 1 * 60 * 60 * 1000;
+        const meeting = await this.meetingModel.findById(meetingId);
+        if (!meeting) {
+            return false;
+        }
+        if (!meeting.realEndTime) {
+            return true;
+        }
+
+        return new Date(meeting.realEndTime.getTime() + oneHour) >= now;
     }
 
     async hasViewPermission(meetingId: string, userId: string) {

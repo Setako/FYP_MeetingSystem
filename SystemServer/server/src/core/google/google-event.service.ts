@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { google, calendar_v3 } from 'googleapis';
-import { empty, defer } from 'rxjs';
-import { flatMap, expand, map } from 'rxjs/operators';
+import { google } from 'googleapis';
+import { defer } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class GoogleEventService {

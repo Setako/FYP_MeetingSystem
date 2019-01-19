@@ -41,7 +41,7 @@ export class GoogleAuthService {
     }
 
     signAuthState(state: GoogleAuthState) {
-        return this.jwtService.sign(state, { expiresIn: '5m' });
+        return this.jwtService.sign(state);
     }
 
     verifyAuthState(state: string) {
