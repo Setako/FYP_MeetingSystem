@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { google } from 'googleapis';
-import { defer } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { google, calendar_v3 } from 'googleapis';
+import { defer, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 
 @Injectable()
 export class GoogleEventService {
@@ -59,6 +59,11 @@ export class GoogleEventService {
 
         return defer(() => freebusy({ requestBody })).pipe(
             map(item => item.data.calendars),
+            catchError(() =>
+                of([
+                    { busy: [], errors: [] },
+                ] as calendar_v3.Schema$FreeBusyCalendar),
+            ),
         );
     }
 }

@@ -96,7 +96,7 @@ export class GoogleAuthService {
                     }),
                 ),
                 flatMap(client => client.getRequestHeaders()),
-                catchError(() => of(false)),
+                catchError(e => of(false)),
                 map(item => Boolean(item)),
             )
             .toPromise();

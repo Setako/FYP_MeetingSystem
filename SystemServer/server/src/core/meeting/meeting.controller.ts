@@ -539,14 +539,14 @@ export class MeetingController {
             userRefreshToken$,
             userCalendarIdList$,
         ).pipe(
-            flatMap(([refreshToken, calendarIds]) =>
-                this.googleEventService.getAllBusyEvent({
+            flatMap(([refreshToken, calendarIds]) => {
+                return this.googleEventService.getAllBusyEvent({
                     refreshToken,
                     calendarIds,
                     timeMax: query.toDate,
                     timeMin: query.fromDate,
-                }),
-            ),
+                });
+            }),
             toArray(),
         );
 
@@ -581,7 +581,10 @@ export class MeetingController {
         );
 
         const groupedBusyTime$ = merge(busyTime$, systemBusyTime$).pipe(
-            groupBy(time => time.fromDate.getTime() - time.toDate.getTime()),
+            groupBy(time => ({
+                a: time.fromDate.getTime(),
+                b: time.fromDate.getTime(),
+            })),
             flatMap(group => group.pipe(toArray())),
         );
 
@@ -596,6 +599,11 @@ export class MeetingController {
                 ),
             })),
             filter(item => Boolean(item.fromDate) && Boolean(item.toDate)),
+            map(item => ({
+                ...item,
+                fromDate: new Date(item.fromDate),
+                toDate: new Date(item.toDate),
+            })),
         );
 
         return result$.pipe(
