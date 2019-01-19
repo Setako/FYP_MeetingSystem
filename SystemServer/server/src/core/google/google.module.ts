@@ -3,7 +3,8 @@ import { Module } from '@nestjs/common';
 import { GoogleController } from './google.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from '../user/user.module';
-import { UserService } from '../user/user.service';
+import { GoogleEventService } from './google-event.service';
+import { GoogleCalendarService } from './google-calendar.service';
 
 @Module({
     imports: [
@@ -16,6 +17,7 @@ import { UserService } from '../user/user.service';
         UserModule,
     ],
     controllers: [GoogleController],
-    providers: [GoogleAuthService, UserService],
+    providers: [GoogleAuthService, GoogleEventService, GoogleCalendarService],
+    exports: [GoogleAuthService, GoogleEventService, GoogleCalendarService],
 })
 export class GoogleModule {}
