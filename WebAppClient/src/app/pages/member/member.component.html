@@ -26,7 +26,9 @@
         <div class="ml-auto">
 
           <button mat-icon-button class="ml-3" [mat-menu-trigger-for]="notifications">
-            <mat-icon matBadge="2" matBadgeColor="warn">notifications</mat-icon>
+            <mat-icon [matBadge]="notificationService.notifications.length" matBadgeColor="warn">
+              notifications
+            </mat-icon>
           </button>
 
           <mat-menu #notifications="matMenu" class="notification-panel">

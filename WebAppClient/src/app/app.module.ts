@@ -46,6 +46,7 @@ import {MeetingInvitationsComponent} from './pages/member/meeting-invitations/me
 import {SelectFriendsDialogComponent} from './shared/components/dialogs/select-friends-dialog/select-friends-dialog.component';
 import { ConfirmationDialogComponent } from './shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
 import { FaceRecognitionSettingComponent } from './pages/member/settings/face-recognition-setting/face-recognition-setting.component';
+import { AddDriveFolderDialogComponent } from './shared/components/dialogs/add-drive-folder-dialog/add-drive-folder-dialog.component';
 
 @NgModule({
   declarations: [
@@ -81,7 +82,8 @@ import { FaceRecognitionSettingComponent } from './pages/member/settings/face-re
     MeetingInvitationsComponent,
     SelectFriendsDialogComponent,
     ConfirmationDialogComponent,
-    FaceRecognitionSettingComponent
+    FaceRecognitionSettingComponent,
+    AddDriveFolderDialogComponent
   ],
   imports: [
     BrowserModule,

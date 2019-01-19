@@ -86,7 +86,7 @@ export class MeetingService {
   }
 
   public turnMeetingStatus(meeting: Meeting, status: MeetingStatus): Observable<any> {
-    const meetingOperation: Meeting = {id: meeting.id, status: status} as Meeting;
+    const meetingStatus = {status: status};
     switch (status) {
       case 'planned':
         break;
@@ -95,7 +95,7 @@ export class MeetingService {
       case 'confirmed':
         break;
     }
-    return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}`, meetingOperation);
+    return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}/status`, meetingStatus);
   }
 
 

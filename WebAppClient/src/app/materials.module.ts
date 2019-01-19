@@ -12,7 +12,6 @@ import {
   MatTabsModule,
   MatToolbarModule, MatTooltipModule
 } from '@angular/material';
-import {NgcFloatButtonModule} from 'ngc-float-button';
 import {CdkTableModule} from '@angular/cdk/table';
 
 @NgModule({
@@ -47,7 +46,6 @@ import {CdkTableModule} from '@angular/cdk/table';
     MatTableModule,
     MatTooltipModule,
     CdkTableModule,
-    NgcFloatButtonModule,
   ]
 })
 export class MaterialsModule {

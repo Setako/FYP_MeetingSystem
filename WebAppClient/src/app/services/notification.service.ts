@@ -1,13 +1,13 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {AuthService} from './auth.service';
-import {Observable} from 'rxjs';
+import {Observable, timer} from 'rxjs';
 import {ListResponse} from '../utils/list-response';
 import {UserNotification, UserNotificationType} from '../shared/models/userNotification';
 import {FriendRequest} from '../shared/models/user';
 import {Meeting} from '../shared/models/meeting';
 import {Router} from '@angular/router';
-import {map, tap} from 'rxjs/operators';
+import {filter, map, mergeMap, retry, tap} from 'rxjs/operators';
 import {AppConfig} from '../app-config';
 import {DatePipe} from '@angular/common';
 
@@ -15,6 +15,7 @@ import {DatePipe} from '@angular/common';
   providedIn: 'root'
 })
 export class NotificationService {
+  public notifications: UserNotification[] = [];
   private notificationDTOEntityMapper
     : { [type in UserNotificationType]: (dto: UserNotificationDTO) => UserNotification } = {
     friendRequestAccepted: (dto) => {
@@ -76,6 +77,13 @@ export class NotificationService {
   };
 
   constructor(private http: HttpClient, private auth: AuthService, private router: Router, private datePipe: DatePipe) {
+    timer(0, 10000)
+      .pipe(
+        filter((_) => this.auth.isLoggedIn),
+        mergeMap((_) => this.getNotifications()),
+        retry()
+      )
+      .subscribe((res) => this.notifications = res);
   }
 
   public getNotifications(): Observable<UserNotification[]> {

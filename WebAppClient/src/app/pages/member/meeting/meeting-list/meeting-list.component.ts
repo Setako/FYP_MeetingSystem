@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {MatBottomSheet, PageEvent} from '@angular/material';
 import {Meeting, MeetingSearchingFilter, MeetingStatus, priorityDisplay} from '../../../../shared/models/meeting';
 import {MeetingService} from '../../../../services/meeting.service';
-import {ql} from '@angular/core/src/render3';
 import {Observable, Subscription} from 'rxjs';
 import {ListResponse} from '../../../../utils/list-response';
 import {AuthService} from '../../../../services/auth.service';
