@@ -234,19 +234,7 @@ export class MeetingService {
             return null;
         }
 
-        // TODO: handle the attendance
-        // if (editMeetingDto.attendance) {
-        //     edited.attendance = (await Promise.all(
-        //         editMeetingDto.attendance.map(async item => ({
-        //             ...item,
-        //             arrivalTime: new Date(item.arrivalTime),
-        //             user: await this.userService.getByUsername(item.user),
-        //             permission: item.permission || edited.generalPermission,
-        //         })),
-        //     )).filter(item => item.user);
-        // }
-
-        if (editMeetingDto.invitations) {
+        if (Boolean(editMeetingDto.invitations)) {
             await edited.save();
             edited = await this.editInvitations(
                 edited.id,
@@ -271,27 +259,12 @@ export class MeetingService {
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
             : edited.plannedStartTime;
-        edited.plannedEndTime = editMeetingDto.plannedEndTime
-            ? new Date(editMeetingDto.plannedEndTime)
-            : edited.plannedEndTime;
         edited.realStartTime = editMeetingDto.realStartTime
             ? new Date(editMeetingDto.realStartTime)
             : edited.realStartTime;
         edited.realEndTime = editMeetingDto.realEndTime
             ? new Date(editMeetingDto.realEndTime)
             : edited.realEndTime;
-
-        // TODO: handle the owner attendance
-        // if (
-        //     edited.status !== MeetingStatus.Draft &&
-        //     edited.attendance.some(att => att.user === edited.owner)
-        // ) {
-        //     edited.attendance.push({
-        //         user: edited.owner,
-        //         priority: 1,
-        //         permission: edited.generalPermission,
-        //     });
-        // }
 
         return edited.save();
     }

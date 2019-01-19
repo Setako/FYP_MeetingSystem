@@ -113,14 +113,15 @@ export enum MeetingType {
     Presentation = 'presentation',
 }
 
-// @pre<Meeting>('save', function(next) {
-//     if (this.plannedStartTime && this.length) {
-//         this.plannedEndTime = new Date(
-//             this.plannedEndTime.getTime() + this.length,
-//         );
-//     }
-//     next();
-// })
+@pre<Meeting>('save', function(next) {
+    if (this.plannedStartTime && this.length) {
+        this.plannedEndTime = new Date(
+            new Date(this.plannedStartTime).getTime() + this.length,
+        );
+        console.log(this.plannedEndTime);
+    }
+    next();
+})
 export class Meeting extends Typegoose {
     @prop({
         required: true,
