@@ -131,7 +131,7 @@
                   </mat-selection-list>
                 </mat-card-content>
                 <div class="d-flex justify-content-between">
-                  <button mat-button color="primary">
+                  <button (click)="addFolder()" color="primary" mat-button>
                     <mat-icon>add</mat-icon>
                     Add...
                   </button>
@@ -175,68 +175,9 @@
         <mat-step>
           <ng-template matStepLabel>Select time</ng-template>
 
-          <div class="d-flex flex-wrap">
-            <mat-checkbox class="pr-3"><span style="color: darkred">Sun</span></mat-checkbox>
-            <mat-checkbox class="pr-3">Mon</mat-checkbox>
-            <mat-checkbox class="pr-3">Tue</mat-checkbox>
-            <mat-checkbox class="pr-3">Wed</mat-checkbox>
-            <mat-checkbox class="pr-3">Thur</mat-checkbox>
-            <mat-checkbox class="pr-3">Fri</mat-checkbox>
-            <mat-checkbox class="pr-3">Sat</mat-checkbox>
-          </div>
-          <div>
-            <div>
-              Pick date from range:
-              <mat-form-field class="pr-3">
-                <input matInput [min]="today" [matDatepicker]="fromPicker" placeholder="From">
-                <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
-                <mat-datepicker #fromPicker></mat-datepicker>
-              </mat-form-field>
-              <mat-form-field>
-                <input matInput [min]="today" [matDatepicker]="toPicker" placeholder="To">
-                <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
-                <mat-datepicker #toPicker></mat-datepicker>
-              </mat-form-field>
-            </div>
-            <div>
-              Pick time from range:
-              <mat-form-field class="pr-3">
-                <input matInput placeholder="From" aria-label="State" [matAutocomplete]="fromTimeAuto">
-                <mat-autocomplete #fromTimeAuto="matAutocomplete">
-                  <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
-                    {{time}}
-                  </mat-option>
-                </mat-autocomplete>
-              </mat-form-field>
-              <mat-form-field class="pr-3">
-                <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto">
-                <mat-autocomplete #toTimeAuto="matAutocomplete">
-                  <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
-                    {{time}}
-                  </mat-option>
-                </mat-autocomplete>
-              </mat-form-field>
-            </div>
-          </div>
-          <div class="mb-2">
-            <h2>Suggestion time slot</h2>
-            <div class="col-12 col-lg-6">
-              <mat-card *ngFor="let timeSlotSuggestion of timeSlotSuggestions" class="mb-1">Start
-                at: {{timeSlotSuggestion|date:'short'}}</mat-card>
-            </div>
-          </div>
+          <app-meeting-edit-time [meeting]="meeting">
 
-          <mat-divider></mat-divider>
-
-          <div>
-            <h2>Calendar</h2>
-
-            <app-week-freetime [dayStartHour]="10.5" [dayEndHour]="19"></app-week-freetime>
-
-            <div class="d-flex justify-content-end">
-              <button mat-flat-button matStepperNext color="primary">Complete, Send all invitation</button>
-            </div>
-          </div>
+          </app-meeting-edit-time>
         </mat-step>
 
 

@@ -1,99 +1,96 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {CalendarEvent, CalendarView} from 'angular-calendar';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {CalendarEvent, CalendarView, CalendarWeekViewComponent} from 'angular-calendar';
+import {Meeting} from '../../models/meeting';
+import {MeetingService} from '../../../services/meeting.service';
+import * as moment from 'moment';
+import {MatSnackBar} from '@angular/material';
+import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-week-freetime',
   templateUrl: './week-freetime.component.html',
-  styleUrls: ['./week-freetime.component.css']
+  styleUrls: ['./week-freetime.component.scss']
 })
 export class WeekFreetimeComponent implements OnInit {
   @Input() dayStartHour: number;
   @Input() dayEndHour: number;
+  @ViewChild('calendar') calendar: CalendarWeekViewComponent;
+  busyTimes: CalendarEvent[] = [];
+  public view = CalendarView.Week;
+  private queryingSubscription: Subscription = null;
+
   Math: any;
   viewDate = new Date();
-  events: CalendarEvent[] = [];
+  private selectedDate: Date;
   public CalendarView = CalendarView;
-  public view = CalendarView.Month;
 
-  constructor() {
+  constructor(public meetingService: MeetingService, public snackBar: MatSnackBar) {
     this.Math = Math;
   }
 
+  private _meeting: Meeting;
+
+  get meeting(): Meeting {
+    return this._meeting;
+  }
+
+  @Input()
+  set meeting(meeting: Meeting) {
+    if (meeting != null) {
+      this._meeting = meeting;
+      this.selectedDate = this._meeting.plannedStartTime == null ? null : new Date(this._meeting.plannedStartTime);
+      this.update();
+    }
+  }
+
+  get events(): CalendarEvent[] {
+    return this.selectedDate == null
+      ? this.busyTimes
+      : this.busyTimes.concat({
+        start: this.selectedDate,
+        end: moment(this.selectedDate).add(this.meeting.length, 'millisecond').toDate(),
+        title: 'Planning time',
+        color: {primary: '#ffecb3', secondary: '#ffc107'},
+        cssClass: 'selected-time'
+      });
+  }
+
   ngOnInit() {
-    this.appenedNotFreeEvent();
+    this.update();
   }
 
-  appenedNotFreeEvent() {
-    this.events.push({
-      start: new Date('2019-01-13 13:00'),
-      end: new Date('2019-01-13 13:30'),
-      title: 'Tommy.Chan and kwwok11 may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-14 10:00'),
-      end: new Date('2019-01-14 10:30'),
-      title: 'Tommy.Chan and kwwok11 may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-14 13:00'),
-      end: new Date('2019-01-14 14:00'),
-      title: 'Tommy.Chan and kwwok11 may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-15 14:00'),
-      end: new Date('2019-01-15 17:30'),
-      title: 'Tommy.Chan and kwwok11 may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-16 12:00'),
-      end: new Date('2019-01-16 13:30'),
-      title: 'Tommy.Chan and kwwok11 may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-17 11:00'),
-      end: new Date('2019-01-17 15:30'),
-      title: 'You may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-17 09:00'),
-      end: new Date('2019-01-17 10:30'),
-      title: 'You may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-18 14:00'),
-      end: new Date('2019-01-18 17:30'),
-      title: 'You may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-18 10:00'),
-      end: new Date('2019-01-18 12:30'),
-      title: 'You may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
-    this.events.push({
-      start: new Date('2019-01-19 09:00'),
-      end: new Date('2019-01-19 13:30'),
-      title: 'You may not free at this period',
-      color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-      cssClass: 'not-free-time'
-    });
+  update() {
+    if (this.meeting != null) {
+      const start = moment(this.viewDate).isoWeekday(0).hour(0).minute(0).second(0).toDate();
+      const end = moment(this.viewDate).isoWeekday(6).hour(23).minute(59).second(59).toDate();
+
+      if (this.queryingSubscription != null) {
+        this.queryingSubscription.unsubscribe();
+      }
+
+      this.queryingSubscription = this.meetingService.getBusyTime(this.meeting, start, end).subscribe(busyTimes => {
+        this.busyTimes = [];
+
+        busyTimes.items.forEach(busyTime => {
+          this.busyTimes.push({
+            start: new Date(busyTime.fromDate),
+            end: new Date(busyTime.toDate),
+            title: busyTime.users.map(user => user.displayName).join(', ') + ' may not free at this period',
+            color: {primary: '#ffbab1', secondary: '#ff6d6f'},
+            cssClass: 'not-free-time'
+          });
+        });
+
+        this.queryingSubscription = null;
+      });
+    }
   }
 
+  setPlanningTime($event: { date: Date }) {
+    if (moment($event.date).isAfter()) {
+      this.selectedDate = $event.date;
+    } else {
+      this.snackBar.open('You can\'t select a passed time', 'Dismiss', {duration: 3000});
+    }
+  }
 }

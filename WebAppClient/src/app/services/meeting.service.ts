@@ -3,9 +3,10 @@ import {Meeting, MeetingAttendance, MeetingParticipantsDTO, MeetingSearchingFilt
 import {HttpClient} from '@angular/common/http';
 import {AppConfig} from '../app-config';
 import {Observable} from 'rxjs';
-import {map, tap} from 'rxjs/operators';
+import {map} from 'rxjs/operators';
 import {ListResponse} from '../utils/list-response';
 import {AuthService} from './auth.service';
+import {BusyTime} from '../shared/models/busy-time';
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +15,10 @@ export class MeetingService {
   public static mapDTOtoModel(meetingDTO: any): Meeting {
     const meeting: Meeting = JSON.parse(JSON.stringify(meetingDTO));
     const attendanceMap = new Map<String, MeetingAttendance>();
-    meeting.attendance.forEach((attendance: MeetingAttendance) => attendanceMap.set(attendance.username, attendance));
-    meeting.attendance = attendanceMap;
+    if (meeting.attendance != null) {
+      meeting.attendance.forEach((attendance: MeetingAttendance) => attendanceMap.set(attendance.username, attendance));
+      meeting.attendance = attendanceMap;
+    }
     return meeting as Meeting;
   }
 
@@ -109,5 +112,13 @@ export class MeetingService {
 
   public deleteMeetingDraft(meeting: Meeting): Observable<any> {
     return this.http.delete(`${AppConfig.API_PATH}/meeting/${meeting.id}`);
+  }
+
+  public getBusyTime(meeting: Meeting, from: Date, to: Date): Observable<ListResponse<BusyTime>> {
+    return this.http.get<ListResponse<BusyTime>>(
+      `${AppConfig.API_PATH}/meeting/${meeting.id}/busy-time` +
+      `?fromDate=${from.toISOString()}` +
+      `&toDate=${to.toISOString()}`
+    );
   }
 }

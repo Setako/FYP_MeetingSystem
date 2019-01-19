@@ -1,13 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {MatBottomSheet, PageEvent} from '@angular/material';
+import {MatBottomSheet, MatSnackBar, PageEvent} from '@angular/material';
 import {Meeting, MeetingSearchingFilter, MeetingStatus, priorityDisplay} from '../../../../shared/models/meeting';
 import {MeetingService} from '../../../../services/meeting.service';
-import {Observable, Subscription} from 'rxjs';
-import {ListResponse} from '../../../../utils/list-response';
+import {Subscription} from 'rxjs';
 import {AuthService} from '../../../../services/auth.service';
-import {
-  MeetingOperationsBottomSheetsComponent
-} from '../../../../shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
+import {MeetingOperationsBottomSheetsComponent} from '../../../../shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
 
 @Component({
   selector: 'app-meeting-list',
@@ -30,7 +27,8 @@ export class MeetingListComponent implements OnInit {
   public hostedByOther = true;
   public status: MeetingStatus[] = this.availableStatus.map(s => s.toLowerCase()) as MeetingStatus[];
 
-  constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet) {
+  constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet,
+              public snackBar: MatSnackBar) {
   }
 
   ngOnInit() {
@@ -69,7 +67,10 @@ export class MeetingListComponent implements OnInit {
         this.meetingsLength = res.length;
         this.meetingListQuerySubscription = null;
       },
-      err => this.meetingListQuerySubscription = null
+      err => {
+        this.snackBar.open(err);
+        this.meetingListQuerySubscription = null;
+      }
     );
   }
 

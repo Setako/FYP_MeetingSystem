@@ -4,12 +4,14 @@ import {MeetingService} from '../../../../services/meeting.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {MatDialog, MatSelectionList, MatSnackBar, MatStepper} from '@angular/material';
 import {StepperSelectionEvent} from '@angular/cdk/stepper';
-import {Meeting, MeetingParticipantsDTO} from '../../../../shared/models/meeting';
+import {Meeting} from '../../../../shared/models/meeting';
 import {Millisecond} from '../../../../utils/time-unit';
 import {ObjectFilter} from '../../../../utils/object-filter';
 import {SelectFriendsDialogComponent} from '../../../../shared/components/dialogs/select-friends-dialog/select-friends-dialog.component';
-import {Friend, User} from '../../../../shared/models/user';
+import {User} from '../../../../shared/models/user';
 import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
+import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
+import {mapTo} from 'rxjs/operators';
 
 @Component({
   selector: 'app-meeting-edit',
@@ -23,8 +25,7 @@ export class MeetingEditComponent implements OnInit {
     }
   };
 
-  today: Date = new Date();
-  queryingAction = null;
+  queryingAction = 'Getting data';
 
   @ViewChild('stepper') stepper: MatStepper;
 
@@ -33,12 +34,6 @@ export class MeetingEditComponent implements OnInit {
   public meeting: Meeting;
   public meetingParticipantFriends: User[] = [];
   public meetingParticipantEmails = '';
-
-  public timeSlotSuggestions: Date[] = [
-    new Date('2019-01-15 10:00'),
-    new Date('2019-01-16 14:30'),
-    new Date('2019-01-17 16:30'),
-  ];
 
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
@@ -49,15 +44,9 @@ export class MeetingEditComponent implements OnInit {
     description: new FormControl('')
   });
 
-  get timeAutoComplete() {
-    return Array.from(new Array(48), (x, i) => i)
-      .map((x) => ({hour: Math.floor(x / 2), minute: (x % 2) * 30}))
-      .map((t) => `${(t.hour + '').padStart(2, '0')}:${(t.minute + '').padStart(2, '0')}`);
-  }
-
   constructor(private activatedRoute: ActivatedRoute, private  meetingService: MeetingService,
               private snackBar: MatSnackBar, private router: Router,
-              private dialog: MatDialog) {
+              private dialog: MatDialog, private googleOauthService: GoogleOauthService) {
   }
 
   ngOnInit() {
@@ -100,7 +89,7 @@ export class MeetingEditComponent implements OnInit {
             friends: this.meetingParticipantFriends.map(user => user.username),
             emails: this.meetingParticipantEmails.split('\n').filter(email => email.trim().length > 0)
           }
-        }).subscribe(
+        }).pipe(mapTo(this.updateMeeting(this.meeting.id))).subscribe(
           () => {
             this.queryingAction = null;
             this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
@@ -172,4 +161,19 @@ export class MeetingEditComponent implements OnInit {
     );
   }
 
+  addFolder() {
+    this.googleOauthService.gapiInit().subscribe(() => {
+      console.log('ok');
+    }, err => {
+      console.log('e ' + err);
+    }, () => {
+      console.log('c');
+      this.googleOauthService.doRequest(
+        (token) => this.googleOauthService.test(token),
+      ).subscribe(
+        null, err => console.log(err)
+      );
+
+    });
+  }
 }

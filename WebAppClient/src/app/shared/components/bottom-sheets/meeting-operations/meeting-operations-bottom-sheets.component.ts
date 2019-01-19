@@ -44,8 +44,7 @@ export class MeetingOperationsBottomSheetsComponent implements OnInit {
     this.refreshCallback = data.refreshCallback;
 
 
-    console.log(this.meeting.attendance);
-    this.attendance = this.meeting.attendance.get(authService.loggedInUser.username);
+    this.attendance = this.meeting.attendance == null ? null : this.meeting.attendance.get(authService.loggedInUser.username);
     this.isOwner = this.meeting.owner.username === authService.loggedInUser.username;
   }
 

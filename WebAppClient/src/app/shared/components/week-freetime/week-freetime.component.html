@@ -1,39 +1,48 @@
-<div class="d-flex justify-content-between flex-row align-items-center flex-sm-wrap">
-  <div class="d-flex align-items-center justify-content-between " style="max-width: 400px; width: 100%;">
+<div style="position: relative">
+  <div *ngIf="queryingSubscription!=null" style="position: absolute; height: 100%; width: 100%">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+  <div class="d-flex justify-content-between flex-row align-items-center flex-sm-wrap">
+    <div class="d-flex align-items-center justify-content-between " style="max-width: 400px; width: 100%;">
 
 
-    <button mat-icon-button mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate">
-      <mat-icon>chevron_left</mat-icon>
-    </button>
-
-    <h3 style="display: inline-block;">{{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}</h3>
-
-
-    <div>
-      <button mat-icon-button mwlCalendarNextView [view]="view" [(viewDate)]="viewDate">
-        <mat-icon>chevron_right</mat-icon>
+      <button (viewDateChange)="update()" [(viewDate)]="viewDate" [view]="view" mat-icon-button
+              mwlCalendarPreviousView>
+        <mat-icon>chevron_left</mat-icon>
       </button>
-      <button mat-button mwlCalendarToday [(viewDate)]="viewDate">
-        <mat-icon>today</mat-icon>
-        Today
-      </button>
+
+      <h3 style="display: inline-block;">{{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}</h3>
+
+
+      <div>
+        <button (viewDateChange)="update()" [(viewDate)]="viewDate" [view]="view" mat-icon-button mwlCalendarNextView>
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+        <button (viewDateChange)="update()" [(viewDate)]="viewDate" mat-button mwlCalendarToday>
+          <mat-icon>today</mat-icon>
+          Today
+        </button>
+
+      </div>
+
 
     </div>
-
-
+    <!--<mat-button-toggle-group [(ngModel)]="view">-->
+    <!--<mat-button-toggle [value]="CalendarView.Month" ngDefaultControl>Month</mat-button-toggle>-->
+    <!--<mat-button-toggle [value]="CalendarView.Week" ngDefaultControl>Week</mat-button-toggle>-->
+    <!--<mat-button-toggle [value]="CalendarView.Day" ngDefaultControl>Day</mat-button-toggle>-->
+    <!--</mat-button-toggle-group>-->
   </div>
-  <!--<mat-button-toggle-group [(ngModel)]="view">-->
-  <!--<mat-button-toggle [value]="CalendarView.Month" ngDefaultControl>Month</mat-button-toggle>-->
-  <!--<mat-button-toggle [value]="CalendarView.Week" ngDefaultControl>Week</mat-button-toggle>-->
-  <!--<mat-button-toggle [value]="CalendarView.Day" ngDefaultControl>Day</mat-button-toggle>-->
-  <!--</mat-button-toggle-group>-->
-</div>
-<mwl-calendar-week-view
-  [viewDate]="viewDate"
-  [dayStartHour]="Math.floor(dayStartHour)"
-  [dayStartMinute]="dayStartHour%1"
-  [dayEndHour]="Math.floor(dayEndHour)"
-  [dayEndMinute]="dayEndHour%1"
-  [events]="events">
+  <mwl-calendar-week-view
+    #calendar
+    (hourSegmentClicked)="setPlanningTime($event)"
+    [dayEndHour]="Math.floor(dayEndHour)"
+    [dayEndMinute]="dayEndHour%1"
+    [dayStartHour]="Math.floor(dayStartHour)"
+    [dayStartMinute]="dayStartHour%1"
+    [events]="events"
+    [viewDate]="viewDate"
+  >
 
-</mwl-calendar-week-view>
+  </mwl-calendar-week-view>
+</div>
