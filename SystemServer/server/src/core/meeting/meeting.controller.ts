@@ -397,6 +397,8 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingBusyTimeQueryDto,
     ) {
+        // this.meetingService.getAllUserJoinedMeetingInRange(user.id)
+
         const friendsId$ = from(
             this.meetingService.getAllFriendIdsInInvitations(id, user.id),
         ).pipe(

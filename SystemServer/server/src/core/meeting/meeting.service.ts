@@ -339,35 +339,31 @@ export class MeetingService {
     }
 
     async findNewInviteeIds(meetingId: string, invitations: InvitationsDto) {
-        const emails = new Set(invitations.emails);
-        const friends = new Set(invitations.friends);
+        const invitationList = invitations || undefined;
+        const emails = new Set(invitationList ? invitationList.emails : []);
+        const friends = new Set(invitationList ? invitationList.friends : []);
 
         const meeting = await this.meetingModel
             .findById(meetingId)
             .populate('owner invitations.user')
             .exec();
 
-        const meeting$ = from(
-            this.meetingModel
-                .findById(meetingId)
-                .populate('owner invitations.user')
-                .exec(),
-        ).pipe(filter(item => Boolean(item)));
-
         [meeting.owner as InstanceType<User>].map(owner => {
             emails.delete(owner.email);
             friends.delete(owner.username);
         });
 
-        const kept$ = from(meeting.invitations).pipe(
-            filter(item => {
-                const user: InstanceType<User> = item.user as any;
-                const hasEmail = item.email && emails.delete(item.email);
-                const hasEmail2 = user && emails.delete(user.email);
-                const hasFriends = user && friends.delete(user.username);
-                return hasEmail || hasEmail2 || hasFriends;
-            }),
-        );
+        const kept$ = await from(meeting.invitations)
+            .pipe(
+                filter(item => {
+                    const user: InstanceType<User> = item.user as any;
+                    const hasEmail = item.email && emails.delete(item.email);
+                    const hasEmail2 = user && emails.delete(user.email);
+                    const hasFriends = user && friends.delete(user.username);
+                    return hasEmail || hasEmail2 || hasFriends;
+                }),
+            )
+            .toPromise();
 
         const friendIds$ = from(friends.values()).pipe(
             flatMap(item => from(this.userService.getByUsername(item))),
@@ -398,9 +394,9 @@ export class MeetingService {
         if (!meeting) {
             return null;
         }
-
-        const emails = new Set(invitations.emails);
-        const friends = new Set(invitations.friends);
+        const invitationList = invitations || undefined;
+        const emails = new Set(invitationList ? invitationList.emails : []);
+        const friends = new Set(invitationList ? invitationList.friends : []);
 
         [meeting.owner as InstanceType<User>].map(owner => {
             emails.delete(owner.email);
@@ -456,7 +452,7 @@ export class MeetingService {
         return meeting.save();
     }
 
-    async getAllFriendIdsInInvitations(id: string, userId: string) {
+    async getAllFriendIdsInInvitations(id: string, _userId: string) {
         const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
             filter(item => Boolean(item)),
         );
@@ -469,6 +465,57 @@ export class MeetingService {
         );
 
         return friends$.pipe(toArray()).toPromise();
+    }
+
+    async getAllUserJoinedMeetingInRange({
+        userId,
+        fromDate,
+        toDate,
+    }: {
+        userId: string;
+        fromDate: Date;
+        toDate: Date;
+    }) {
+        const userObjId = Types.ObjectId(userId);
+        return this.meetingModel
+            .find({
+                $and: [
+                    {
+                        status: {
+                            $in: [
+                                MeetingStatus.Planned,
+                                MeetingStatus.Confirmed,
+                                MeetingStatus.Started,
+                            ],
+                        },
+                    },
+                    {
+                        plannedStartTime: { $gte: fromDate },
+                        plannedEndTime: { $lte: toDate },
+                    },
+                    {
+                        $or: [
+                            {
+                                $and: {
+                                    owner: { $eq: userObjId },
+                                },
+                            },
+                            {
+                                $and: {
+                                    'invitations.user': { $eq: userObjId },
+                                    'invitations.status': {
+                                        $in: [InvitationStatus.Accepted],
+                                    },
+                                },
+                            },
+                            {
+                                'attendance.user': { $eq: userObjId },
+                            },
+                        ],
+                    },
+                ],
+            })
+            .exec();
     }
 
     async acceptOrRejectInvitation(
