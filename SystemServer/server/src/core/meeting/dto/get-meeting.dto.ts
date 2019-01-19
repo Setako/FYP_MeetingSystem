@@ -30,7 +30,6 @@ export class GetMeetingDto {
 
     location?: string;
 
-    // @Type(() => Types.ObjectId)
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
 

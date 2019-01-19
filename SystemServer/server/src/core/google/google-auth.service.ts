@@ -41,7 +41,7 @@ export class GoogleAuthService {
     }
 
     signAuthState(state: GoogleAuthState) {
-        return this.jwtService.sign(state, { expiresIn: '5m' });
+        return this.jwtService.sign(state);
     }
 
     verifyAuthState(state: string) {
@@ -96,7 +96,7 @@ export class GoogleAuthService {
                     }),
                 ),
                 flatMap(client => client.getRequestHeaders()),
-                catchError(() => of(false)),
+                catchError(e => of(false)),
                 map(item => Boolean(item)),
             )
             .toPromise();

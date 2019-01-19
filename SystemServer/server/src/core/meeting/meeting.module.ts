@@ -7,6 +7,7 @@ import { MeetingService } from './meeting.service';
 import { FriendModule } from '../friend/friend.module';
 import { NotificationModule } from '../notification/notification.module';
 import { GoogleModule } from '../google/google.module';
+import { DeviceModule } from '../device/device.module';
 
 @Module({
     imports: [
@@ -15,6 +16,7 @@ import { GoogleModule } from '../google/google.module';
         FriendModule,
         NotificationModule,
         GoogleModule,
+        DeviceModule,
     ],
     controllers: [MeetingController],
     providers: [MeetingService],

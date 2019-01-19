@@ -1,20 +1,6 @@
-import { arrayProp, prop, Ref, Typegoose } from 'typegoose';
+import { arrayProp, prop, Ref, Typegoose, pre } from 'typegoose';
 import { Device } from '../device/device.model';
 import { User } from '../user/user.model';
-
-export class Attendance {
-    public user!: Ref<User>;
-
-    public priority!: number;
-
-    public arrivalTime?: Date;
-
-    public status?: AttendanceStatus;
-
-    public permission!: AccessPostMeetingPermission;
-
-    public googleCalendarEventId?: string;
-}
 
 export enum InvitationStatus {
     Accepted = 'accepted',
@@ -23,8 +9,6 @@ export enum InvitationStatus {
 }
 
 export class Invitation {
-    public id!: string;
-
     @prop({
         ref: User,
     })
@@ -46,28 +30,6 @@ export enum AttendanceStatus {
     Absent = 'absent',
     Present = 'present',
     Exit = 'exit',
-}
-
-export enum MeetingPriority {
-    Hight = 1,
-    Medium = 2,
-    Low = 3,
-}
-
-export enum MeetingStatus {
-    Draft = 'draft',
-    Planned = 'planned',
-    Confirmed = 'confirmed',
-    Cancelled = 'cancelled',
-    Started = 'started',
-    Ended = 'ended',
-    Deleted = 'deleted',
-}
-
-export enum MeetingType {
-    Speech = 'speech',
-    GroupDiscussion = 'group_discussion',
-    Presentation = 'presentation',
 }
 
 export class AccessPostMeetingPermission {
@@ -107,6 +69,58 @@ export class AccessPostMeetingPermission {
     }
 }
 
+export class Attendance {
+    @prop({
+        ref: User,
+    })
+    public user!: Ref<User>;
+
+    @prop()
+    public priority!: number;
+
+    @prop()
+    public arrivalTime?: Date;
+
+    @prop()
+    public status?: AttendanceStatus;
+
+    @prop()
+    public permission!: AccessPostMeetingPermission;
+
+    @prop()
+    public googleCalendarEventId?: string;
+}
+
+export enum MeetingPriority {
+    Hight = 1,
+    Medium = 2,
+    Low = 3,
+}
+
+export enum MeetingStatus {
+    Draft = 'draft',
+    Planned = 'planned',
+    Confirmed = 'confirmed',
+    Cancelled = 'cancelled',
+    Started = 'started',
+    Ended = 'ended',
+    Deleted = 'deleted',
+}
+
+export enum MeetingType {
+    Speech = 'speech',
+    GroupDiscussion = 'group_discussion',
+    Presentation = 'presentation',
+}
+
+@pre<Meeting>('save', function(next) {
+    if (this.plannedStartTime && this.length) {
+        this.plannedEndTime = new Date(
+            new Date(this.plannedStartTime).getTime() + this.length,
+        );
+    }
+    next();
+})
 export class Meeting extends Typegoose {
     @prop({
         required: true,

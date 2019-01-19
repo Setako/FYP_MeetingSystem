@@ -10,12 +10,18 @@ import {
 } from 'typegoose';
 
 export class Relation {
+    @prop({
+        ref: 'User',
+    })
     public attendee: Ref<User>;
 
+    @prop()
     public recordStartDate: Date;
 
+    @prop()
     public latesMeetingDate: Date;
 
+    @prop()
     public meetingCount: number;
 
     constructor(
@@ -177,13 +183,13 @@ export class User extends Typegoose {
 
     @arrayProp({
         items: Relation,
-        default: [],
+        _id: false,
     })
     public userMeetingRelation!: Relation[];
 
     @prop({
         required: true,
-        default: new UserSetting(),
+        default: () => new UserSetting(),
     })
     public setting!: UserSetting;
 }

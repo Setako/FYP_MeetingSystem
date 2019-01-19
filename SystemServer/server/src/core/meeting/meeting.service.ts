@@ -15,8 +15,8 @@ import {
     Meeting,
     MeetingStatus,
 } from './meeting.model';
-import { from, merge, identity, of, empty } from 'rxjs';
-import { map, flatMap, filter, toArray, tap, mergeMapTo } from 'rxjs/operators';
+import { from, merge, identity, of, empty, defer } from 'rxjs';
+import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
 @Injectable()
@@ -234,19 +234,7 @@ export class MeetingService {
             return null;
         }
 
-        // TODO: handle the attendance
-        // if (editMeetingDto.attendance) {
-        //     edited.attendance = (await Promise.all(
-        //         editMeetingDto.attendance.map(async item => ({
-        //             ...item,
-        //             arrivalTime: new Date(item.arrivalTime),
-        //             user: await this.userService.getByUsername(item.user),
-        //             permission: item.permission || edited.generalPermission,
-        //         })),
-        //     )).filter(item => item.user);
-        // }
-
-        if (editMeetingDto.invitations) {
+        if (Boolean(editMeetingDto.invitations)) {
             await edited.save();
             edited = await this.editInvitations(
                 edited.id,
@@ -271,27 +259,12 @@ export class MeetingService {
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
             : edited.plannedStartTime;
-        edited.plannedEndTime = editMeetingDto.plannedEndTime
-            ? new Date(editMeetingDto.plannedEndTime)
-            : edited.plannedEndTime;
         edited.realStartTime = editMeetingDto.realStartTime
             ? new Date(editMeetingDto.realStartTime)
             : edited.realStartTime;
         edited.realEndTime = editMeetingDto.realEndTime
             ? new Date(editMeetingDto.realEndTime)
             : edited.realEndTime;
-
-        // TODO: handle the owner attendance
-        // if (
-        //     edited.status !== MeetingStatus.Draft &&
-        //     edited.attendance.some(att => att.user === edited.owner)
-        // ) {
-        //     edited.attendance.push({
-        //         user: edited.owner,
-        //         priority: 1,
-        //         permission: edited.generalPermission,
-        //     });
-        // }
 
         return edited.save();
     }
@@ -339,35 +312,19 @@ export class MeetingService {
     }
 
     async findNewInviteeIds(meetingId: string, invitations: InvitationsDto) {
-        const emails = new Set(invitations.emails);
-        const friends = new Set(invitations.friends);
+        const invitationList = invitations || undefined;
+        const emails = new Set(invitationList ? invitationList.emails : []);
+        const friends = new Set(invitationList ? invitationList.friends : []);
 
         const meeting = await this.meetingModel
             .findById(meetingId)
             .populate('owner invitations.user')
             .exec();
 
-        const meeting$ = from(
-            this.meetingModel
-                .findById(meetingId)
-                .populate('owner invitations.user')
-                .exec(),
-        ).pipe(filter(item => Boolean(item)));
-
         [meeting.owner as InstanceType<User>].map(owner => {
             emails.delete(owner.email);
             friends.delete(owner.username);
         });
-
-        const kept$ = from(meeting.invitations).pipe(
-            filter(item => {
-                const user: InstanceType<User> = item.user as any;
-                const hasEmail = item.email && emails.delete(item.email);
-                const hasEmail2 = user && emails.delete(user.email);
-                const hasFriends = user && friends.delete(user.username);
-                return hasEmail || hasEmail2 || hasFriends;
-            }),
-        );
 
         const friendIds$ = from(friends.values()).pipe(
             flatMap(item => from(this.userService.getByUsername(item))),
@@ -398,9 +355,9 @@ export class MeetingService {
         if (!meeting) {
             return null;
         }
-
-        const emails = new Set(invitations.emails);
-        const friends = new Set(invitations.friends);
+        const invitationList = invitations || undefined;
+        const emails = new Set(invitationList ? invitationList.emails : []);
+        const friends = new Set(invitationList ? invitationList.friends : []);
 
         [meeting.owner as InstanceType<User>].map(owner => {
             emails.delete(owner.email);
@@ -456,7 +413,7 @@ export class MeetingService {
         return meeting.save();
     }
 
-    async getAllFriendIdsInInvitations(id: string, userId: string) {
+    async getAllFriendIdsInInvitations(id: string, _userId: string) {
         const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
             filter(item => Boolean(item)),
         );
@@ -469,6 +426,57 @@ export class MeetingService {
         );
 
         return friends$.pipe(toArray()).toPromise();
+    }
+
+    async getAllUserJoinedMeetingInRange({
+        userId,
+        fromDate,
+        toDate,
+    }: {
+        userId: string;
+        fromDate: Date;
+        toDate: Date;
+    }) {
+        const userObjId = Types.ObjectId(userId);
+        return this.meetingModel
+            .find({
+                $and: [
+                    {
+                        status: {
+                            $in: [
+                                MeetingStatus.Planned,
+                                MeetingStatus.Confirmed,
+                                MeetingStatus.Started,
+                            ],
+                        },
+                    },
+                    {
+                        plannedStartTime: { $gte: fromDate },
+                        plannedEndTime: { $lte: toDate },
+                    },
+                    {
+                        $or: [
+                            {
+                                owner: { $eq: userObjId },
+                            },
+                            {
+                                $and: [
+                                    { 'invitations.user': { $eq: userObjId } },
+                                    {
+                                        'invitations.status': {
+                                            $in: [InvitationStatus.Accepted],
+                                        },
+                                    },
+                                ],
+                            },
+                            {
+                                'attendance.user': { $eq: userObjId },
+                            },
+                        ],
+                    },
+                ],
+            })
+            .exec();
     }
 
     async acceptOrRejectInvitation(
@@ -500,6 +508,35 @@ export class MeetingService {
                 }),
             )
             .toPromise();
+    }
+
+    async updateDevice(meetingId: string, deviceId: string) {
+        return this.meetingModel
+            .findByIdAndUpdate(meetingId, {
+                device: Types.ObjectId(deviceId),
+            })
+            .exec();
+    }
+
+    async clearRealEndTime(meetingId: string) {
+        return this.meetingModel
+            .findByIdAndUpdate(meetingId, {
+                $unset: { realEndTime: '' },
+            })
+            .exec();
+    }
+
+    async isAvaialbeToBackToStart(meetingId: string, now: Date) {
+        const oneHour = 1 * 60 * 60 * 1000;
+        const meeting = await this.meetingModel.findById(meetingId);
+        if (!meeting) {
+            return false;
+        }
+        if (!meeting.realEndTime) {
+            return true;
+        }
+
+        return new Date(meeting.realEndTime.getTime() + oneHour) >= now;
     }
 
     async hasViewPermission(meetingId: string, userId: string) {
