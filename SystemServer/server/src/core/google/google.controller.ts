@@ -66,7 +66,14 @@ export class GoogleController {
         );
 
         const authUrl$ = clearUserToken$.pipe(
-            mapTo(this.authService.getAuthUrl(user.id, query.successRedirect)),
+            mapTo(
+                this.authService.getAuthUrl(
+                    user.id,
+                    query.successRedirect
+                        ? decodeURIComponent(query.successRedirect)
+                        : query.successRedirect,
+                ),
+            ),
         );
 
         return authUrl$.pipe(

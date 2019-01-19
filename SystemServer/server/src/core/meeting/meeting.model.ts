@@ -118,7 +118,6 @@ export enum MeetingType {
         this.plannedEndTime = new Date(
             new Date(this.plannedStartTime).getTime() + this.length,
         );
-        console.log(this.plannedEndTime);
     }
     next();
 })

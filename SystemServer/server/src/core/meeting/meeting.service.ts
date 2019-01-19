@@ -469,17 +469,17 @@ export class MeetingService {
                     {
                         $or: [
                             {
-                                $and: {
-                                    owner: { $eq: userObjId },
-                                },
+                                owner: { $eq: userObjId },
                             },
                             {
-                                $and: {
-                                    'invitations.user': { $eq: userObjId },
-                                    'invitations.status': {
-                                        $in: [InvitationStatus.Accepted],
+                                $and: [
+                                    { 'invitations.user': { $eq: userObjId } },
+                                    {
+                                        'invitations.status': {
+                                            $in: [InvitationStatus.Accepted],
+                                        },
                                     },
-                                },
+                                ],
                             },
                             {
                                 'attendance.user': { $eq: userObjId },

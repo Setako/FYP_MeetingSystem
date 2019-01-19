@@ -26,7 +26,16 @@ import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
-import { defer, identity, from, combineLatest, pipe, zip } from 'rxjs';
+import {
+    defer,
+    identity,
+    from,
+    combineLatest,
+    pipe,
+    zip,
+    concat,
+    merge,
+} from 'rxjs';
 import {
     flatMap,
     filter,
@@ -268,6 +277,7 @@ export class MeetingController {
                     MeetingStatus.Planned,
                     MeetingStatus.Cancelled,
                     MeetingStatus.Deleted,
+                    MeetingStatus.Started,
                 ],
             ],
             [MeetingStatus.Started, [MeetingStatus.Ended]],
@@ -343,7 +353,6 @@ export class MeetingController {
 
     @Put(':id/invitation')
     @HttpCode(HttpStatus.NO_CONTENT)
-    @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async acceptOrRejctInvitation(
         @Auth() user: InstanceType<User>,
@@ -397,8 +406,6 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingBusyTimeQueryDto,
     ) {
-        // this.meetingService.getAllUserJoinedMeetingInRange(user.id)
-
         const friendsId$ = from(
             this.meetingService.getAllFriendIdsInInvitations(id, user.id),
         ).pipe(
@@ -409,6 +416,16 @@ export class MeetingController {
         const friend$ = friendsId$.pipe(
             flatMap(friendId => this.userService.getById(friendId)),
             filter(item => Boolean(item)),
+        );
+
+        const friendJoinedMeeting$ = friend$.pipe(
+            flatMap(friend =>
+                this.meetingService.getAllUserJoinedMeetingInRange({
+                    userId: friend.id,
+                    fromDate: query.fromDate,
+                    toDate: query.toDate,
+                }),
+            ),
         );
 
         const whoHasGoogleService$ = friend$.pipe(
@@ -468,7 +485,19 @@ export class MeetingController {
             ),
         );
 
-        const groupedBusyTime$ = busyTime$.pipe(
+        const systemBusyTime$ = zip(friend$, friendJoinedMeeting$).pipe(
+            flatMap(([userInstance, meetingList]) =>
+                from(meetingList).pipe(
+                    map(item => ({
+                        fromDate: item.plannedStartTime,
+                        toDate: item.plannedEndTime,
+                        user: userInstance,
+                    })),
+                ),
+            ),
+        );
+
+        const groupedBusyTime$ = merge(busyTime$, systemBusyTime$).pipe(
             groupBy(time => time.fromDate.getTime() - time.toDate.getTime()),
             flatMap(group => group.pipe(toArray())),
         );
@@ -478,7 +507,8 @@ export class MeetingController {
                 fromDate: group.length !== 0 ? group[0].fromDate : undefined,
                 toDate: group.length !== 0 ? group[0].toDate : undefined,
                 users: group.reduce(
-                    (acc, xs) => acc.concat(xs.user),
+                    (acc, xs) =>
+                        acc.includes(xs.user) ? acc : acc.concat(xs.user),
                     [] as Array<InstanceType<User>>,
                 ),
             })),
