@@ -641,16 +641,17 @@ export class MeetingController {
         // Todo: mark the calendar
     }
 
-    @Put(':id/attendance/status')
+    @Put(':id/attendance/:attendee')
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     @HttpCode(HttpStatus.NO_CONTENT)
     async updateAttendeeStatus(
         @Param('id') id: string,
+        @Param('attendee') attendeeUsername: string,
         @Body() editAttendeeStatusDto: EditAttendeeStatusDto,
     ) {
         const attendee$ = from(
-            this.userService.getByUsername(editAttendeeStatusDto.attendee),
+            this.userService.getByUsername(attendeeUsername),
         ).pipe(
             tap(attendee => {
                 if (!attendee) {
