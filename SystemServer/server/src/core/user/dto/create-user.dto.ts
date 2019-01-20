@@ -3,8 +3,6 @@ import { IsEmail, IsString, Length } from 'class-validator';
 
 export class CreateUserDto {
     @IsUsername()
-    @Length(2, 20)
-    @IsString()
     readonly username!: string;
 
     @Length(8, 60)

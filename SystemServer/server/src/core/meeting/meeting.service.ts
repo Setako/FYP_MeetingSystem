@@ -14,7 +14,7 @@ import {
     InvitationStatus,
     Meeting,
     MeetingStatus,
-    Attendance,
+    AttendanceStatus,
 } from './meeting.model';
 import { from, merge, identity, of, empty, defer } from 'rxjs';
 import { map, flatMap, filter, toArray, tap } from 'rxjs/operators';
@@ -303,6 +303,74 @@ export class MeetingService {
         );
 
         return saveAttendee$.toPromise();
+    }
+
+    async isAttendeeExist(id: string, attendeeId: string) {
+        return defer(() =>
+            this.meetingModel
+                .find({
+                    _id: { $eq: Types.ObjectId(id) },
+                    'attendance.user': { $eq: Types.ObjectId(attendeeId) },
+                })
+                .countDocuments()
+                .exec(),
+        )
+            .pipe(map(Boolean))
+            .toPromise();
+    }
+
+    async updateAttendeeStatus(
+        id: string,
+        attendeeId: string,
+        status: AttendanceStatus,
+    ) {
+        const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
+            flatMap(item => (item ? of(item) : empty())),
+        );
+
+        return meeting$
+            .pipe(
+                flatMap(item => {
+                    const attendee = item.attendance.find(attendance =>
+                        (attendance.user as Types.ObjectId).equals(attendeeId),
+                    );
+
+                    if (!attendee) {
+                        return of(item);
+                    }
+
+                    attendee.status = status;
+                    return item.save();
+                }),
+            )
+            .toPromise();
+    }
+
+    async updateAttendeeArrivalTime(
+        id: string,
+        attendeeId: string,
+        arrivalTime = new Date(),
+    ) {
+        const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
+            flatMap(item => (item ? of(item) : empty())),
+        );
+
+        return meeting$
+            .pipe(
+                flatMap(item => {
+                    const attendee = item.attendance.find(attendance =>
+                        (attendance.user as Types.ObjectId).equals(attendeeId),
+                    );
+
+                    if (!attendee) {
+                        return of(item);
+                    }
+
+                    attendee.arrivalTime = arrivalTime;
+                    return item.save();
+                }),
+            )
+            .toPromise();
     }
 
     async editStatus(id: string, status: MeetingStatus) {

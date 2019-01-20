@@ -1,4 +1,3 @@
-import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
 import { AttendanceStatus } from '../meeting.model';
 import { PermissionDto } from './permission.dto';
 import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';

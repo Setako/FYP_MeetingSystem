@@ -24,16 +24,13 @@ import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
-import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
 import {
     defer,
     identity,
     from,
     combineLatest,
-    pipe,
     zip,
-    concat,
     merge,
     empty,
     Observable,
@@ -49,15 +46,18 @@ import {
     tap,
     mergeMapTo,
     groupBy,
-    reduce,
     catchError,
     mergeAll,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
-import { GetInvitationDto } from './dto/get-invitation.dto';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
 import { Types } from 'mongoose';
-import { InvitationStatus, MeetingStatus, Meeting } from './meeting.model';
+import {
+    InvitationStatus,
+    MeetingStatus,
+    Meeting,
+    AttendanceStatus,
+} from './meeting.model';
 import { AcceptDto } from '@commander/shared/dto/accept.dto';
 import { EditMeetingStatusDto } from './dto/edit-meeting.status.dto';
 import { ValidationPipe } from '@commander/shared/pipe/validation.pipe';
@@ -74,6 +74,7 @@ import { GoogleEventService } from '../google/google-event.service';
 import { GoogleCalendarService } from '../google/google-calendar.service';
 import { BusyTimeDto } from './dto/busy-time.dto';
 import { DeviceService } from '../device/device.service';
+import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -638,5 +639,68 @@ export class MeetingController {
     @UseGuards(MeetingGuard)
     async markOrUnMarkCalendar() {
         // Todo: mark the calendar
+    }
+
+    @Put(':id/attendance/status')
+    @UseGuards(MeetingOwnerGuard)
+    @UseGuards(MeetingGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async updateAttendeeStatus(
+        @Param('id') id: string,
+        @Body() editAttendeeStatusDto: EditAttendeeStatusDto,
+    ) {
+        const attendee$ = from(
+            this.userService.getByUsername(editAttendeeStatusDto.attendee),
+        ).pipe(
+            tap(attendee => {
+                if (!attendee) {
+                    throw new BadRequestException(
+                        'attendee is not in the system',
+                    );
+                }
+            }),
+        );
+
+        const isAttendeeExist$ = attendee$.pipe(
+            flatMap(attendee =>
+                this.meetingService.isAttendeeExist(id, attendee.id),
+            ),
+        );
+
+        const updatedStatus$ = zip(attendee$, isAttendeeExist$).pipe(
+            flatMap(([attendee, exist]) => {
+                if (!exist) {
+                    throw new BadRequestException(
+                        'attendee is not in the meeting',
+                    );
+                }
+
+                return this.meetingService.updateAttendeeStatus(
+                    id,
+                    attendee.id,
+                    editAttendeeStatusDto.status,
+                );
+            }),
+        );
+
+        await updatedStatus$.toPromise();
+
+        const afterUpdateAction = (status: AttendanceStatus) => {
+            switch (status) {
+                case AttendanceStatus.Present:
+                    return attendee$.pipe(
+                        flatMap(attendee =>
+                            this.meetingService.updateAttendeeArrivalTime(
+                                id,
+                                attendee.id,
+                            ),
+                        ),
+                    );
+                default:
+                    return empty();
+            }
+        };
+
+        afterUpdateAction(editAttendeeStatusDto.status).subscribe();
     }
 }
