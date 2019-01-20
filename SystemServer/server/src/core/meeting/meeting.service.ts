@@ -14,9 +14,10 @@ import {
     InvitationStatus,
     Meeting,
     MeetingStatus,
+    AttendanceStatus,
 } from './meeting.model';
 import { from, merge, identity, of, empty, defer } from 'rxjs';
-import { map, flatMap, filter, toArray } from 'rxjs/operators';
+import { map, flatMap, filter, toArray, tap } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
 @Injectable()
@@ -195,10 +196,7 @@ export class MeetingService {
     }
 
     async getAll(options = {}) {
-        return this.meetingModel
-            .find(options)
-            .populate('owner invitation.owner')
-            .exec();
+        return this.meetingModel.find(options).exec();
     }
 
     async getAllWithPage(pageSize: number, pageNum = 1, options = {}) {
@@ -267,6 +265,112 @@ export class MeetingService {
             : edited.realEndTime;
 
         return edited.save();
+    }
+
+    async addAttendance(id: string, attendeeId: string) {
+        const meeting$ = defer(() =>
+            this.meetingModel.findById(id).exec(),
+        ).pipe(flatMap(item => (item ? of(item) : empty())));
+
+        const attendance$ = meeting$.pipe(map(item => item.attendance));
+
+        const attendeeIds$ = attendance$.pipe(
+            map(item =>
+                item.map(attendee =>
+                    (attendee.user as Types.ObjectId).toHexString(),
+                ),
+            ),
+        );
+
+        const ifNotExistAttendee$ = attendeeIds$.pipe(
+            flatMap(list =>
+                list.includes(attendeeId) ? empty() : of(attendeeId),
+            ),
+            tap(console.log.bind(console)),
+        );
+
+        const saveAttendee$ = ifNotExistAttendee$.pipe(
+            flatMap(attendee =>
+                meeting$.pipe(
+                    flatMap(item => {
+                        item.attendance.push({
+                            user: Types.ObjectId(attendee),
+                        });
+                        return item.save();
+                    }),
+                ),
+            ),
+        );
+
+        return saveAttendee$.toPromise();
+    }
+
+    async isAttendeeExist(id: string, attendeeId: string) {
+        return defer(() =>
+            this.meetingModel
+                .find({
+                    _id: { $eq: Types.ObjectId(id) },
+                    'attendance.user': { $eq: Types.ObjectId(attendeeId) },
+                })
+                .countDocuments()
+                .exec(),
+        )
+            .pipe(map(Boolean))
+            .toPromise();
+    }
+
+    async updateAttendeeStatus(
+        id: string,
+        attendeeId: string,
+        status: AttendanceStatus,
+    ) {
+        const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
+            flatMap(item => (item ? of(item) : empty())),
+        );
+
+        return meeting$
+            .pipe(
+                flatMap(item => {
+                    const attendee = item.attendance.find(attendance =>
+                        (attendance.user as Types.ObjectId).equals(attendeeId),
+                    );
+
+                    if (!attendee) {
+                        return of(item);
+                    }
+
+                    attendee.status = status;
+                    return item.save();
+                }),
+            )
+            .toPromise();
+    }
+
+    async updateAttendeeArrivalTime(
+        id: string,
+        attendeeId: string,
+        arrivalTime = new Date(),
+    ) {
+        const meeting$ = from(this.meetingModel.findById(id).exec()).pipe(
+            flatMap(item => (item ? of(item) : empty())),
+        );
+
+        return meeting$
+            .pipe(
+                flatMap(item => {
+                    const attendee = item.attendance.find(attendance =>
+                        (attendance.user as Types.ObjectId).equals(attendeeId),
+                    );
+
+                    if (!attendee) {
+                        return of(item);
+                    }
+
+                    attendee.arrivalTime = arrivalTime;
+                    return item.save();
+                }),
+            )
+            .toPromise();
     }
 
     async editStatus(id: string, status: MeetingStatus) {

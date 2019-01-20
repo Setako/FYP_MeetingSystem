@@ -24,16 +24,13 @@ import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
 import { MeetingQueryDto } from './dto/meeting-query.dto';
 import { GetMeetingDto } from './dto/get-meeting.dto';
-import { InvitationsDto } from './dto/invitations.dto';
 import { MeetingService } from './meeting.service';
 import {
     defer,
     identity,
     from,
     combineLatest,
-    pipe,
     zip,
-    concat,
     merge,
     empty,
     Observable,
@@ -49,14 +46,18 @@ import {
     tap,
     mergeMapTo,
     groupBy,
-    reduce,
     catchError,
+    mergeAll,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
-import { GetInvitationDto } from './dto/get-invitation.dto';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
 import { Types } from 'mongoose';
-import { InvitationStatus, MeetingStatus, Meeting } from './meeting.model';
+import {
+    InvitationStatus,
+    MeetingStatus,
+    Meeting,
+    AttendanceStatus,
+} from './meeting.model';
 import { AcceptDto } from '@commander/shared/dto/accept.dto';
 import { EditMeetingStatusDto } from './dto/edit-meeting.status.dto';
 import { ValidationPipe } from '@commander/shared/pipe/validation.pipe';
@@ -73,6 +74,7 @@ import { GoogleEventService } from '../google/google-event.service';
 import { GoogleCalendarService } from '../google/google-calendar.service';
 import { BusyTimeDto } from './dto/busy-time.dto';
 import { DeviceService } from '../device/device.service';
+import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -109,7 +111,9 @@ export class MeetingController {
             flatMap(identity),
             filter(item => Boolean(item)),
             flatMap(item =>
-                item.populate('owner invitations.user').execPopulate(),
+                item
+                    .populate('owner invitations.user attendance.user')
+                    .execPopulate(),
             ),
         );
 
@@ -166,7 +170,9 @@ export class MeetingController {
         ).pipe(
             flatMap(identity),
             flatMap(item =>
-                item.populate('owner invitations.user').execPopulate(),
+                item
+                    .populate('owner invitations.user attendance.user')
+                    .execPopulate(),
             ),
         );
 
@@ -210,7 +216,6 @@ export class MeetingController {
                         [
                             MeetingStatus.Planned,
                             MeetingStatus.Confirmed,
-                            MeetingStatus,
                         ].includes(item.status),
                 ),
             )
@@ -241,7 +246,7 @@ export class MeetingController {
             flatMap(_id =>
                 this.meetingService
                     .findAll({ _id: { $eq: _id } })
-                    .populate('owner invitations.user')
+                    .populate('owner invitations.user attendance.user')
                     .exec(),
             ),
             flatMap(identity),
@@ -255,6 +260,7 @@ export class MeetingController {
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async editStatus(
+        @Auth() owner: InstanceType<User>,
         @Param('id') id: string,
         @Body() { status, ...editStatusDto }: EditMeetingStatusDto,
     ) {
@@ -388,7 +394,7 @@ export class MeetingController {
                                 item.user,
                         );
 
-                        return from(inviteeInWaiting).pipe(
+                        const addNotification$ = from(inviteeInWaiting).pipe(
                             flatMap(invitee =>
                                 this.notificationService.create({
                                     receiver: invitee.user as Types.ObjectId,
@@ -400,6 +406,14 @@ export class MeetingController {
                                         NotificationObjectModel.Meeting,
                                 }),
                             ),
+                        );
+
+                        const addOwnerAttendance$ = from(
+                            this.meetingService.addAttendance(id, owner.id),
+                        );
+
+                        return of(addNotification$, addOwnerAttendance$).pipe(
+                            mergeAll(),
                         );
                     });
                 case MeetingStatus.Started:
@@ -468,6 +482,12 @@ export class MeetingController {
             }),
         );
 
+        const addAttendance$ = defer(() =>
+            acceptDto.accept
+                ? this.meetingService.addAttendance(id, user.id)
+                : empty(),
+        );
+
         await isInvited$
             .pipe(
                 flatMap(() =>
@@ -479,6 +499,8 @@ export class MeetingController {
                 ),
             )
             .toPromise();
+
+        addAttendance$.subscribe();
     }
 
     @Get(':id/busy-time')
@@ -613,53 +635,73 @@ export class MeetingController {
         );
     }
 
-    @Get(':id/participant')
-    @UseGuards(MeetingGuard)
-    async getInvitation(@Param('id') id: string) {
-        return from(this.meetingService.getById(id)).pipe(
-            flatMap(item => item!.populate('invitations.user').execPopulate()),
-            map(
-                pipe(
-                    item => item.toObject(),
-                    ({ invitations }) => ({
-                        items: invitations.map((item: object) =>
-                            ObjectUtils.ObjectToPlain(item, GetInvitationDto),
-                        ),
-                        length: invitations.length,
-                    }),
-                ),
-            ),
-        );
-    }
-
-    @Put(':id/participant')
-    @UseGuards(MeetingOwnerGuard)
-    @UseGuards(MeetingGuard)
-    async editInvitation(
-        @Param('id') id: string,
-        @Body() invitationDto: InvitationsDto,
-    ) {
-        return from(
-            this.meetingService.editInvitations(id, invitationDto),
-        ).pipe(
-            flatMap(item => item!.populate('invitations.user').execPopulate()),
-            map(
-                pipe(
-                    item => item.toObject(),
-                    ({ invitations }) => ({
-                        items: invitations.map((item: object) =>
-                            ObjectUtils.ObjectToPlain(item, GetInvitationDto),
-                        ),
-                        length: invitations.length,
-                    }),
-                ),
-            ),
-        );
-    }
-
     @Put(':id/calendar')
     @UseGuards(MeetingGuard)
     async markOrUnMarkCalendar() {
         // Todo: mark the calendar
+    }
+
+    @Put(':id/attendance/:attendee')
+    @UseGuards(MeetingOwnerGuard)
+    @UseGuards(MeetingGuard)
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async updateAttendeeStatus(
+        @Param('id') id: string,
+        @Param('attendee') attendeeUsername: string,
+        @Body() editAttendeeStatusDto: EditAttendeeStatusDto,
+    ) {
+        const attendee$ = from(
+            this.userService.getByUsername(attendeeUsername),
+        ).pipe(
+            tap(attendee => {
+                if (!attendee) {
+                    throw new BadRequestException(
+                        'attendee is not in the system',
+                    );
+                }
+            }),
+        );
+
+        const isAttendeeExist$ = attendee$.pipe(
+            flatMap(attendee =>
+                this.meetingService.isAttendeeExist(id, attendee.id),
+            ),
+        );
+
+        const updatedStatus$ = zip(attendee$, isAttendeeExist$).pipe(
+            flatMap(([attendee, exist]) => {
+                if (!exist) {
+                    throw new BadRequestException(
+                        'attendee is not in the meeting',
+                    );
+                }
+
+                return this.meetingService.updateAttendeeStatus(
+                    id,
+                    attendee.id,
+                    editAttendeeStatusDto.status,
+                );
+            }),
+        );
+
+        await updatedStatus$.toPromise();
+
+        const afterUpdateAction = (status: AttendanceStatus) => {
+            switch (status) {
+                case AttendanceStatus.Present:
+                    return attendee$.pipe(
+                        flatMap(attendee =>
+                            this.meetingService.updateAttendeeArrivalTime(
+                                id,
+                                attendee.id,
+                            ),
+                        ),
+                    );
+                default:
+                    return empty();
+            }
+        };
+
+        afterUpdateAction(editAttendeeStatusDto.status).subscribe();
     }
 }

@@ -27,6 +27,8 @@ export function IsUsername(
 
                     return (
                         typeof value === 'string' &&
+                        value.length >= 2 &&
+                        value.length <= 20 &&
                         !value
                             .split('')
                             .some(
