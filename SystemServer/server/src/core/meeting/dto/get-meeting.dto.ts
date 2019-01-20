@@ -37,12 +37,6 @@ export class GetMeetingDto {
     owner!: SimpleUserDto;
 
     @Type(() => AttendanceDto)
-    @Transform(arr => {
-        return arr.map((attendance: { user: { username: any } }) => ({
-            ...attendance,
-            user: attendance.user.username,
-        }));
-    })
     attendance!: AttendanceDto[];
 
     @Type(() => GetInvitationDto)

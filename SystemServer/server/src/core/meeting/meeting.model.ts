@@ -18,7 +18,7 @@ export class Invitation {
     public email?: string;
 
     @prop()
-    public priority!: number;
+    public priority?: number;
 
     @prop({
         enum: InvitationStatus,
@@ -72,11 +72,12 @@ export class AccessPostMeetingPermission {
 export class Attendance {
     @prop({
         ref: User,
+        unique: true,
     })
     public user!: Ref<User>;
 
     @prop()
-    public priority!: number;
+    public priority?: number;
 
     @prop()
     public arrivalTime?: Date;
@@ -85,7 +86,7 @@ export class Attendance {
     public status?: AttendanceStatus;
 
     @prop()
-    public permission!: AccessPostMeetingPermission;
+    public permission?: AccessPostMeetingPermission;
 
     @prop()
     public googleCalendarEventId?: string;
@@ -186,6 +187,7 @@ export class Meeting extends Typegoose {
 
     @arrayProp({
         items: Attendance,
+        _id: false,
     })
     public attendance!: Attendance[];
 

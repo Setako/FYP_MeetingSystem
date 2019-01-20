@@ -51,6 +51,7 @@ import {
     groupBy,
     reduce,
     catchError,
+    mergeAll,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { GetInvitationDto } from './dto/get-invitation.dto';
@@ -109,7 +110,9 @@ export class MeetingController {
             flatMap(identity),
             filter(item => Boolean(item)),
             flatMap(item =>
-                item.populate('owner invitations.user').execPopulate(),
+                item
+                    .populate('owner invitations.user attendance.user')
+                    .execPopulate(),
             ),
         );
 
@@ -166,7 +169,9 @@ export class MeetingController {
         ).pipe(
             flatMap(identity),
             flatMap(item =>
-                item.populate('owner invitations.user').execPopulate(),
+                item
+                    .populate('owner invitations.user attendance.user')
+                    .execPopulate(),
             ),
         );
 
@@ -210,7 +215,6 @@ export class MeetingController {
                         [
                             MeetingStatus.Planned,
                             MeetingStatus.Confirmed,
-                            MeetingStatus,
                         ].includes(item.status),
                 ),
             )
@@ -241,7 +245,7 @@ export class MeetingController {
             flatMap(_id =>
                 this.meetingService
                     .findAll({ _id: { $eq: _id } })
-                    .populate('owner invitations.user')
+                    .populate('owner invitations.user attendance.user')
                     .exec(),
             ),
             flatMap(identity),
@@ -255,6 +259,7 @@ export class MeetingController {
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async editStatus(
+        @Auth() owner: InstanceType<User>,
         @Param('id') id: string,
         @Body() { status, ...editStatusDto }: EditMeetingStatusDto,
     ) {
@@ -388,7 +393,7 @@ export class MeetingController {
                                 item.user,
                         );
 
-                        return from(inviteeInWaiting).pipe(
+                        const addNotification$ = from(inviteeInWaiting).pipe(
                             flatMap(invitee =>
                                 this.notificationService.create({
                                     receiver: invitee.user as Types.ObjectId,
@@ -400,6 +405,14 @@ export class MeetingController {
                                         NotificationObjectModel.Meeting,
                                 }),
                             ),
+                        );
+
+                        const addOwnerAttendance$ = from(
+                            this.meetingService.addAttendance(id, owner.id),
+                        );
+
+                        return of(addNotification$, addOwnerAttendance$).pipe(
+                            mergeAll(),
                         );
                     });
                 case MeetingStatus.Started:
@@ -468,6 +481,12 @@ export class MeetingController {
             }),
         );
 
+        const addAttendance$ = defer(() =>
+            acceptDto.accept
+                ? this.meetingService.addAttendance(id, user.id)
+                : empty(),
+        );
+
         await isInvited$
             .pipe(
                 flatMap(() =>
@@ -479,6 +498,8 @@ export class MeetingController {
                 ),
             )
             .toPromise();
+
+        addAttendance$.subscribe();
     }
 
     @Get(':id/busy-time')
@@ -610,50 +631,6 @@ export class MeetingController {
             map(item => ObjectUtils.ObjectToPlain(item, BusyTimeDto)),
             toArray(),
             map(items => ({ items })),
-        );
-    }
-
-    @Get(':id/participant')
-    @UseGuards(MeetingGuard)
-    async getInvitation(@Param('id') id: string) {
-        return from(this.meetingService.getById(id)).pipe(
-            flatMap(item => item!.populate('invitations.user').execPopulate()),
-            map(
-                pipe(
-                    item => item.toObject(),
-                    ({ invitations }) => ({
-                        items: invitations.map((item: object) =>
-                            ObjectUtils.ObjectToPlain(item, GetInvitationDto),
-                        ),
-                        length: invitations.length,
-                    }),
-                ),
-            ),
-        );
-    }
-
-    @Put(':id/participant')
-    @UseGuards(MeetingOwnerGuard)
-    @UseGuards(MeetingGuard)
-    async editInvitation(
-        @Param('id') id: string,
-        @Body() invitationDto: InvitationsDto,
-    ) {
-        return from(
-            this.meetingService.editInvitations(id, invitationDto),
-        ).pipe(
-            flatMap(item => item!.populate('invitations.user').execPopulate()),
-            map(
-                pipe(
-                    item => item.toObject(),
-                    ({ invitations }) => ({
-                        items: invitations.map((item: object) =>
-                            ObjectUtils.ObjectToPlain(item, GetInvitationDto),
-                        ),
-                        length: invitations.length,
-                    }),
-                ),
-            ),
         );
     }
 
