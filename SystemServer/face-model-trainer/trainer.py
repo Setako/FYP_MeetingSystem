@@ -7,7 +7,7 @@ from sklearn import neighbors
 import face_recognition as fr
 
 DEFAULT_SETTING = {
-    'server_root': str(Path(__file__).resolve().parent.parent / 'server'),
+    'server_root': './',
     'resource_root': 'data',
     'model_save_path': 'trained-model',
     'user_image_path': 'user-image'
@@ -83,7 +83,6 @@ def command(
         verbose=True
     )
 
-
 def train(
     train_dir_list: list,
     model_save_path: str = None,
@@ -111,7 +110,7 @@ def train(
     :param verbose: verbosity of training
     :return: returns knn classifier that was trained on the given data.
     """
-    X = []
+    x = []
     y = []
 
     # Loop through each person in the training set
@@ -154,18 +153,18 @@ def train(
                     )
             else:
                 # Add face encoding for current image to the training set
-                X.append(
+                x.append(
                     fr.face_encodings(
                         image,
                         known_face_locations=face_bounding_boxes,
-                        num_jitters=100
+                        num_jitters=50 # change it small will faster
                     )[0]
                 )
                 y.append(class_dir.name)
 
     # Determine how many neighbors to use for weighting in the KNN classifier
     if n_neighbors is None:
-        n_neighbors = int(round(math.sqrt(len(X))))
+        n_neighbors = int(round(math.sqrt(len(x))))
         if verbose:
             click.echo(
                 'Choose n_neighbors automatically: {}'.format(n_neighbors)
@@ -175,11 +174,11 @@ def train(
     knn_clf = neighbors.KNeighborsClassifier(
         n_neighbors=n_neighbors, algorithm=knn_algo, weights='distance'
     )
-    knn_clf.fit(X, y)
+    knn_clf.fit(x, y)
 
     if model_save_path is not None:
-        with open(model_save_path, 'wb') as f:
-            pickle.dump(knn_clf, f)
+        with open(model_save_path, 'wb') as model_file:
+            pickle.dump(knn_clf, model_file)
         if verbose:
             click.echo('Model saved in {}'.format(model_save_path))
 
@@ -188,3 +187,4 @@ def train(
 
 if __name__ == '__main__':
     command()
+    
