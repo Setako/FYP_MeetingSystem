@@ -17,7 +17,7 @@ export class WeekFreetimeComponent implements OnInit {
   @ViewChild('calendar') calendar: CalendarWeekViewComponent;
   busyTimes: CalendarEvent[] = [];
   public view = CalendarView.Week;
-  private queryingSubscription: Subscription = null;
+  public queryingSubscription: Subscription = null;
 
   Math: any;
   viewDate = new Date();
@@ -89,6 +89,7 @@ export class WeekFreetimeComponent implements OnInit {
   setPlanningTime($event: { date: Date }) {
     if (moment($event.date).isAfter()) {
       this.selectedDate = $event.date;
+      this.meeting.plannedStartTime = $event.date.toISOString();
     } else {
       this.snackBar.open('You can\'t select a passed time', 'Dismiss', {duration: 3000});
     }

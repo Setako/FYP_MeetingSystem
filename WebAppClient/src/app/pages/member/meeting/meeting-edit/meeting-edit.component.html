@@ -5,7 +5,7 @@
   <mat-card-content>
 
     <app-querying-content-hider [querying]="queryingAction!=null" [queryingAction]="queryingAction">
-      <mat-vertical-stepper #stepper (selectionChange)="saveStepState($event,Step.Basic)">
+      <mat-vertical-stepper #stepper (selectionChange)="saveStepState($event.previouslySelectedIndex,Step.Basic)">
         <mat-step>
           <ng-template matStepLabel>Basic information</ng-template>
 
@@ -178,6 +178,9 @@
           <app-meeting-edit-time [meeting]="meeting">
 
           </app-meeting-edit-time>
+          <div class="d-flex justify-content-end">
+            <button (click)="saveStepState(3)" color="primary" mat-flat-button>Complete, Save</button>
+          </div>
         </mat-step>
 
 
