@@ -3,7 +3,6 @@ import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {MatDialog, MatSelectionList, MatSnackBar, MatStepper} from '@angular/material';
-import {StepperSelectionEvent} from '@angular/cdk/stepper';
 import {Meeting} from '../../../../shared/models/meeting';
 import {Millisecond} from '../../../../utils/time-unit';
 import {ObjectFilter} from '../../../../utils/object-filter';
@@ -55,9 +54,8 @@ export class MeetingEditComponent implements OnInit {
     });
   }
 
-  saveStepState(event: StepperSelectionEvent, step: any) {
-    console.log(event);
-    switch (event.previouslySelectedIndex) {
+  saveStepState(previousStepNum: number, step: any) {
+    switch (previousStepNum) {
       case 0:
         if (!this.basicForm.valid) {
           this.snackBar.open('Some data of basic information are invalid, not saved!', 'Dismiss', {duration: 4000});
@@ -90,6 +88,20 @@ export class MeetingEditComponent implements OnInit {
             emails: this.meetingParticipantEmails.split('\n').filter(email => email.trim().length > 0)
           }
         }).pipe(mapTo(this.updateMeeting(this.meeting.id))).subscribe(
+          () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
+          }, () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
+          });
+        break;
+      case 3:
+        this.queryingAction = 'Updating planned start time';
+        this.meetingService.saveMeeting({
+          id: this.meeting.id,
+          plannedStartTime: this.meeting.plannedStartTime
+        } as Meeting).pipe(mapTo(this.updateMeeting(this.meeting.id))).subscribe(
           () => {
             this.queryingAction = null;
             this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
