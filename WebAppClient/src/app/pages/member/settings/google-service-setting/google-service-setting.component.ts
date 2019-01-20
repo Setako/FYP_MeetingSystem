@@ -1,7 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
 import {MatSnackBar} from '@angular/material';
-import {Observable} from 'rxjs';
 
 @Component({
   selector: 'app-google-service-setting',
@@ -9,7 +8,7 @@ import {Observable} from 'rxjs';
   styleUrls: ['./google-service-setting.component.css']
 })
 export class GoogleServiceSettingComponent implements OnInit {
-  public querying = false;
+  public querying = true;
   public queryingAction: string;
   public auth: boolean;
 
@@ -17,6 +16,7 @@ export class GoogleServiceSettingComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.updateAuthStatus();
   }
 
   googleLogin() {
@@ -24,12 +24,11 @@ export class GoogleServiceSettingComponent implements OnInit {
     this.querying = true;
     this.googleOauthService.connectGoogle().subscribe(
       token => {
-        this.snackBar.open(token);
-        // console.log(token);
+        this.snackBar.open('Connected successfully', 'Dismiss', {duration: 3000});
         this.querying = false;
+        this.updateAuthStatus();
       }, (err) => {
-        this.snackBar.open(err);
-        console.log(err);
+        this.snackBar.open(err.message, 'Dismiss', {duration: 3000});
         this.querying = false;
       }
     );
@@ -42,11 +41,27 @@ export class GoogleServiceSettingComponent implements OnInit {
       () => {
         this.querying = false;
         this.auth = true;
+        console.log('success');
       },
       (err) => {
+        console.log(err);
         this.querying = false;
         this.auth = false;
+      },
+      () => {
+        this.querying = false;
+        this.auth = true;
+        console.log('success');
       }
     );
+  }
+
+  googleDisconnect() {
+    this.querying = true;
+    this.queryingAction = 'Disconnecting...';
+    this.googleOauthService.disconnectGoogle().subscribe(() => {
+      this.querying = false;
+      this.updateAuthStatus();
+    });
   }
 }

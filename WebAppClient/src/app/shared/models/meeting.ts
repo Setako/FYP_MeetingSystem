@@ -4,7 +4,11 @@ export type MeetingStatus = 'draft' | 'planned' | 'confirmed' | 'cancelled' | 's
 export type MeetingAttendanceStatus = 'absent' | 'present' | 'exit';
 export type MeetingInvitationStatus = 'accepted' | 'declined' | 'waiting';
 
-export const priorityDisplay = ['low', 'medium', 'high'];
+export const priorityDisplay = {
+  3: 'low',
+  2: 'medium',
+  1: 'high'
+};
 
 export interface Meeting {
   id: string;

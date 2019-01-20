@@ -1,22 +1,21 @@
 import {Injectable} from '@angular/core';
 import {AuthService} from '../auth.service';
-import {interval, observable, Observable, of, race, throwError} from 'rxjs';
+import {interval, Observable, of, race} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
 import {AppConfig} from '../../app-config';
-import {catchError, delay, filter, map, mergeMap, retry, retryWhen, scan, take, tap} from 'rxjs/operators';
+import {concatAll, delay, filter, flatMap, map, mergeMap, retryWhen, scan, take, tap} from 'rxjs/operators';
 import {MatSnackBar} from '@angular/material';
 import {Router} from '@angular/router';
 import {PlatformLocation} from '@angular/common';
 import {GoogleAccessToken} from '../../shared/models/google-oauth';
-import {google, oauth2_v2} from 'googleapis';
-import {auth} from 'google-auth-library';
-import Oauth2 = oauth2_v2.Oauth2;
 
 declare global {
   interface Window {
     cc: any;
   }
 }
+declare var gapi: any;
+declare var google: any;
 
 @Injectable({
   providedIn: 'root'
@@ -38,17 +37,112 @@ export class GoogleOauthService {
     }
   }
 
+  get accessToken(): Observable<GoogleAccessToken> {
+    if (this._googleAccessToken == null) {
+      console.log('s1');
+      return this.getUserGoogleAccessToken();
+    } else {
+      console.log('s2');
+      return of(this._googleAccessToken);
+    }
+  }
+
   public connectGoogle(): Observable<any> {
-    const authWindow = window.open('', 'Google Oauth');
+    const authWindow = window.open('', 'Google Oauth',
+      'menubar=yes,location=yes,resizable=yes,scrollbars=yes,status=yes');
     if (!authWindow.opener) {
       authWindow.opener = this;
     }
     authWindow.focus();
     return this.http
-      .get<any>(`${AppConfig.API_PATH}/google/auth/url?successRedirect=${this.platformLocation.pathname}/assets/authSuccess.html`)
+      .get<any>(`${AppConfig.API_PATH}/google/auth/url?successRedirect=${
+        encodeURIComponent(window.location.origin + '/assets/auth-success.html')}`)
       .pipe(
         map(res => res.url),
         mergeMap(url => this.showGoogleOauth(authWindow, url)),
+      );
+  }
+
+  public disconnectGoogle(): Observable<any> {
+    this._googleAccessToken = null;
+    return this.http.delete(`${AppConfig.API_PATH}/google/auth/refresh-token`);
+  }
+
+  public gapiInit(): Observable<any> {
+    const funcs: (() => Observable<any>)[] = [
+      () => this.gapiLoad('client'),
+      () => this.gapiLoad('picker'),
+      () => this.gapiClientLoad('drive', 'v2')
+    ];
+    return of(funcs)
+      .pipe(
+        flatMap(x => x),
+        map(f => f()),
+        concatAll(),
+      );
+  }
+
+  test(token: GoogleAccessToken) {
+    return Observable.create(
+      (observer) => {
+        console.log('created');
+        // gapi.client.drive.files.list({
+        //   'pageSize': 10,
+        //   'fields': 'nextPageToken, files(id, name)'
+        // }).then(function (response) {
+        //   console.log('Files:');
+        //   const files = response.result.files;
+        //   if (files && files.length > 0) {
+        //     for (let i = 0; i < files.length; i++) {
+        //       const file = files[i];
+        //       console.log(file.name + ' (' + file.id + ')');
+        //     }
+        //   } else {
+        //     console.log('No files found.');
+        //   }
+        //   observer.next(response);
+        //   observer.complete();
+        // });
+        const folderView = new google.picker.​DocsView(google.picker.ViewId.FOLDERS);
+        folderView.setParent('root');
+        folderView.setSelectFolderEnabled(true);
+        const picker = new google.picker.PickerBuilder()
+          .addView(folderView)
+          .setOAuthToken(token.token)
+
+          .setDeveloperKey('AIzaSyDTfef8MKO3gUXKvbCJsiArpUNtmdajYCY')
+          .setCallback((cb) => {
+            console.log(cb);
+            observer.next(cb);
+            observer.complete();
+          })
+          .build();
+        picker.setVisible(true);
+      }
+    );
+
+  }
+
+  public doRequest<T>(func: (token: GoogleAccessToken) => Observable<T>): Observable<T> {
+
+    const client = gapi.client;
+    return this.accessToken
+      .pipe(
+        tap((token: GoogleAccessToken) => client.setToken({access_token: token.token})),
+        mergeMap((token => func(token))),
+        retryWhen((err$) => {
+          return err$.pipe(
+            scan((count, err) => {
+              const isCredentailWrong = true;
+              if (!isCredentailWrong || count > 2) {
+                throw err;
+              }
+              this._googleAccessToken = null;
+              return count + 1;
+            }, 1),
+            delay(100)
+          );
+        })
       );
   }
 
@@ -60,7 +154,7 @@ export class GoogleOauthService {
         filter(() => authWindow.closed),
         take(1),
         map((_) => {
-          throw new Error('Auth window closed');
+          throw new Error('Auth window closed by user');
         })
       ),
       Observable.create((observer) => {
@@ -82,35 +176,27 @@ export class GoogleOauthService {
       );
   }
 
-  get accessToken(): Observable<GoogleAccessToken> {
-    if (this._googleAccessToken == null) {
-      return this.getUserGoogleAccessToken();
-    } else {
-      return of(this._googleAccessToken);
-    }
+  private gapiLoad(m: string): Observable<any> {
+    return Observable.create((observer) => {
+      gapi.load(m, {
+        callback: () => {
+          observer.complete();
+        },
+        onerror: observer.error,
+        timeout: 1000, // 5 seconds.
+        ontimeout: observer.error
+      });
+    });
   }
 
-
-  public doRequest<T>(func: (client: any) => Observable<T>): Observable<T> {
-    const client = new google.auth.OAuth2();
-    return this.accessToken
-      .pipe(
-        tap((token: GoogleAccessToken) => client.setCredentials({access_token: token.token})),
-        mergeMap((_) => func(client)),
-        retryWhen((err$) => {
-          return err$.pipe(
-            scan((count, err) => {
-              const isCredentailWrong = true;
-              if (isCredentailWrong && count <= 2) {
-                this._googleAccessToken = null;
-                return count++;
-              } else {
-                throw err;
-              }
-            }, 0)
-          );
-        })
-      );
+  private gapiClientLoad(m: string, v: string): Observable<any> {
+    return Observable.create((observer) => {
+      console.log('l ' + m);
+      gapi.client.load(m, v, function () {
+        console.log('s ' + m);
+        observer.complete();
+      });
+    });
   }
 }
 
