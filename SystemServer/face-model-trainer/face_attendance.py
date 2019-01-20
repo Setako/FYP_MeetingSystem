@@ -1,5 +1,4 @@
 import pickle
-import time
 
 import click
 import cv2
@@ -7,7 +6,7 @@ import face_recognition as fr
 import requests
 from sklearn.neighbors import KNeighborsClassifier
 
-DEFAULT_API_URL = 'http://localhost:3000/api'
+DEFAULT_API_URL = 'https://conference-commander.herokuapp.com/api'
 
 
 class MeetingAPI:
@@ -161,7 +160,12 @@ def lookup_attendance(
 @click.option('-i', '--show-image', is_flag=True, help='Enables windows')
 @click.option('-v', '--verbose', is_flag=True, help='Enables verbose mode')
 def command(
-    meeting_id: str, secret: str, api_url: str, show_image: bool, verbose: bool
+    meeting_id: str,
+    secret: str,
+    api_url: str,
+    show_image: bool,
+    verbose: bool = None,
+    local: str = None
 ):
     try:
         # Check Meeting
@@ -189,7 +193,6 @@ def command(
     except Exception as err:
         if verbose:
             click.echo('Error: {}'.format(err), err=True, nl=True)
-        # exit(1)
         raise
 
 

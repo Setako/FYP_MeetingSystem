@@ -6,7 +6,7 @@
     </button>
   </div>
   <mat-divider></mat-divider>
-  <a *ngFor="let notification of notifications" mat-list-item matRipple class="notification-item">
+  <a *ngFor="let notification of notificationService.notifications" mat-list-item matRipple class="notification-item">
     <div class="d-flex justify-content-between align-items-center my-1  w-100">
       <div class="py-2">
         <div>

@@ -3,34 +3,34 @@ import { Types } from 'mongoose';
 import { UserSetting } from '../user.model';
 
 export class UserDto {
-    username: string;
-    email: string;
-    displayName: string;
+    username!: string;
+    email!: string;
+    displayName!: string;
 
-    userMeetingRelation: any[];
+    userMeetingRelation!: any[];
 
-    setting: UserSetting;
-
-    @Exclude()
-    _id: Types.ObjectId;
+    setting!: UserSetting;
 
     @Exclude()
-    password: string;
+    _id!: Types.ObjectId;
 
     @Exclude()
-    salt: string;
+    password!: string;
 
     @Exclude()
-    tokenVerificationCode: string;
+    salt!: string;
 
     @Exclude()
-    googleAccessToken?: string;
+    tokenVerificationCode!: string;
 
     @Exclude()
-    __v: number;
+    googleRefreshToken?: string;
 
     @Exclude()
-    avatar: string;
+    __v!: number;
+
+    @Exclude()
+    avatar!: string;
 
     constructor(partial: Partial<UserDto>) {
         Object.assign(this, partial);

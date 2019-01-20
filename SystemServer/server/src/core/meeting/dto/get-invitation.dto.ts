@@ -5,7 +5,7 @@ import { InvitationStatus } from '../meeting.model';
 @Exclude()
 export class GetInvitationDto {
     @Expose()
-    id: string;
+    id!: string;
 
     @Expose()
     @Type(() => SimpleUserDto)
@@ -15,7 +15,7 @@ export class GetInvitationDto {
     email?: string;
 
     @Expose()
-    status: InvitationStatus;
+    status!: InvitationStatus;
 
     constructor(partial: Partial<GetInvitationDto>) {
         Object.assign(this, partial);

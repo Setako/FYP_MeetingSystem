@@ -4,6 +4,7 @@ import {MatSnackBar} from '@angular/material';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {MediaMatcher} from '@angular/cdk/layout';
 import {UserService} from '../../services/user.service';
+import {NotificationService} from '../../services/notification.service';
 
 @Component({
   selector: 'app-member',
@@ -39,7 +40,8 @@ export class MemberComponent implements OnInit {
 
   constructor(public auth: AuthService, private snackBar: MatSnackBar,
               public userService: UserService,
-              private  changeDetectorRef: ChangeDetectorRef, private mediaMatcher: MediaMatcher) {
+              private  changeDetectorRef: ChangeDetectorRef, private mediaMatcher: MediaMatcher,
+              private  notificationService: NotificationService) {
     this.mobileQuery = mediaMatcher.matchMedia('(max-width: 767px)');
     this.mobileQuery.addListener(() => changeDetectorRef.detectChanges());
   }

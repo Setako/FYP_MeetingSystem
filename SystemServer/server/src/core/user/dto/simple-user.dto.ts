@@ -3,13 +3,13 @@ import { Exclude, Expose } from 'class-transformer';
 @Exclude()
 export class SimpleUserDto {
     @Expose()
-    username: string;
+    username!: string;
 
     @Expose()
-    email: string;
+    email!: string;
 
     @Expose()
-    displayName: string;
+    displayName!: string;
 
     constructor(partial: Partial<SimpleUserDto>) {
         Object.assign(this, partial);

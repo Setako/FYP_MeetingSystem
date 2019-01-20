@@ -5,5 +5,5 @@ export class CreateFriendRequestDto {
     @IsString()
     @Length(2, 20)
     @IsUsername()
-    readonly targetUser: string;
+    readonly targetUser!: string;
 }

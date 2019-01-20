@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {MeetingService} from '../../../services/meeting.service';
-import {MatBottomSheet, PageEvent} from '@angular/material';
+import {MatBottomSheet, MatSnackBar, PageEvent} from '@angular/material';
 import {AuthService} from '../../../services/auth.service';
 import {Meeting, MeetingSearchingFilter} from '../../../shared/models/meeting';
 import {Subscription} from 'rxjs';
@@ -19,7 +19,8 @@ export class MeetingInvitationsComponent implements OnInit {
   public meetingsLength = 0;
   public invitingFromFriend = true;
 
-  constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet) {
+  constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet,
+              public snackBar: MatSnackBar) {
 
     this.updateList();
   }
@@ -44,7 +45,10 @@ export class MeetingInvitationsComponent implements OnInit {
           this.meetingsLength = res.length;
           this.meetingListQuerySubscription = null;
         },
-        err => this.meetingListQuerySubscription = null
+        err => {
+          this.snackBar.open(err);
+          this.meetingListQuerySubscription = null;
+        }
       );
   }
 
@@ -56,6 +60,8 @@ export class MeetingInvitationsComponent implements OnInit {
       case 'From strangers':
         this.invitingFromFriend = false;
         break;
+      case 'All':
+        this.invitingFromFriend = undefined;
     }
     this.updateList();
   }

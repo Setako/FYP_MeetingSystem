@@ -9,10 +9,8 @@ import {
     IsString,
     MinLength,
     ValidateNested,
-    ValidateIf,
 } from 'class-validator';
 import { MeetingStatus, MeetingType, MeetingPriority } from '../meeting.model';
-import { AttendanceDto } from './attendance.dto';
 import { InvitationsDto } from './invitations.dto';
 import { PermissionDto } from './permission.dto';
 
@@ -70,11 +68,6 @@ export class EditMeetingDto {
     @IsOptional()
     @IsISO8601()
     readonly realEndTime?: string;
-
-    @Type(() => AttendanceDto)
-    @IsOptional()
-    @ValidateNested()
-    readonly attendance?: AttendanceDto[];
 
     @IsOptional()
     @IsInstance(InvitationsDto)

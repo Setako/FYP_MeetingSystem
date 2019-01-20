@@ -1,20 +1,6 @@
-import { arrayProp, prop, Ref, Typegoose } from 'typegoose';
+import { arrayProp, prop, Ref, Typegoose, pre } from 'typegoose';
 import { Device } from '../device/device.model';
 import { User } from '../user/user.model';
-
-export class Attendance {
-    public user: Ref<User>;
-
-    public priority: number;
-
-    public arrivalTime?: Date;
-
-    public status?: AttendanceStatus;
-
-    public permission: AccessPostMeetingPermission;
-
-    public googleCalendarEventId?: string;
-}
 
 export enum InvitationStatus {
     Accepted = 'accepted',
@@ -23,8 +9,6 @@ export enum InvitationStatus {
 }
 
 export class Invitation {
-    public id: string;
-
     @prop({
         ref: User,
     })
@@ -34,40 +18,18 @@ export class Invitation {
     public email?: string;
 
     @prop()
-    public priority: number;
+    public priority?: number;
 
     @prop({
         enum: InvitationStatus,
     })
-    public status: InvitationStatus;
+    public status!: InvitationStatus;
 }
 
 export enum AttendanceStatus {
     Absent = 'absent',
     Present = 'present',
     Exit = 'exit',
-}
-
-export enum MeetingPriority {
-    Hight = 1,
-    Medium = 2,
-    Low = 3,
-}
-
-export enum MeetingStatus {
-    Draft = 'draft',
-    Planned = 'planned',
-    Confirmed = 'confirmed',
-    Cancelled = 'cancelled',
-    Started = 'started',
-    Ended = 'ended',
-    Deleted = 'deleted',
-}
-
-export enum MeetingType {
-    Speech = 'speech',
-    GroupDiscussion = 'group_discussion',
-    Presentation = 'presentation',
 }
 
 export class AccessPostMeetingPermission {
@@ -107,28 +69,81 @@ export class AccessPostMeetingPermission {
     }
 }
 
+export class Attendance {
+    @prop({
+        ref: User,
+        unique: true,
+    })
+    public user!: Ref<User>;
+
+    @prop()
+    public priority?: number;
+
+    @prop()
+    public arrivalTime?: Date;
+
+    @prop()
+    public status?: AttendanceStatus;
+
+    @prop()
+    public permission?: AccessPostMeetingPermission;
+
+    @prop()
+    public googleCalendarEventId?: string;
+}
+
+export enum MeetingPriority {
+    Hight = 1,
+    Medium = 2,
+    Low = 3,
+}
+
+export enum MeetingStatus {
+    Draft = 'draft',
+    Planned = 'planned',
+    Confirmed = 'confirmed',
+    Cancelled = 'cancelled',
+    Started = 'started',
+    Ended = 'ended',
+    Deleted = 'deleted',
+}
+
+export enum MeetingType {
+    Speech = 'speech',
+    GroupDiscussion = 'group_discussion',
+    Presentation = 'presentation',
+}
+
+@pre<Meeting>('save', function(next) {
+    if (this.plannedStartTime && this.length) {
+        this.plannedEndTime = new Date(
+            new Date(this.plannedStartTime).getTime() + this.length,
+        );
+    }
+    next();
+})
 export class Meeting extends Typegoose {
     @prop({
         required: true,
     })
-    public type: string;
+    public type!: string;
 
     @prop({
         required: true,
         minlength: 1,
     })
-    public title: string;
+    public title!: string;
 
     @prop({
         required: true,
         enum: MeetingStatus,
     })
-    public status: string;
+    public status!: MeetingStatus;
 
     @prop({
         required: true,
     })
-    public length: number;
+    public length!: number;
 
     @prop()
     public description?: string;
@@ -152,12 +167,12 @@ export class Meeting extends Typegoose {
         required: true,
         default: 'en-US',
     })
-    public language: string;
+    public language!: string;
 
     @prop({
         required: true,
     })
-    public priority: number;
+    public priority!: number;
 
     @prop({
         ref: Device,
@@ -168,23 +183,22 @@ export class Meeting extends Typegoose {
         ref: User,
         required: true,
     })
-    public owner: Ref<User>;
+    public owner!: Ref<User>;
 
     @arrayProp({
         items: Attendance,
-        default: [],
+        _id: false,
     })
-    public attendance: Attendance[];
+    public attendance!: Attendance[];
 
     @arrayProp({
         items: Invitation,
-        default: [],
     })
-    public invitations: Invitation[];
+    public invitations!: Invitation[];
 
     @prop({
         required: true,
         default: () => new AccessPostMeetingPermission(),
     })
-    public generalPermission: AccessPostMeetingPermission;
+    public generalPermission!: AccessPostMeetingPermission;
 }

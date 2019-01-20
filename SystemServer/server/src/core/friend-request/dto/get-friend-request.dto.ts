@@ -7,26 +7,26 @@ import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 export class GetFriendRequestDto {
     @Expose()
     @Type(() => SimpleUserDto)
-    user: SimpleUserDto;
+    user!: SimpleUserDto;
 
     @Expose()
     @Type(() => SimpleUserDto)
-    targetUser: SimpleUserDto;
+    targetUser!: SimpleUserDto;
 
     @Expose()
-    status: FriendRequestStatus;
+    status!: FriendRequestStatus;
 
     @Expose()
-    requestTime: string;
+    requestTime!: string;
 
     @Expose()
     get id(): string {
         return this._id.toHexString();
     }
 
-    _id: ObjectId;
+    _id!: ObjectId;
 
-    __v: number;
+    __v!: number;
 
     constructor(partial: Partial<GetFriendRequestDto>) {
         Object.assign(this, partial);

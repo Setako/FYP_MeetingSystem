@@ -26,10 +26,6 @@ export class EditUserDto {
     @IsOptional()
     readonly userMeetingRelation?: any[];
 
-    @IsString()
-    @IsOptional()
-    readonly googleAccessToken?: string;
-
     @ValidateNested()
     @IsOptional()
     readonly setting?: EditUserSettingDto;

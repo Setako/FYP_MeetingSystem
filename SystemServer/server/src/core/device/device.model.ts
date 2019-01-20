@@ -4,5 +4,5 @@ export class Device extends Typegoose {
     @prop({
         required: true,
     })
-    public seceret: string;
+    public seceret!: string;
 }

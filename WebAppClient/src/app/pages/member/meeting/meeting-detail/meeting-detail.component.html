@@ -8,7 +8,7 @@
   <mat-card class="my-3" *ngIf="!querying">
     <mat-card-title>{{meeting.title}}
       <mat-chip-list style="float: right">
-        <mat-chip style="background: #ffca68">{{meeting.status}}</mat-chip>
+        <mat-chip color="primary">{{meeting.status}}</mat-chip>
       </mat-chip-list>
     </mat-card-title>
     <mat-card-subtitle>
@@ -19,7 +19,7 @@
         </div>
         <div class="d-inline-flex align-items-center">
           <mat-icon> priority_high</mat-icon>
-          <span>Priority: {{meeting.priority}}</span>
+          <span>Priority: {{priorityDisplay[meeting.priority]}}</span>
         </div>
       </div>
     </mat-card-subtitle>

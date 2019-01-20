@@ -1,19 +1,28 @@
-<div style="background: white" class="p-sm-2 p-md-4">
-  <h3>
-    Google Service connect state: <span style="color: red"> Not connected </span>
-  </h3>
-  <div>
-    Google Service is required to enabling the following features: <br>
-    <ul>
-      <li>File sharing</li>
-      <li>Calendar marking</li>
-      <li>Best meeting time searching</li>
-    </ul>
+<app-querying-content-hider [querying]="querying" [queryingAction]="queryingAction">
+  <div style="background: white" class="p-sm-2 p-md-4">
+    <h3>
+      Google Service connect state:
+      <span *ngIf="!auth" style="color: red"> Not connected </span>
+      <span *ngIf="auth" style="color: green"> Connected </span>
+    </h3>
+    <div>
+      Google Service is required to enabling the following features: <br>
+      <ul>
+        <li>File sharing</li>
+        <li>Calendar marking</li>
+        <li>Best meeting time searching</li>
+      </ul>
 
-    Before you start to enjoying our system, please grant the permissions after logged in your google account.
+      <div *ngIf="!auth">
+        Before you start to enjoying our system, please grant the permissions after logged in your google account.
+      </div>
+    </div>
+    <button #googleAuthBtn (click)="googleLogin()" *ngIf="!auth" class="mt-2" color="primary" mat-raised-button>
+      Connect
+    </button>
+    <button #googleAuthBtn (click)="googleDisconnect()" *ngIf="auth" class="mt-2" color="warn" mat-raised-button>
+      Disconnect
+    </button>
   </div>
-  <button mat-raised-button color="primary" class="mt-2" #googleAuthBtn (click)="googleLogin()">Login your
-    google account
-  </button>
-</div>
 
+</app-querying-content-hider>

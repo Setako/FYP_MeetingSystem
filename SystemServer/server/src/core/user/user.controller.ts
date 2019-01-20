@@ -93,8 +93,8 @@ export class UsersController {
             filter(item => Boolean(item)),
             map(item =>
                 ObjectUtils.DocumentToPlain(
-                    item,
-                    item.username === user.username ? UserDto : SimpleUserDto,
+                    item!,
+                    item!.username === user.username ? UserDto : SimpleUserDto,
                 ),
             ),
         );
@@ -121,7 +121,7 @@ export class UsersController {
         @Body() editUserDto: EditUserDto,
     ) {
         return from(this.userService.edit(username, editUserDto)).pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, UserDto)),
+            map(item => ObjectUtils.DocumentToPlain(item!, UserDto)),
         );
     }
 
@@ -149,7 +149,9 @@ export class UsersController {
             return res.sendFile(FileUtils.normalize(root + '/' + filename));
         }
 
-        const user = await this.userService.getByUsername(username);
+        const user = (await this.userService.getByUsername(
+            username,
+        )) as InstanceType<User>;
         if (!user.avatar) {
             throw new NotFoundException('User avatar not found');
         }

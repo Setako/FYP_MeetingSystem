@@ -6,13 +6,13 @@ import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 import { GetInvitationDto } from './get-invitation.dto';
 
 export class GetMeetingDto {
-    type: string;
+    type!: string;
 
-    title: string;
+    title!: string;
 
-    status: string;
+    status!: string;
 
-    length: number;
+    length!: number;
 
     description?: string;
 
@@ -24,33 +24,26 @@ export class GetMeetingDto {
 
     realEndTime?: Date;
 
-    language: string;
+    language!: string;
 
-    priority: number;
+    priority!: number;
 
     location?: string;
 
-    // @Type(() => Types.ObjectId)
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
 
     @Type(() => SimpleUserDto)
-    owner: SimpleUserDto;
+    owner!: SimpleUserDto;
 
     @Type(() => AttendanceDto)
-    @Transform(arr => {
-        return arr.map((attendance: { user: { username: any } }) => ({
-            ...attendance,
-            user: attendance.user.username,
-        }));
-    })
-    attendance: AttendanceDto[];
+    attendance!: AttendanceDto[];
 
     @Type(() => GetInvitationDto)
-    invitations: GetInvitationDto[];
+    invitations!: GetInvitationDto[];
 
     @Type(() => AccessPostMeetingPermission)
-    generalPermission: AccessPostMeetingPermission;
+    generalPermission!: AccessPostMeetingPermission;
 
     @Expose()
     get id(): string {
@@ -58,10 +51,10 @@ export class GetMeetingDto {
     }
 
     @Exclude()
-    _id: Types.ObjectId;
+    _id!: Types.ObjectId;
 
     @Exclude()
-    __v: number;
+    __v!: number;
 
     constructor(partial: Partial<GetMeetingDto>) {
         Object.assign(this, partial);

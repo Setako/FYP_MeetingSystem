@@ -3,7 +3,7 @@ import { InjectModel } from 'nestjs-typegoose';
 import { FriendRequest, FriendRequestStatus } from './friend-request.model';
 import { ModelType } from 'typegoose';
 import { UserService } from '../user/user.service';
-import { AcceptFriendRequestDto } from './dto/accept-friend-request.dto';
+import { AcceptDto } from '../../shared/dto/accept.dto';
 
 @Injectable()
 export class FriendRequestService {
@@ -136,10 +136,6 @@ export class FriendRequestService {
         target: string,
         options = { status: FriendRequestStatus.Requested },
     ) {
-        const deleted = await this.getByUserAndTarget(user, target, {
-            status: FriendRequestStatus.Requested,
-        });
-
         return this.friendRequestModel.deleteMany({
             ...options,
             user: await this.userService.getByUsername(user),
@@ -150,11 +146,15 @@ export class FriendRequestService {
     async acceptOrRejectRequest(
         user: string,
         target: string,
-        acceptDto: AcceptFriendRequestDto,
+        acceptDto: AcceptDto,
     ) {
         const request = await this.getByUserAndTarget(user, target, {
             status: FriendRequestStatus.Requested,
         });
+
+        if (!request) {
+            return null;
+        }
 
         request.status = acceptDto.accept
             ? FriendRequestStatus.Accepted

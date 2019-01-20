@@ -16,11 +16,11 @@ export class EditUserSettingDto {
     @ValidateNested()
     @IsArray()
     @IsOptional()
-    readonly calendarImportance: CalendarImportanceDto[];
+    readonly calendarImportance?: CalendarImportanceDto[];
 
     @ValidateNested()
     @IsOptional()
-    readonly notification: {
+    readonly notification?: {
         friendRequest: NotificationSettingDto;
         meetingInfoUpdate: NotificationSettingDto;
         meetingInvitation: NotificationSettingDto;
@@ -31,17 +31,17 @@ export class EditUserSettingDto {
 
 class CalendarImportanceDto {
     @IsString()
-    readonly carlendarId: string;
+    readonly carlendarId!: string;
 
     @IsIn([1, 2, 3])
     @IsInt()
-    readonly importance: number;
+    readonly importance!: number;
 }
 
 class NotificationSettingDto {
     @IsBoolean()
-    email: boolean;
+    email!: boolean;
 
     @IsBoolean()
-    notification: boolean;
+    notification!: boolean;
 }

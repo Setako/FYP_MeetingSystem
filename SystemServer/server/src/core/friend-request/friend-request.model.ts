@@ -13,23 +13,23 @@ export class FriendRequest extends Typegoose {
         required: true,
         index: true,
     })
-    public user: Ref<User>;
+    public user!: Ref<User>;
 
     @prop({
         ref: User,
         required: true,
     })
-    public targetUser: Ref<User>;
+    public targetUser!: Ref<User>;
 
     @prop({
         required: true,
     })
-    public requestTime: Date;
+    public requestTime!: Date;
 
     @prop({
         required: true,
         default: FriendRequestStatus.Requested,
         enum: FriendRequestStatus,
     })
-    public status: FriendRequestStatus;
+    public status!: FriendRequestStatus;
 }

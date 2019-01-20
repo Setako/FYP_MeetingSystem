@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType } from 'typegoose';
-import { UserService } from '../user/user.service';
 import { Friend } from './friend.model';
 
 @Injectable()
@@ -10,7 +9,6 @@ export class FriendService {
     constructor(
         @InjectModel(Friend)
         private readonly friendModel: ModelType<Friend>,
-        private readonly userService: UserService,
     ) {}
 
     findAll(options = {}) {
@@ -75,15 +73,11 @@ export class FriendService {
     }
 
     async create(userId: string, friendId: string, addDate = new Date()) {
-        const user = await this.userService.getById(userId);
-        const friend = await this.userService.getById(friendId);
-
         const created = new this.friendModel({
-            friends: [user._id, friend._id],
+            friends: [Types.ObjectId(userId), Types.ObjectId(friendId)],
             addDate,
+            stared: [],
         });
-
-        created.stared = [];
 
         return created.save();
     }
@@ -109,17 +103,19 @@ export class FriendService {
             })
             .exec();
 
-        const isStared = result.stared.some((item: Types.ObjectId) =>
-            item.equals(userId),
+        if (!result) {
+            return null;
+        }
+
+        const isStared = result.stared.some(item =>
+            (item as Types.ObjectId).equals(userId),
         );
 
-        if (isStared) {
-            result.stared = result.stared.filter(
-                (item: Types.ObjectId) => !item.equals(userId),
-            );
-        } else {
-            result.stared = [...result.stared, Types.ObjectId(userId)];
-        }
+        result.stared = isStared
+            ? result.stared.filter(
+                  item => !(item as Types.ObjectId).equals(userId),
+              )
+            : [...result.stared, Types.ObjectId(userId)];
 
         return result.save();
     }

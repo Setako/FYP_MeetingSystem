@@ -19,7 +19,7 @@ const routes: Routes = [
   {
     path: 'member', component: MemberComponent, canActivate: [AuthGuard],
     children: [
-      {path: '', redirectTo: 'dashboard', pathMatch: 'full'},
+      {path: '', redirectTo: 'meeting', pathMatch: 'full'},
       {path: 'dashboard', component: DashboardComponent},
       {path: 'calendar', component: CalendarComponent, pathMatch: 'full'},
       {path: 'settings', component: SettingsComponent, pathMatch: 'full'},
@@ -46,5 +46,4 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule {
-
 }

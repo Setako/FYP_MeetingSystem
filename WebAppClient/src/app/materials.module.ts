@@ -1,18 +1,36 @@
 import {NgModule} from '@angular/core';
 import {
   MatAutocompleteModule,
-  MatBadgeModule, MatBottomSheetModule,
-  MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule,
-  MatDividerModule, MatExpansionModule, MatIconModule,
+  MatBadgeModule,
+  MatBottomSheetModule,
+  MatButtonModule,
+  MatButtonToggleModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatChipsModule,
+  MatDatepickerModule,
+  MatDividerModule,
+  MatExpansionModule,
+  MatIconModule,
   MatInputModule,
-  MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule,
-  MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule,
-  MatSidenavModule, MatSliderModule, MatSlideToggleModule,
-  MatSnackBarModule, MatStepperModule, MatTableModule,
+  MatListModule,
+  MatMenuModule,
+  MatNativeDateModule,
+  MatPaginatorModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
+  MatRadioModule,
+  MatRippleModule,
+  MatSelectModule,
+  MatSidenavModule,
+  MatSlideToggleModule,
+  MatSnackBarModule,
+  MatStepperModule,
+  MatTableModule,
   MatTabsModule,
-  MatToolbarModule, MatTooltipModule
+  MatToolbarModule,
+  MatTooltipModule
 } from '@angular/material';
-import {NgcFloatButtonModule} from 'ngc-float-button';
 import {CdkTableModule} from '@angular/cdk/table';
 
 @NgModule({
@@ -46,8 +64,9 @@ import {CdkTableModule} from '@angular/cdk/table';
     MatSlideToggleModule,
     MatTableModule,
     MatTooltipModule,
+    MatProgressBarModule,
+
     CdkTableModule,
-    NgcFloatButtonModule,
   ]
 })
 export class MaterialsModule {

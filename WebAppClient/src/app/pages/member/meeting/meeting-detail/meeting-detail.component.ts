@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {MeetingService} from '../../../../services/meeting.service';
-import {Meeting} from '../../../../shared/models/meeting';
+import {Meeting, priorityDisplay} from '../../../../shared/models/meeting';
 import {MatBottomSheet, MatSnackBar} from '@angular/material';
 import {
   MeetingOperationsBottomSheetsComponent
@@ -15,6 +15,7 @@ import {
 export class MeetingDetailComponent implements OnInit {
   public querying = false;
   public meeting: Meeting = null;
+  public priorityDisplay = priorityDisplay;
 
   constructor(private activatedRoute: ActivatedRoute, private  meetingService: MeetingService,
               private snackBar: MatSnackBar, private router: Router, private bottomSheet: MatBottomSheet) {

@@ -21,7 +21,7 @@ async function bootstrap() {
         app.use(logger('dev')).enableCors();
     }
 
-    await app.listen(process.env.PORT || 3000);
+    await app.listen(process.env.PORT || 80);
 
     if (module.hot) {
         module.hot.accept();
