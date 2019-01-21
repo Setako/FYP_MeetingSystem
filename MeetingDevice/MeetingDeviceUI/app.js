@@ -13,6 +13,7 @@ let loadURL = url.format({
 // let loadURL = "http://google.com";
 let commandInput = commander.version("0.0.1")
   .option("-u, --url [url]", "Load from url")
+  .option("-d, --dev", "Enable development mode, available ")
   .parse(process.argv);
 
 if (commandInput.url) loadURL = commandInput.url;
@@ -49,7 +50,11 @@ app.on("ready", () => {
     //Prevent automatic maximize and resize
     rendererWindow.setResizable(false);
     rendererWindow.setMaximizable(false);
-    rendererWindow.setIgnoreMouseEvents(true, {forward: true});
+
+    if (!commandInput.dev) {
+      rendererWindow.setIgnoreMouseEvents(true, {forward: true});
+    }
+
     module.exports.rendererWindow = rendererWindow;
     server.listen(8555);
   })
