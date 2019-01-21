@@ -5,7 +5,7 @@ import { Device } from './device.model';
 import { from, of, empty, defer, identity } from 'rxjs';
 import { flatMap, defaultIfEmpty, map } from 'rxjs/operators';
 import { JwtService } from '@nestjs/jwt';
-import { DeviceSeceretDto } from './dto/device-secret.dto';
+import { DeviceSecretDto } from './dto/device-secret.dto';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class DeviceService {
             .exec();
     }
 
-    async create(createDeviceDto: DeviceSeceretDto) {
+    async create(createDeviceDto: DeviceSecretDto) {
         const device = new this.deviceModel({
             ...createDeviceDto,
         });
@@ -70,11 +70,11 @@ export class DeviceService {
         return (this.jwtService.decode(token) as any).deviceId;
     }
 
-    isDeviceSeceretAvailable(id: string, seceret: string) {
+    isDeviceSecretAvailable(id: string, secret: string) {
         return defer(() =>
             this.deviceModel
                 .find({
-                    $and: [{ _id: Types.ObjectId(id) }, { seceret }],
+                    $and: [{ _id: Types.ObjectId(id) }, { secret }],
                 })
                 .countDocuments()
                 .exec(),

@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { DeviceGuard } from '@commander/shared/guard/device.guard';
-import { DeviceSeceretDto } from './dto/device-secret.dto';
+import { DeviceSecretDto } from './dto/device-secret.dto';
 import { of, from } from 'rxjs';
 import { tap, map, concatAll, toArray, flatMap } from 'rxjs/operators';
 import { AuthGuard } from '@nestjs/passport';
@@ -32,7 +32,7 @@ export class DeviceController {
     }
 
     @Post()
-    async create(@Body() deviceSecretDto: DeviceSeceretDto) {
+    async create(@Body() deviceSecretDto: DeviceSecretDto) {
         return from(this.deviceService.create(deviceSecretDto)).pipe(
             map(device => ({
                 id: device.id,
@@ -50,15 +50,15 @@ export class DeviceController {
     @UseGuards(DeviceGuard)
     async getStartToken(
         @Param('id') id: string,
-        @Body() deviceSecretDto: DeviceSeceretDto,
+        @Body() deviceSecretDto: DeviceSecretDto,
     ) {
         const checkSecret$ = this.deviceService
-            .isDeviceSeceretAvailable(id, deviceSecretDto.seceret)
+            .isDeviceSecretAvailable(id, deviceSecretDto.secret)
             .pipe(
                 tap(available => {
                     if (!available) {
                         throw new BadRequestException(
-                            'device seceret is not available',
+                            'device secret is not available',
                         );
                     }
                 }),
