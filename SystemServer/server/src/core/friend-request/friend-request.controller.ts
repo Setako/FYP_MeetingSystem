@@ -37,7 +37,7 @@ import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { defer, identity, from, combineLatest } from 'rxjs';
 import { map, flatMap, toArray } from 'rxjs/operators';
 
-@Controller('friend/request')
+@Controller('friend-request')
 @UseGuards(AuthGuard('jwt'))
 export class FriendRequestController {
     constructor(
