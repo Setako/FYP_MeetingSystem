@@ -36,7 +36,11 @@ import { InstanceType } from 'typegoose';
 
 @Controller('user')
 export class UsersController {
-    constructor(private readonly userService: UserService) {}
+    private DEFAULT_USER_AVATAR: string;
+
+    constructor(private readonly userService: UserService) {
+        this.DEFAULT_USER_AVATAR = process.env.DEFAULT_USER_AVATAR;
+    }
 
     @Get()
     @UseGuards(AuthGuard('jwt'))
@@ -153,6 +157,11 @@ export class UsersController {
             username,
         )) as InstanceType<User>;
         if (!user.avatar) {
+            if (this.DEFAULT_USER_AVATAR) {
+                const defaultAvatar = parseDataURL(this.DEFAULT_USER_AVATAR);
+                res.contentType(defaultAvatar.mimeType.toString());
+                return res.end(defaultAvatar.body, 'binary');
+            }
             throw new NotFoundException('User avatar not found');
         }
 
