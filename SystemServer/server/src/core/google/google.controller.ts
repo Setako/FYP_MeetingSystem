@@ -23,7 +23,6 @@ import {
     map,
     tap,
     mapTo,
-    mergeMapTo,
     flatMap,
     filter,
     defaultIfEmpty,
@@ -60,7 +59,7 @@ export class GoogleController {
 
         const clearUserToken$ = isTokenAvailable$.pipe(
             defaultIfEmpty(null),
-            mergeMapTo(this.userService.editGoogleRefreshToken(user.id)),
+            flatMap(() => this.userService.editGoogleRefreshToken(user.id)),
         );
 
         const authUrl$ = clearUserToken$.pipe(
