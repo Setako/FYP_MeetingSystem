@@ -553,6 +553,7 @@ export class MeetingController {
 
         const userRefreshToken$ = whoHasGoogleService$.pipe(
             map(friend => friend.googleRefreshToken),
+            shareReplay()
         );
 
         const userCalendarIdList$ = userRefreshToken$.pipe(
