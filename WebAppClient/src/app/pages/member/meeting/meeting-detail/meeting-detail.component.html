@@ -48,61 +48,57 @@
       <div class="mt-5 mb-4 pl-3">
         <pre>{{meeting.description}}</pre>
       </div>
-      <mat-accordion>
-        <mat-expansion-panel style="background: #ecfbde">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Confirmed attendee list
-            </mat-panel-title>
-            <mat-panel-description>
-              People who will attend this meeting
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-          <div class="p-3">
-            <mat-chip-list>
-              <mat-chip color="primary" selected>FishWW.661</mat-chip>
-              <mat-chip color="primary" selected>ArPo</mat-chip>
-              <mat-chip color="primary" selected>Kate</mat-chip>
-              <mat-chip color="primary" selected>AppleTree_</mat-chip>
-              <mat-chip color="primary" selected>blue_rainbow</mat-chip>
-            </mat-chip-list>
-          </div>
-        </mat-expansion-panel>
-        <mat-expansion-panel style="background: #fbf6d6">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Not confirmed yet attendee list
-            </mat-panel-title>
-            <mat-panel-description>
-              People who haven't responded yet
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-          <div class="p-3">
-            <mat-chip-list>
-              <mat-chip color="primary" selected>Runner_life</mat-chip>
-              <mat-chip color="primary" selected>Chan_Tai_Man</mat-chip>
-              <mat-chip>chanpeter12345@gmail.com</mat-chip>
-              <mat-chip>charlie2liu@outlook.com</mat-chip>
-              <mat-chip>mrjamestang@outlook.com</mat-chip>
-            </mat-chip-list>
-          </div>
-        </mat-expansion-panel>
-        <mat-expansion-panel style="background: #fbe4e4">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Not attend list
-            </mat-panel-title>
-            <mat-panel-description>
-              People who declined to attend
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-          <div class="p-3">
-            <mat-chip-list>
-              <mat-chip color="primary" selected>CmOscar</mat-chip>
-            </mat-chip-list>
-          </div>
-        </mat-expansion-panel>
-      </mat-accordion>
+      <mat-expansion-panel style="background: #ecfbde">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Confirmed attendee list ({{invitations['accepted'].length}})
+          </mat-panel-title>
+          <mat-panel-description>
+            People who will attend this meeting
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div class="p-3">
+          <ng-container *ngFor="let invitation of invitations['accepted']">
+            <app-invitation-chip [invitation]="invitation"></app-invitation-chip>
+          </ng-container>
+        </div>
+      </mat-expansion-panel>
+
+
+      <mat-expansion-panel style="background: #fbf6d6">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Not confirmed yet attendee list ({{invitations['waiting'].length}})
+          </mat-panel-title>
+          <mat-panel-description>
+            People who haven't responded yet
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div class="p-3">
+          <mat-chip-list>
+            <ng-container *ngFor="let invitation of invitations['waiting']">
+              <app-invitation-chip [invitation]="invitation"></app-invitation-chip>
+            </ng-container>
+          </mat-chip-list>
+        </div>
+      </mat-expansion-panel>
+
+
+      <mat-expansion-panel style="background: #fbe4e4">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Not attend list ({{invitations['declined'].length}})
+          </mat-panel-title>
+          <mat-panel-description>
+            People who declined to attend
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div class="p-3">
+          <ng-container *ngFor="let invitation of invitations['declined']">
+            <app-invitation-chip [invitation]="invitation"></app-invitation-chip>
+          </ng-container>
+        </div>
+      </mat-expansion-panel>
 
       <div class="mt-4">
         <mat-chip-list>

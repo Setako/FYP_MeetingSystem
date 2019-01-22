@@ -18,6 +18,7 @@ export class MeetingInvitationsComponent implements OnInit {
   public pageSize = 5;
   public meetingsLength = 0;
   public invitingFromFriend = true;
+  public querying = true;
 
   constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet,
               public snackBar: MatSnackBar) {
@@ -64,6 +65,17 @@ export class MeetingInvitationsComponent implements OnInit {
         this.invitingFromFriend = undefined;
     }
     this.updateList();
+  }
+
+  public responseInvitation(meeting: Meeting, accept: boolean) {
+    this.meetingListQuerySubscription = this.meetingService.responseInvitation(meeting.id, accept).subscribe(() => {
+      this.meetingListQuerySubscription = null;
+      this.updateList();
+    }, err => {
+      this.snackBar.open('Failed to response invitation', 'Dismiss', {duration: 4000});
+      this.meetingListQuerySubscription = null;
+      this.updateList();
+    });
   }
 
 

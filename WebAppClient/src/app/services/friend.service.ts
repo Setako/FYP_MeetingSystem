@@ -14,20 +14,20 @@ export class FriendService {
   }
 
   public getReceivedRequests(): Observable<ListResponse<FriendRequest>> {
-    return this.http.get<ListResponse<FriendRequest>>(`${AppConfig.API_PATH}/friend/request/received`);
+    return this.http.get<ListResponse<FriendRequest>>(`${AppConfig.API_PATH}/friend-request/received`);
   }
 
   public getSendedRequests(): Observable<ListResponse<FriendRequest>> {
-    return this.http.get<ListResponse<FriendRequest>>(`${AppConfig.API_PATH}/friend/request`);
+    return this.http.get<ListResponse<FriendRequest>>(`${AppConfig.API_PATH}/friend-request`);
   }
 
   public responseRequest(username: string, accept: boolean): Observable<any> {
-    return this.http.put(`${AppConfig.API_PATH}/friend/request/received/${username}`,
+    return this.http.put(`${AppConfig.API_PATH}/friend-request/received/${username}`,
       {accept: accept});
   }
 
   public sendRequest(username: string): Observable<any> {
-    return this.http.post(`${AppConfig.API_PATH}/friend/request/${username}`, {});
+    return this.http.post(`${AppConfig.API_PATH}/friend-request/${username}`, {});
   }
 
   public deleteFriend(username: string): Observable<any> {
@@ -35,7 +35,7 @@ export class FriendService {
   }
 
   public deleteSendedRequest(username: string): Observable<any> {
-    return this.http.delete(`${AppConfig.API_PATH}/friend/request/${username}`);
+    return this.http.delete(`${AppConfig.API_PATH}/friend-request/${username}`);
   }
 
   public getFriends(): Observable<ListResponse<Friend>> {

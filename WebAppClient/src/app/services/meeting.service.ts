@@ -121,4 +121,8 @@ export class MeetingService {
       `&toDate=${to.toISOString()}`
     );
   }
+
+  public responseInvitation(meetingId: string, accept: boolean): Observable<any> {
+    return this.http.put(`${AppConfig.API_PATH}/meeting/${meetingId}/invitation`, {accept: accept});
+  }
 }

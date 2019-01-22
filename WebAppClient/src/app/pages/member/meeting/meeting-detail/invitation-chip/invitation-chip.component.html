@@ -1,0 +1,9 @@
+<mat-chip [color]="invitation.email == null? 'primary':''" selected>
+  <ng-container *ngIf="invitation.user == null">
+    {{invitation.email}}
+  </ng-container>
+  <ng-container *ngIf="invitation.user != null">
+    {{invitation.user.displayName}} (@{{invitation.user.username}})
+  </ng-container>
+</mat-chip>
+

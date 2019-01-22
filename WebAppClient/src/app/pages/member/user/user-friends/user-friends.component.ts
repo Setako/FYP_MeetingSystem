@@ -51,17 +51,19 @@ export class UserFriendsComponent implements OnInit {
     this.dialog.open(ConfirmationDialogComponent, {
       data: {title: 'Confirmation', content: `Delete friend "${user.displayName}"?`}
     }).afterClosed().subscribe(res => {
-      this.querying = true;
-      this.friendService.deleteFriend(user.username).subscribe(() => {
-        this.querying = false;
-        this.update();
-      });
+      if (res) {
+        this.querying = true;
+        this.friendService.deleteFriend(user.username).subscribe(() => {
+          this.querying = false;
+          this.update();
+        });
+      }
     });
   }
 
   deleteSendedRequest(friendRequest: FriendRequest) {
     this.querying = true;
-    this.friendService.deleteSendedRequest(friendRequest.user.username).subscribe(() => {
+    this.friendService.deleteSendedRequest(friendRequest.targetUser.username).subscribe(() => {
       this.querying = false;
       this.update();
     }, err => this.querying = false);

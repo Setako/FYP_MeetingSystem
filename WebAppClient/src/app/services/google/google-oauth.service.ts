@@ -113,8 +113,12 @@ export class GoogleOauthService {
           .setDeveloperKey('AIzaSyDTfef8MKO3gUXKvbCJsiArpUNtmdajYCY')
           .setCallback((cb) => {
             console.log(cb);
-            observer.next(cb);
-            observer.complete();
+            if (cb.action === 'cancel') {
+              observer.complete();
+            } else if (cb.action === 'picked') {
+              observer.next(cb);
+              observer.complete();
+            }
           })
           .build();
         picker.setVisible(true);

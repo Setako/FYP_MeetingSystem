@@ -34,6 +34,9 @@ export class MeetingEditComponent implements OnInit {
   public meetingParticipantFriends: User[] = [];
   public meetingParticipantEmails = '';
 
+
+  public pickedFolders: string[] = [];
+
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
     length: new FormControl('', [Validators.required]),
@@ -180,10 +183,12 @@ export class MeetingEditComponent implements OnInit {
       console.log('e ' + err);
     }, () => {
       console.log('c');
-      this.googleOauthService.doRequest(
+      this.googleOauthService.doRequest<any>(
         (token) => this.googleOauthService.test(token),
       ).subscribe(
-        null, err => console.log(err)
+        (res) => {
+          res.docs.map(doc => doc.name).forEach((doc) => this.pickedFolders.push(doc));
+        }, err => console.log(err)
       );
 
     });
