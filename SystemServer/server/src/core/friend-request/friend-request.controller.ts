@@ -36,8 +36,9 @@ import { FriendRequestService } from './friend-request.service';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { defer, identity, from, combineLatest } from 'rxjs';
 import { map, flatMap, toArray } from 'rxjs/operators';
+import { GetSentReqeustQuery } from './dto/get-sent-request.dto';
 
-@Controller('friend/request')
+@Controller('friend-request')
 @UseGuards(AuthGuard('jwt'))
 export class FriendRequestController {
     constructor(
@@ -51,9 +52,14 @@ export class FriendRequestController {
     @Get()
     async getAllSentRequests(
         @Auth() user: InstanceType<User>,
-        @Query() query: PaginationQueryDto,
+        @Query() query: GetSentReqeustQuery,
     ) {
         const { resultPageNum, resultPageSize } = query;
+        const options = query.status
+            ? {
+                  status: { $in: query.status },
+              }
+            : {};
 
         const list = defer(() =>
             resultPageSize
@@ -61,8 +67,12 @@ export class FriendRequestController {
                       user.username,
                       NumberUtils.parseOrThrow(resultPageSize),
                       NumberUtils.parseOr(resultPageNum, 1),
+                      options,
                   )
-                : this.friendRequestService.getAllByUser(user.username),
+                : this.friendRequestService.getAllByUser(
+                      user.username,
+                      options,
+                  ),
         ).pipe(flatMap(identity));
 
         const items = list.pipe(
@@ -70,7 +80,10 @@ export class FriendRequestController {
         );
 
         const length = from(
-            this.friendRequestService.countDocumentsByUser(user.username),
+            this.friendRequestService.countDocumentsByUser(
+                user.username,
+                options,
+            ),
         );
 
         return combineLatest(items.pipe(toArray()), length).pipe(

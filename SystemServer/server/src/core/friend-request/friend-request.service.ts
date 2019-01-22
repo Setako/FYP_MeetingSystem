@@ -89,7 +89,7 @@ export class FriendRequestService {
         return this.friendRequestModel
             .find({
                 ...options,
-                user,
+                user: user._id,
             })
             .populate('user')
             .populate('targetUser')
@@ -106,7 +106,7 @@ export class FriendRequestService {
         return this.friendRequestModel
             .find({
                 ...options,
-                user,
+                user: user._id,
             })
             .populate('user')
             .populate('targetUser')
