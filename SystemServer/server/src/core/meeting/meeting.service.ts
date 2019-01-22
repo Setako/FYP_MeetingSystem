@@ -432,15 +432,15 @@ export class MeetingService {
 
         const friendIds$ = from(friends.values()).pipe(
             flatMap(item => from(this.userService.getByUsername(item))),
-            filter(Boolean.bind(Boolean)),
-            map(item => item.id),
+            filter(item => Boolean(item)),
+            map(item => item.id as string),
         );
 
         const emailOnwerId$ = from(emails.values()).pipe(
             flatMap(email =>
                 from(this.userService.getByEmail(email)).pipe(
                     filter(item => Boolean(item)),
-                    map(item => item.id),
+                    map(item => item.id as string),
                 ),
             ),
         );

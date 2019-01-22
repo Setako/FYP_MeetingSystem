@@ -44,10 +44,10 @@ import {
     mapTo,
     switchMap,
     tap,
-    mergeMapTo,
     groupBy,
     catchError,
     mergeAll,
+    shareReplay,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -220,7 +220,7 @@ export class MeetingController {
                 ),
             )
             .pipe(
-                mergeMapTo(
+                flatMap(() =>
                     this.meetingService.findNewInviteeIds(
                         id,
                         editMeetingDto.invitations,
@@ -518,9 +518,12 @@ export class MeetingController {
             flatMap(identity),
         );
 
+        let count = 0;
+
         const friend$ = friendsId$.pipe(
             flatMap(friendId => this.userService.getById(friendId)),
             filter(item => Boolean(item)),
+            shareReplay(),
         );
 
         const friendJoinedMeeting$ = friend$.pipe(
@@ -545,6 +548,7 @@ export class MeetingController {
                     mapTo(friend),
                 ),
             ),
+            shareReplay(),
         );
 
         const userRefreshToken$ = whoHasGoogleService$.pipe(
