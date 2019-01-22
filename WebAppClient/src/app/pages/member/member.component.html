@@ -55,7 +55,7 @@
                class="flex-shrink-1 flex-grow-1">
 
             <div class="mat-elevation-z2 d-flex align-items-center" style="height: 100px;padding: 4px 36px;">
-              <img [src]="userService.getUserAvatarPath(auth.loggedInUser)" class="p-1 cc-avatar"
+              <img [src]="auth.loggedInUserAvatarPath" class="p-1 cc-avatar"
                    style="height: 50px; width: 50px;" alt="">
               <div class="d-inline-block pl-1"
                    style="font-size: 20px;overflow: hidden;text-overflow: ellipsis">{{auth.loggedInUser.displayName}}</div>
@@ -65,7 +65,7 @@
 
               <!--User options-->
               <a [routerLink]="link.link" *ngFor="let link of userLinks" routerLinkActive="actived"
-                 class="user-link w-100 sidebar-link"
+                 (click)="showNav = false" class="user-link w-100 sidebar-link"
                  mat-button style="padding: 4px 36px; height: 48px; text-align: left">
                 <div class="d-flex flex-row align-items-center">
                   <mat-icon style="font-size: 32px; width: 32px; height: 32px">{{link.icon}}</mat-icon>
@@ -76,7 +76,7 @@
             </div>
             <div class="pt-4">
               <a [routerLink]="link.link" *ngFor="let link of links" routerLinkActive="actived"
-                 class="user-link w-100 sidebar-link"
+                 (click)="showNav = false" class="user-link w-100 sidebar-link"
                  mat-button style="padding: 4px 36px; height: 48px; text-align: left">
                 <div class="d-flex flex-row align-items-center">
                   <mat-icon style="font-size: 32px; width: 32px; height: 32px">{{link.icon}}</mat-icon>
@@ -96,7 +96,7 @@
                 Logout
               </div>
             </button>
-            <button mat-button routerLink="/member/settings" routerLinkActive="actived"
+            <button (click)="showNav = false" mat-button routerLink="/member/settings" routerLinkActive="actived"
                     class="flex-grow-0 flex-shrink-0 sidebar-link user-link setting-link" style="width: 48px">
               <div class="d-flex">
                 <mat-icon style="font-size: 32px;width: 32px;height: 32px">settings</mat-icon>

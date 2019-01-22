@@ -4,9 +4,8 @@ import {FriendService} from '../../../../services/friend.service';
 import {AppConfig} from '../../../../app-config';
 import {UserService} from '../../../../services/user.service';
 import {Friend, FriendRequest, User} from '../../../../shared/models/user';
-import {query} from '@angular/animations';
-import {forkJoin, Observable} from 'rxjs';
-import {map, take} from 'rxjs/operators';
+import {forkJoin} from 'rxjs';
+import {take, tap} from 'rxjs/operators';
 import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
 import {MatDialog} from '@angular/material';
 
@@ -18,6 +17,7 @@ import {MatDialog} from '@angular/material';
 export class UserFriendsComponent implements OnInit {
   public querying = true;
   public receivedFriendRequests: FriendRequest[] = [];
+  public sendedFriendRequests: FriendRequest[] = [];
   public API_PATH: string = AppConfig.API_PATH;
   friends: Friend[] = [];
 
@@ -30,10 +30,12 @@ export class UserFriendsComponent implements OnInit {
   }
 
   update() {
+    console.error('test');
     this.querying = true;
     forkJoin(
-      this.friendService.getReceivedRequests().pipe(map(requests => this.receivedFriendRequests = requests.items), take(1)),
-      this.friendService.getFriends().pipe(map(friends => this.friends = friends.items), take(1))
+      this.friendService.getReceivedRequests().pipe(tap(requests => this.receivedFriendRequests = requests.items), take(1)),
+      this.friendService.getFriends().pipe(tap(friends => this.friends = friends.items), take(1)),
+      this.friendService.getSendedRequests().pipe(tap(requests => this.sendedFriendRequests = requests.items), take(1))
     ).subscribe(() => this.querying = false);
   }
 
@@ -55,6 +57,14 @@ export class UserFriendsComponent implements OnInit {
         this.update();
       });
     });
+  }
+
+  deleteSendedRequest(friendRequest: FriendRequest) {
+    this.querying = true;
+    this.friendService.deleteSendedRequest(friendRequest.user.username).subscribe(() => {
+      this.querying = false;
+      this.update();
+    }, err => this.querying = false);
   }
 
 }

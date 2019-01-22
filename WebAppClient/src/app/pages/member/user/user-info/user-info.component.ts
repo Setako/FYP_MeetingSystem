@@ -27,6 +27,8 @@ export class UserInfoComponent implements OnInit {
     currentPassword: new FormControl('', [Validators.required]),
   }, {validators: [this.checkPasswordRepeat]});
 
+  public randomImageParam = Math.floor(Math.random() * 100000) + 't' + new Date().getMilliseconds();
+
   private permissions = [
     'profile',
     'email',
@@ -88,7 +90,15 @@ export class UserInfoComponent implements OnInit {
 
   }
 
-  uploadAvatar() {
-    this.dialog.open(UserAvatarUploadDialogComponent);
+  updateImage() {
+    this.randomImageParam = Math.floor(Math.random() * 100000) + 't' + new Date().getMilliseconds();
   }
+
+  uploadAvatar() {
+    const dialogRef = this.dialog.open(UserAvatarUploadDialogComponent);
+    dialogRef.afterClosed().subscribe(() => {
+      this.updateImage();
+    });
+  }
+
 }

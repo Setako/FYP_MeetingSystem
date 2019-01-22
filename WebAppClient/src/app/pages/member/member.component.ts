@@ -1,7 +1,7 @@
 import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {AuthService} from '../../services/auth.service';
 import {MatSnackBar} from '@angular/material';
-import {animate, state, style, transition, trigger} from '@angular/animations';
+import {animate, style, transition, trigger} from '@angular/animations';
 import {MediaMatcher} from '@angular/cdk/layout';
 import {UserService} from '../../services/user.service';
 import {NotificationService} from '../../services/notification.service';

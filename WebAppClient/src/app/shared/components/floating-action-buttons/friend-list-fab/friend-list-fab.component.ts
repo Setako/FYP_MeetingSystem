@@ -8,7 +8,7 @@ import {AddFriendDialogComponent} from '../../dialogs/add-friend-dialog/add-frie
   styleUrls: ['./friend-list-fab.component.css']
 })
 export class FriendListFabComponent implements OnInit {
-  @Input('refreshCallback') refreshCallback: () => any;
+  @Input() refreshCallback: () => any;
 
   constructor(private dialog: MatDialog) {
   }
