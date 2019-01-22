@@ -13,8 +13,7 @@ import { DeviceService } from './device.service';
 import { DeviceGuard } from '@commander/shared/guard/device.guard';
 import { DeviceSecretDto } from './dto/device-secret.dto';
 import { of, from } from 'rxjs';
-import { tap, map, concatAll, toArray, flatMap } from 'rxjs/operators';
-import { AuthGuard } from '@nestjs/passport';
+import { tap, map, concatAll, toArray } from 'rxjs/operators';
 
 @Controller('device')
 export class DeviceController {

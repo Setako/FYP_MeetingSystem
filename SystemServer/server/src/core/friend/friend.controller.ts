@@ -66,19 +66,6 @@ export class FriendController {
             })),
         );
 
-        // const items = list.pipe(
-        //     map(item => ({
-        //         user: item.friends.filter(
-        //             (friend: InstanceType<User>) =>
-        //                 !Types.ObjectId(friend.id).equals(user.id),
-        //         )[0],
-        //         addDate: item.addDate,
-        //         stared: item.stared.some((id: Types.ObjectId) =>
-        //             id.equals(user.id),
-        //         ),
-        //     })),
-        // );
-
         return combineLatest(
             items.pipe(
                 map(item => ObjectUtils.ObjectToPlain(item, GetFriendDto)),
@@ -137,25 +124,6 @@ export class FriendController {
             ),
             toArray(),
         );
-
-        // const items = friends.pipe(
-        //     map(
-        //         pipe(
-        //             item => ({
-        //                 user: item.friends.filter(
-        //                     (friend: InstanceType<User>) =>
-        //                         !Types.ObjectId(friend.id).equals(user.id),
-        //                 )[0],
-        //                 addDate: item.addDate,
-        //                 stared: item.stared.some((id: Types.ObjectId) =>
-        //                     id.equals(user.id),
-        //                 ),
-        //             }),
-        //             item => ObjectUtils.ObjectToPlain(item, GetFriendDto),
-        //         ),
-        //     ),
-        //     toArray(),
-        // );
 
         return items.pipe(
             map(itemList => ({

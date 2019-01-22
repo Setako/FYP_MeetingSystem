@@ -5,6 +5,8 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { User } from '../user/user.model';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { from } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Controller('auth')
 export class AuthController {
@@ -13,9 +15,9 @@ export class AuthController {
     @Post('login')
     @HttpCode(200)
     async login(@Body() loginDto: LoginDto) {
-        return {
-            token: await this.authService.login(loginDto),
-        };
+        return from(this.authService.login(loginDto)).pipe(
+            map(token => ({ token })),
+        );
     }
 
     @Post('register')
@@ -27,9 +29,9 @@ export class AuthController {
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
     async refresh(@Auth() user: User) {
-        return {
-            token: await this.authService.refresh(user),
-        };
+        return from(this.authService.refresh(user)).pipe(
+            map(token => ({ token })),
+        );
     }
 
     @Post('logout')

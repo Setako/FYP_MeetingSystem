@@ -164,12 +164,14 @@ export class FriendRequestService {
     }
 
     async hasReqeustedRequest(user: string, target: string) {
-        return (
-            (await this.friendRequestModel.find({
+        return this.friendRequestModel
+            .find({
                 user: await this.userService.getByUsername(user),
                 targetUser: await this.userService.getByUsername(target),
                 status: FriendRequestStatus.Requested,
-            })).length !== 0
-        );
+            })
+            .countDocuments()
+            .exec()
+            .then(item => item !== 0);
     }
 }

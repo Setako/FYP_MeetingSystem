@@ -518,8 +518,6 @@ export class MeetingController {
             flatMap(identity),
         );
 
-        let count = 0;
-
         const friend$ = friendsId$.pipe(
             flatMap(friendId => this.userService.getById(friendId)),
             filter(item => Boolean(item)),
@@ -553,7 +551,7 @@ export class MeetingController {
 
         const userRefreshToken$ = whoHasGoogleService$.pipe(
             map(friend => friend.googleRefreshToken),
-            shareReplay()
+            shareReplay(),
         );
 
         const userCalendarIdList$ = userRefreshToken$.pipe(

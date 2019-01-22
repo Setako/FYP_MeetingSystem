@@ -26,6 +26,7 @@ import {
     flatMap,
     filter,
     defaultIfEmpty,
+    shareReplay,
 } from 'rxjs/operators';
 import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
@@ -63,7 +64,7 @@ export class GoogleController {
         );
 
         const authUrl$ = clearUserToken$.pipe(
-            mapTo(
+            map(() =>
                 this.authService.getAuthUrl(
                     user.id,
                     query.successRedirect
@@ -95,7 +96,7 @@ export class GoogleController {
 
         const state$ = defer(() =>
             of(this.authService.decodeAuthState(authDto.state)),
-        );
+        ).pipe(shareReplay());
         const userId$ = state$.pipe(map(item => item.userId));
         const successRedirect$ = state$.pipe(
             flatMap(({ successRedirect }) =>

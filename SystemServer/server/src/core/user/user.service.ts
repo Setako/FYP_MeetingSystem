@@ -151,11 +151,6 @@ export class UserService {
     }
 
     async editGoogleRefreshToken(userId: string, refreshToken?: string) {
-        // const edited = await this.userModel.findByUsername(username);
-        // if (!edited) {
-        //     return null;
-        // }
-
         return from(this.userModel.findById(userId).exec())
             .pipe(
                 flatMap(item => (item ? of(item) : empty())),
@@ -165,10 +160,6 @@ export class UserService {
                 }),
             )
             .toPromise();
-
-        // edited.googleRefreshToken = refreshToken;
-
-        // return edited.save();
     }
 
     async delete(username: string) {

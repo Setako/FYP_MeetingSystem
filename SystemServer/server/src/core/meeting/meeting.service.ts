@@ -286,7 +286,6 @@ export class MeetingService {
             flatMap(list =>
                 list.includes(attendeeId) ? empty() : of(attendeeId),
             ),
-            tap(console.log.bind(console)),
         );
 
         const saveAttendee$ = ifNotExistAttendee$.pipe(
