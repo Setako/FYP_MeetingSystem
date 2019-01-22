@@ -26,6 +26,10 @@ export class FriendService {
     return this.http.post(`${AppConfig.API_PATH}/friend/request/${username}`, {});
   }
 
+  public deleteFriend(username: string): Observable<any> {
+    return this.http.delete(`${AppConfig.API_PATH}/friend/${username}`);
+  }
+
   public getFriends(): Observable<ListResponse<Friend>> {
     return this.http.get<ListResponse<Friend>>(`${AppConfig.API_PATH}/friend`);
   }

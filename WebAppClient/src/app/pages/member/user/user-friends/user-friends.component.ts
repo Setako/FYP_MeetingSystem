@@ -3,10 +3,12 @@ import {AuthService} from '../../../../services/auth.service';
 import {FriendService} from '../../../../services/friend.service';
 import {AppConfig} from '../../../../app-config';
 import {UserService} from '../../../../services/user.service';
-import {Friend, FriendRequest} from '../../../../shared/models/user';
+import {Friend, FriendRequest, User} from '../../../../shared/models/user';
 import {query} from '@angular/animations';
 import {forkJoin, Observable} from 'rxjs';
 import {map, take} from 'rxjs/operators';
+import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
+import {MatDialog} from '@angular/material';
 
 @Component({
   selector: 'app-user-friends',
@@ -20,7 +22,7 @@ export class UserFriendsComponent implements OnInit {
   friends: Friend[] = [];
 
   constructor(public authService: AuthService, public friendService: FriendService,
-              public userService: UserService) {
+              public userService: UserService, public dialog: MatDialog) {
     this.update();
   }
 
@@ -38,9 +40,21 @@ export class UserFriendsComponent implements OnInit {
   responseFriendRequest(friendRequest: FriendRequest, approve: boolean) {
     this.querying = true;
     this.friendService.responseRequest(friendRequest.user.username, approve).subscribe(() => {
-      this.update();
       this.querying = false;
+      this.update();
     }, err => this.querying = false);
+  }
+
+  deleteFriend(user: User) {
+    this.dialog.open(ConfirmationDialogComponent, {
+      data: {title: 'Confirmation', content: `Delete friend "${user.displayName}"?`}
+    }).afterClosed().subscribe(res => {
+      this.querying = true;
+      this.friendService.deleteFriend(user.username).subscribe(() => {
+        this.querying = false;
+        this.update();
+      });
+    });
   }
 
 }

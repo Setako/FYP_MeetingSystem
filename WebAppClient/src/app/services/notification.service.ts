@@ -93,6 +93,22 @@ export class NotificationService {
         )
       );
   }
+
+  public dismissNotification(notification: UserNotification): Observable<any> {
+    this.notifications = this.notifications.filter(filtering => filtering.id !== notification.id);
+    return this.http.delete(`${AppConfig.API_PATH}/notification/${notification.id}`)
+      .pipe(
+        map((x) => this.getNotifications())
+      );
+  }
+
+  public dismissNotifications(): Observable<any> {
+    this.notifications = [];
+    return this.http.delete(`${AppConfig.API_PATH}/notification}`)
+      .pipe(
+        map((x) => this.getNotifications())
+      );
+  }
 }
 
 class UserNotificationDTO {
