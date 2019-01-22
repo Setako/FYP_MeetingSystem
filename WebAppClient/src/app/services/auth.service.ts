@@ -27,6 +27,16 @@ export class AuthService {
     return this._token;
   }
 
+  private userAvatarRandom = Math.floor(Math.random() * 100000) + 't' + new Date().getMilliseconds();
+
+  get loggedInUserAvatarPath(): string {
+    return `${AppConfig.API_PATH}/user/${this.loggedInUser.username}/avatar?r=${this.userAvatarRandom}`;
+  }
+
+  public updateUserAvatar() {
+    this.userAvatarRandom = Math.floor(Math.random() * 100000) + 't' + new Date().getMilliseconds();
+  }
+
   private set _token(token: string) {
     if (token == null) {
       localStorage.removeItem('token');
@@ -54,13 +64,14 @@ export class AuthService {
       const username = this.tokenObject.username;
       return this.http.get<ListResponse<User>>(`${AppConfig.API_PATH}/user/${username}`)
         .pipe(tap((res) => {
-          console.log("ok")
+          console.log('ok');
           this._loggedInUser = res.items[0];
         }));
     }
   }
 
   public login(username: string, password: string): Observable<any> {
+    this.updateUserAvatar();
     return this.http.post(`${AppConfig.API_PATH}/auth/login`, {
       username: username,
       password: password

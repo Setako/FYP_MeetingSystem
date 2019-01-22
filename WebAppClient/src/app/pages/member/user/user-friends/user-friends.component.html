@@ -1,8 +1,36 @@
-<app-friend-list-fab></app-friend-list-fab>
+<app-friend-list-fab [refreshCallback]="update"></app-friend-list-fab>
 <div class="mat-elevation-z4 p-3" style="background: white">
   <h2>Friends</h2>
   <app-querying-content-hider [querying]="querying" queryingAction="Loading friend list">
     <mat-accordion class="mt-2">
+
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Request sended by you ({{sendedFriendRequests.length}})
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <mat-action-list class="h-100" style="overflow-y: auto; overflow-x: hidden">
+          <div class="my-2 friend-item"
+               *ngFor="let friendRequest of sendedFriendRequests">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="d-flex flex-row align-items-center">
+                <img class="friend-icon cc-avatar"
+                     [src]="userService.getUserAvatarPath(friendRequest.user)"
+                     alt="">
+                <span class="ml-3">{{friendRequest.user.displayName}} (@{{friendRequest.user.username}})</span>
+              </div>
+              <div>
+                <button mat-icon-button (click)="deleteSendedRequest(friendRequest)">
+                  <mat-icon color="warn">delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </mat-action-list>
+      </mat-expansion-panel>
+
+
       <mat-expansion-panel>
         <mat-expansion-panel-header>
           <mat-panel-title>
@@ -16,7 +44,7 @@
             <div class="d-flex justify-content-between align-items-center w-100">
               <div class="d-flex flex-row align-items-center">
                 <img class="friend-icon cc-avatar"
-                     [src]="userService.getUserAvatarPath(friendRequest.user.username)"
+                     [src]="userService.getUserAvatarPath(friendRequest.user)"
                      alt="">
                 <span class="ml-3">{{friendRequest.user.displayName}} (@{{friendRequest.user.username}})</span>
               </div>
@@ -47,7 +75,7 @@
               <div class="d-flex justify-content-between align-items-center w-100" matRipple="">
                 <div class="d-flex flex-row align-items-center">
                   <img class="friend-icon cc-avatar"
-                       [src]="userService.getUserAvatarPath(friend.user.username)"
+                       [src]="userService.getUserAvatarPath(friend.user)"
                        alt="">
                   <span class="ml-3">{{friend.user.displayName}} (@{{friend.user.username}})</span>
                 </div>
