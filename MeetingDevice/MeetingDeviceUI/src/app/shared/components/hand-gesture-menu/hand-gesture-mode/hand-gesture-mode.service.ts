@@ -7,7 +7,6 @@ import {HandGestureMode} from './hand-gesture-mode';
 export class HandGestureModeService {
   private _availableHandGestureModes: HandGestureMode[] = [];
   private _currentHandGestureMode: HandGestureMode;
-  private
 
   constructor() {
 

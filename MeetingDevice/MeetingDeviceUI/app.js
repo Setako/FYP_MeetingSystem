@@ -13,10 +13,21 @@ let loadURL = url.format({
 // let loadURL = "http://google.com";
 let commandInput = commander.version("0.0.1")
   .option("-u, --url [url]", "Load from url")
+  .option("-d, --dev", "Development mode")
+  .option("-i, --id [deviceId]", "Set device id")
+  .option("-s, --secret [secret]", "Set device secret")
   .parse(process.argv);
 
 if (commandInput.url) loadURL = commandInput.url;
 
+
+if (commandInput.id == null || commandInput.secret == null) {
+  throw "Missing device id or secret!";
+}
+global.device = {
+  id: commandInput.id,
+  secret: commandInput.secret
+};
 
 let rendererWindow = null;
 app.disableHardwareAcceleration();
@@ -32,24 +43,28 @@ app.on("ready", () => {
       width: 99999,
       height: 99999,
       frame: false,
-      transparent: true,
-      alwaysOnTop: true
+      transparent: true
     });
 
 
     rendererWindow.loadURL(loadURL);
 
-    rendererWindow.setAlwaysOnTop(true);
+
+    if (commandInput.dev) {
+      rendererWindow.toggleDevTools();
+    }else{
+      rendererWindow.setVisibleOnAllWorkspaces(true);
+      rendererWindow.setAlwaysOnTop(true);
+      rendererWindow.setIgnoreMouseEvents(true, {forward: true});
+
+    }
 
 
-    rendererWindow.setVisibleOnAllWorkspaces(true);
     rendererWindow.setSkipTaskbar(true);
-    rendererWindow.toggleDevTools();
 
     //Prevent automatic maximize and resize
     rendererWindow.setResizable(false);
     rendererWindow.setMaximizable(false);
-    rendererWindow.setIgnoreMouseEvents(true, {forward: true});
     module.exports.rendererWindow = rendererWindow;
     server.listen(8555);
   })
