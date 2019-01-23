@@ -3,6 +3,7 @@ import {DeviceService} from '../../../../services/device.service';
 import {QRCodeUtil} from '../../../../utils/QRCodeUtil';
 import {map, mergeMap, retry} from 'rxjs/operators';
 import {MatSnackBar} from '@angular/material';
+import {timer} from 'rxjs';
 
 @Component({
   selector: 'app-token-qrcode-window',
@@ -17,7 +18,9 @@ export class TokenQrcodeWindowComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.update();
+    timer(0, 50000).subscribe((_) => {
+      this.update();
+    });
   }
 
   update() {
