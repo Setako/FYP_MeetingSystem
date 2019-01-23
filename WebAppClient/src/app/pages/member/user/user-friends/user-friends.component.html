@@ -7,21 +7,22 @@
       <mat-expansion-panel>
         <mat-expansion-panel-header>
           <mat-panel-title>
-            Request sended by you ({{sendedFriendRequests.length}})
+            Request sent by you ({{sentFriendRequests.length}})
           </mat-panel-title>
         </mat-expansion-panel-header>
         <mat-action-list class="h-100" style="overflow-y: auto; overflow-x: hidden">
-          <div class="my-2 friend-item"
-               *ngFor="let friendRequest of sendedFriendRequests">
+          <div class="my-2 friend-item" style="padding: 0 24px;"
+               *ngFor="let friendRequest of sentFriendRequests">
             <div class="d-flex justify-content-between align-items-center w-100">
               <div class="d-flex flex-row align-items-center">
                 <img class="friend-icon cc-avatar"
-                     [src]="userService.getUserAvatarPath(friendRequest.user)"
+                     [src]="userService.getUserAvatarPath(friendRequest.targetUser)"
                      alt="">
-                <span class="ml-3">{{friendRequest.user.displayName}} (@{{friendRequest.user.username}})</span>
+                <span class="ml-3">{{friendRequest.targetUser.displayName}} (@{{friendRequest.targetUser.username}}
+                  )</span>
               </div>
               <div>
-                <button mat-icon-button (click)="deleteSendedRequest(friendRequest)">
+                <button mat-icon-button (click)="deleteSentRequest(friendRequest)">
                   <mat-icon color="warn">delete</mat-icon>
                 </button>
               </div>
@@ -39,7 +40,7 @@
         </mat-expansion-panel-header>
 
         <mat-action-list class="h-100" style="overflow-y: auto; overflow-x: hidden">
-          <div class="my-2 friend-item"
+          <div class="my-2 friend-item" style="padding: 0 24px;"
                *ngFor="let friendRequest of receivedFriendRequests">
             <div class="d-flex justify-content-between align-items-center w-100">
               <div class="d-flex flex-row align-items-center">
@@ -70,7 +71,7 @@
         <mat-action-list class="h-100" style="overflow-y: auto; overflow-x: hidden">
           <div class="m-2">
 
-            <div class="my-2 friend-item"
+            <div class="my-2 friend-item" style="padding: 0 24px;"
                  *ngFor="let friend of friends">
               <div class="d-flex justify-content-between align-items-center w-100" matRipple="">
                 <div class="d-flex flex-row align-items-center">
