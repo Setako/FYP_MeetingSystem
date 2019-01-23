@@ -2,6 +2,8 @@ import {Component, OnInit} from '@angular/core';
 import {MatSnackBar} from '@angular/material';
 import {ControlIpcListenerService} from './services/control/control-ipc-listener.service';
 
+declare let electron: any;
+
 @Component({
   selector: 'app-root',
   // template: '',
