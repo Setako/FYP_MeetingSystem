@@ -21,6 +21,7 @@ import {ControlModeService} from './services/control/control-mode.service';
 import {TokenQrcodeWindowComponent} from './shared/components/window/token-qrcode-window/token-qrcode-window.component';
 import {QueryingContentHiderComponent} from './shared/components/querying-content-hider/querying-content-hider.component';
 import {HttpClientModule} from '@angular/common/http';
+import {WebviewDirective} from './shared/directives/WebviewDirective';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,8 @@ import {HttpClientModule} from '@angular/common/http';
     IconNotificationBlockComponent,
     NotificationContentComponent,
     TokenQrcodeWindowComponent,
-    QueryingContentHiderComponent
+    QueryingContentHiderComponent,
+    WebviewDirective
   ],
   imports: [
     BrowserAnimationsModule,
