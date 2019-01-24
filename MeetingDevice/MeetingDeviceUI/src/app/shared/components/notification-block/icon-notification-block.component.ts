@@ -4,7 +4,7 @@ import {Component} from '@angular/core';
 @Component({
   selector: 'app-icon-notification-block',
   template: `
-    <div *ngIf="notification" class="mat-elevation-z4" style="position:relative;padding: 10px; width: 300px">
+    <div *ngIf="notification" class="mat-elevation-z4" style="position:relative;padding: 10px; width: 300px; background: white; ">
       <div style="display: inline-block; vertical-align: middle; padding-left: 10px;padding-right: 10px">
         <mat-icon>{{notification.icon}}</mat-icon>
       </div>
