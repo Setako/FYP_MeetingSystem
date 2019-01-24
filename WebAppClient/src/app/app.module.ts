@@ -47,6 +47,7 @@ import {FaceRecognitionSettingComponent} from './pages/member/settings/face-reco
 import {AddDriveFolderDialogComponent} from './shared/components/dialogs/add-drive-folder-dialog/add-drive-folder-dialog.component';
 import {MeetingEditTimeComponent} from './pages/member/meeting/meeting-edit/meeting-edit-time/meeting-edit-time.component';
 import {InvitationChipComponent} from './pages/member/meeting/meeting-detail/invitation-chip/invitation-chip.component';
+import { NotYetImplementedFunctionComponent } from './shared/components/not-yet-implemented-function/not-yet-implemented-function.component';
 
 @NgModule({
   declarations: [
@@ -85,7 +86,8 @@ import {InvitationChipComponent} from './pages/member/meeting/meeting-detail/inv
     FaceRecognitionSettingComponent,
     AddDriveFolderDialogComponent,
     MeetingEditTimeComponent,
-    InvitationChipComponent
+    InvitationChipComponent,
+    NotYetImplementedFunctionComponent
   ],
   imports: [
     BrowserModule,
