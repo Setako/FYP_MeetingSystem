@@ -615,17 +615,27 @@ export class MeetingService {
 
     async updateDevice(meetingId: string, deviceId: string) {
         return this.meetingModel
-            .findByIdAndUpdate(meetingId, {
-                device: Types.ObjectId(deviceId),
-            })
+            .findOneAndUpdate(
+                {
+                    _id: Types.ObjectId(meetingId),
+                },
+                {
+                    device: Types.ObjectId(deviceId),
+                },
+            )
             .exec();
     }
 
     async clearRealEndTime(meetingId: string) {
         return this.meetingModel
-            .findByIdAndUpdate(meetingId, {
-                $unset: { realEndTime: '' },
-            })
+            .findOneAndUpdate(
+                {
+                    _id: Types.ObjectId(meetingId),
+                },
+                {
+                    $unset: { realEndTime: '' },
+                },
+            )
             .exec();
     }
 

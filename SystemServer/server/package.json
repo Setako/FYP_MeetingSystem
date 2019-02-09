@@ -29,6 +29,7 @@
         "@nestjs/jwt": "^0.2.1",
         "@nestjs/mongoose": "^5.2.2",
         "@nestjs/passport": "^5.1.0",
+        "@nestjs/websockets": "^5.7.2",
         "cache-manager": "^2.9.0",
         "class-transformer": "^0.2.0",
         "class-validator": "^0.9.1",
@@ -45,6 +46,7 @@
         "reflect-metadata": "^0.1.13",
         "rimraf": "^2.6.3",
         "rxjs": "^6.2.2",
+        "socket.io": "^2.2.0",
         "typegoose": "^5.4.1",
         "typescript": "^3.2.4",
         "uuid": "^3.3.2"
@@ -59,6 +61,7 @@
         "@types/morgan": "^1.7.35",
         "@types/node": "^10.12.18",
         "@types/passport-jwt": "^3.0.1",
+        "@types/socket.io": "^2.1.2",
         "@types/supertest": "^2.0.5",
         "@types/uuid": "^3.4.4",
         "jest": "^23.5.0",

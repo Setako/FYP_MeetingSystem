@@ -20,5 +20,6 @@ import { DeviceModule } from '../device/device.module';
     ],
     controllers: [MeetingController],
     providers: [MeetingService],
+    exports: [MeetingService],
 })
 export class MeetingModule {}

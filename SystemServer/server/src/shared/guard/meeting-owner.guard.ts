@@ -14,9 +14,13 @@ export class MeetingOwnerGuard implements CanActivate {
             params: { id },
         } = context.switchToHttp().getRequest();
 
-        return from(this.meetingService.getById(id)).pipe(
+        return this.validate(id, user.id);
+    }
+
+    protected validate(meetingId: string, userId: string) {
+        return from(this.meetingService.getById(meetingId)).pipe(
             flatMap(item => (item ? of(item.owner) : empty())),
-            map(owner => Types.ObjectId(user.id).equals(owner as any)),
+            map(owner => Types.ObjectId(userId).equals(owner as any)),
             defaultIfEmpty(false),
             catchError(() => of(false)),
         );

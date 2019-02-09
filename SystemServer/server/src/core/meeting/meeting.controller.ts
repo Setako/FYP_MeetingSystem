@@ -313,9 +313,7 @@ export class MeetingController {
         ) => {
             switch (editedStatus) {
                 case MeetingStatus.Planned:
-                    await new ValidationPipe({
-                        transform: true,
-                    }).transformDocument(
+                    await new ValidationPipe().transformDocument(
                         meetingInstance,
                         ReadyToPlannedMeetingDto,
                     );

@@ -66,7 +66,7 @@ export class DeviceService {
         return this.jwtService.verify(token);
     }
 
-    decodeToken(token: string) {
+    decodeToken(token: string): string {
         return (this.jwtService.decode(token) as any).deviceId;
     }
 

@@ -8,12 +8,14 @@ import { MeetingModule } from './core/meeting/meeting.module';
 import { NotificationModule } from './core/notification/notification.module';
 import { UserModule } from './core/user/user.module';
 import { GoogleModule } from './core/google/google.module';
+import { WebsocketModule } from './core/websocket/websocket.module';
 
 @Module({
     imports: [
         TypegooseModule.forRoot(process.env.DB_URL, {
             useNewUrlParser: true,
             useCreateIndex: true,
+            useFindAndModify: false,
         }),
         AuthModule,
         UserModule,
@@ -23,6 +25,7 @@ import { GoogleModule } from './core/google/google.module';
         FriendModule,
         FriendRequestModule,
         GoogleModule,
+        WebsocketModule,
     ],
     controllers: [],
     providers: [],

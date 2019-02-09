@@ -22,6 +22,16 @@ export class AuthService {
         return this.userService.getByUsername(payload.username);
     }
 
+    verifyToken(token: string) {
+        this.jwtService.verify(token);
+    }
+
+    decodeToken(token: string): JwtPayload {
+        return {
+            ...(this.jwtService.decode(token) as any),
+        };
+    }
+
     async login(
         loginDto: LoginDto,
         options: SignOptions = { expiresIn: '7d' },

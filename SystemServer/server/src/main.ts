@@ -12,11 +12,7 @@ declare const module: any;
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    app.setGlobalPrefix('/api').useGlobalPipes(
-        new ValidationPipe({
-            transform: true,
-        }),
-    );
+    app.setGlobalPrefix('/api').useGlobalPipes(new ValidationPipe());
 
     if (process.env.NODE_ENV === 'development') {
         app.use(logger('dev')).enableCors();
