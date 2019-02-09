@@ -23,12 +23,31 @@ export class MeetingListComponent implements OnInit {
 
   public availableStatus = ['Draft', 'Planned', 'Confirmed', 'Cancelled', 'Started', 'Ended'];
 
-  public hostedByMe = true;
-  public hostedByOther = true;
+  private _hostedByMe = true;
+  private _hostedByOther = true;
   public status: MeetingStatus[] = this.availableStatus.map(s => s.toLowerCase()) as MeetingStatus[];
 
   constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet,
               public snackBar: MatSnackBar) {
+  }
+
+
+  get hostedByMe(): boolean {
+    return this._hostedByMe;
+  }
+
+  set hostedByMe(value: boolean) {
+    this._hostedByMe = value;
+    this.updateList();
+  }
+
+  get hostedByOther(): boolean {
+    return this._hostedByOther;
+  }
+
+  set hostedByOther(value: boolean) {
+    this._hostedByOther = value;
+    this.updateList();
   }
 
   ngOnInit() {
@@ -58,8 +77,8 @@ export class MeetingListComponent implements OnInit {
       this.meetingListQuerySubscription = null;
     }
     this.meetingListQuerySubscription = this.meetingService.findMeetings({
-      hostedByMe: this.hostedByMe,
-      hostedByOther: this.hostedByOther,
+      hostedByMe: this._hostedByMe,
+      hostedByOther: this._hostedByOther,
       status: this.status
     } as MeetingSearchingFilter, this.pageSize, this.pageIndex + 1).subscribe(
       res => {

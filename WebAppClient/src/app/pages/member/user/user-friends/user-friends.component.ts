@@ -23,14 +23,13 @@ export class UserFriendsComponent implements OnInit {
 
   constructor(public authService: AuthService, public friendService: FriendService,
               public userService: UserService, public dialog: MatDialog) {
-    this.update();
   }
 
   ngOnInit() {
+    this.update();
   }
 
   update() {
-    console.error('test');
     this.querying = true;
     forkJoin(
       this.friendService.getReceivedRequests().pipe(tap(requests => this.receivedFriendRequests = requests.items), take(1)),

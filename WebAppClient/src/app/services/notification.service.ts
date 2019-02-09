@@ -104,7 +104,7 @@ export class NotificationService {
 
   public dismissNotifications(): Observable<any> {
     this.notifications = [];
-    return this.http.delete(`${AppConfig.API_PATH}/notification}`)
+    return this.http.delete(`${AppConfig.API_PATH}/notification`)
       .pipe(
         map((x) => this.getNotifications())
       );

@@ -38,7 +38,9 @@ export class MeetingInvitationsComponent implements OnInit {
 
   public updateList() {
     this.meetingListQuerySubscription = this.meetingService.findMeetings(
-      {invitingMe: true} as MeetingSearchingFilter,
+      this.invitingFromFriend === undefined
+        ? {invitingMe: true} as MeetingSearchingFilter
+        : {invitingMe: this.invitingFromFriend} as MeetingSearchingFilter,
       this.pageSize, this.pageIndex + 1)
       .subscribe(
         res => {

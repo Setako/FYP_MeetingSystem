@@ -4,8 +4,8 @@
 <div class="p-3 mat-elevation-z4" style="background: white; margin-bottom: 80px!important;">
   <h2>Your meetings</h2>
   <div class="d-flex align-items-center">
-    <mat-checkbox class="mr-3" [checked]="true">Hosted by me</mat-checkbox>
-    <mat-checkbox class="mr-3" [checked]="true">Hosted by other</mat-checkbox>
+    <mat-checkbox class="mr-3" [(ngModel)]="hostedByMe">Hosted by me</mat-checkbox>
+    <mat-checkbox class="mr-3" [(ngModel)]="hostedByOther">Hosted by other</mat-checkbox>
   </div>
   <mat-divider class="mt-3 mb-3"></mat-divider>
   <mat-tab-group class="no-content-tab" (selectedTabChange)="changeStatus($event.tab.textLabel)">
