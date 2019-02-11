@@ -2,10 +2,14 @@ const webpack = require('webpack');
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
     entry: ['webpack/hot/poll?100', './src/main.ts'],
     watch: true,
+    watchOptions: {
+        aggregateTimeout: 1000
+    },
     target: 'node',
     externals: [
         nodeExternals({
@@ -16,7 +20,11 @@ module.exports = {
         rules: [
             {
                 test: /.tsx?$/,
-                use: 'ts-loader',
+                loader: 'ts-loader',
+                options: {
+                    transpileOnly: true,
+                    experimentalWatchApi: true,
+                },
                 exclude: /node_modules/,
             },
         ],
@@ -30,11 +38,17 @@ module.exports = {
             }),
         ],
     },
-    plugins: [new webpack.HotModuleReplacementPlugin()],
+    plugins: [
+        new webpack.HotModuleReplacementPlugin(),
+        new ForkTsCheckerWebpackPlugin({
+            useTypescriptIncrementalApi: true,
+        }),
+    ],
     output: {
         path: path.join(__dirname, 'dist'),
         filename: 'main.js',
-        hotUpdateChunkFilename: 'hot/hot-update.js',
-        hotUpdateMainFilename: 'hot/hot-update.json',
+        publicPath: '/',
+        hotUpdateChunkFilename: 'hot/[hash]hot-update.js',
+        hotUpdateMainFilename: 'hot/[hash]hot-update.json'
     },
 };

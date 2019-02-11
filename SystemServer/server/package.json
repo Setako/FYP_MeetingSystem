@@ -8,9 +8,10 @@
         "build": "tsc -p tsconfig.build.json",
         "format": "prettier --write \"src/**/*.ts\"",
         "start": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/main.js",
-        "start:ts": "ts-node -r tsconfig-paths/register src/main.ts",
+        "start:ts": "ts-node --files -r tsconfig-paths/register src/main.ts",
         "start:dev": "nodemon",
         "start:debug": "nodemon --config nodemon-debug.json",
+        "start:hmr": "node dist/main",
         "prestart:prod": "rimraf dist && npm run build",
         "start:prod": "node -r ts-node/register/transpile-only -r tsconfig-paths/register dist/main.js",
         "lint": "tslint -p tsconfig.json -c tslint.json",
@@ -20,7 +21,7 @@
         "test:cov": "jest --coverage",
         "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
         "test:e2e": "jest --config ./test/jest-e2e.json",
-        "webpack": "webpack --config webpack.config.js",
+        "webpack": "rimraf dist/hot && webpack --config webpack.config.js",
         "postinstall": "npm run prestart:prod"
     },
     "dependencies": {
@@ -59,6 +60,7 @@
         "@types/socket.io": "^2.1.2",
         "@types/supertest": "^2.0.5",
         "@types/uuid": "^3.4.4",
+        "fork-ts-checker-webpack-plugin": "^0.5.2",
         "jest": "^24.1.0",
         "nodemon": "^1.18.10",
         "prettier": "^1.16.4",
