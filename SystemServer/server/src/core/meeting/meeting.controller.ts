@@ -35,6 +35,8 @@ import {
     empty,
     Observable,
     of,
+    range,
+    interval,
 } from 'rxjs';
 import {
     flatMap,
@@ -48,6 +50,11 @@ import {
     catchError,
     mergeAll,
     shareReplay,
+    scan,
+    takeWhile,
+    every,
+    skip,
+    take,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -75,6 +82,8 @@ import { GoogleCalendarService } from '../google/google-calendar.service';
 import { BusyTimeDto } from './dto/busy-time.dto';
 import { DeviceService } from '../device/device.service';
 import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
+import { MeetingSuggestTimeQuery } from './dto/meeting-suggest-time-query';
+import { SuggestTimeDto } from './dto/suggest-time.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -501,6 +510,97 @@ export class MeetingController {
         addAttendance$.subscribe();
     }
 
+    @Get(':id/suggest-time')
+    @UseGuards(MeetingOwnerGuard)
+    @UseGuards(MeetingGuard)
+    async getSuggestTime(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Query() query: MeetingSuggestTimeQuery,
+    ) {
+        const fromTime = query.fromDate.getTime();
+        const toTime = query.toDate.getTime();
+
+        if (query.weekDays.length === 0) {
+            throw new BadRequestException(
+                'weekDays must contain at least 1 elements',
+            );
+        }
+
+        if (fromTime >= toTime) {
+            throw new BadRequestException(
+                'fromDate must be smaller than toDate',
+            );
+        }
+
+        const busyTime$ = from(this.getBusyTime(user, id, query)).pipe(
+            flatMap(identity),
+            flatMap(({ items }) => items),
+            map(item => item as BusyTimeDto),
+            shareReplay(),
+        );
+
+        const meeting$ = from(this.meetingService.getById(id)).pipe();
+
+        const meetingLength$ = meeting$.pipe(
+            map(item => item.length),
+            shareReplay(),
+        );
+
+        const selectedRange$ = interval().pipe(
+            flatMap(time =>
+                meetingLength$.pipe(
+                    map(length => [
+                        fromTime + length * time,
+                        fromTime + length * (time + 1),
+                    ]),
+                ),
+            ),
+        );
+
+        const freeTimeRange$ = selectedRange$.pipe(
+            takeWhile(([_, toDateTime]) => toDateTime <= toTime),
+            filter(
+                ([fromDateTime, toDateTime]) =>
+                    query.weekDays.includes(new Date(fromDateTime).getDay()) &&
+                    query.weekDays.includes(new Date(toDateTime).getDay()),
+            ),
+            flatMap(([fromDateTime, toDateTime]) =>
+                busyTime$
+                    .pipe(
+                        // false if any busy time contained, true mean the time range is free
+                        every(busy => {
+                            const inRange = (ms: number) =>
+                                fromDateTime >= ms && ms <= toDateTime;
+                            return !(
+                                inRange(busy.fromDate.getTime()) ||
+                                inRange(busy.toDate.getTime())
+                            );
+                        }),
+                    )
+                    .pipe(
+                        map(isFree => ({
+                            fromDateTime,
+                            toDateTime,
+                            isFree,
+                        })),
+                    ),
+            ),
+            filter(item => !item.isFree),
+        );
+
+        return freeTimeRange$.pipe(
+            take(query.take || 5),
+            map(item => ({
+                fromDate: new Date(item.fromDateTime),
+                toDate: new Date(item.toDateTime),
+            })),
+            map(item => ObjectUtils.ObjectToPlain(item, SuggestTimeDto)),
+            toArray(),
+            map(items => ({ items, length: items.length })),
+        );
+    }
+
     @Get(':id/busy-time')
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
@@ -632,7 +732,7 @@ export class MeetingController {
         return result$.pipe(
             map(item => ObjectUtils.ObjectToPlain(item, BusyTimeDto)),
             toArray(),
-            map(items => ({ items })),
+            map(items => ({ items, length: items.length })),
         );
     }
 
