@@ -75,8 +75,8 @@ export class UserService {
             .exec();
     }
 
-    async getAll() {
-        return this.userModel.find().exec();
+    async getAll(options = {}) {
+        return this.userModel.find(options).exec();
     }
 
     async getAllWithPage(pageSize: number, pageNum = 1) {

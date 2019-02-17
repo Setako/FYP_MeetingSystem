@@ -1,6 +1,6 @@
 import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { AuthService } from '@commander/core/auth/auth.service';
-import { of, defer } from 'rxjs';
+import { defer } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { WsException } from '@nestjs/websockets';
 import { Socket } from 'socket.io';

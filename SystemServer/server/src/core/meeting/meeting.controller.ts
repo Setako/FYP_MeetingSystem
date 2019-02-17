@@ -35,7 +35,6 @@ import {
     empty,
     Observable,
     of,
-    range,
     interval,
 } from 'rxjs';
 import {
@@ -50,10 +49,8 @@ import {
     catchError,
     mergeAll,
     shareReplay,
-    scan,
     takeWhile,
     every,
-    skip,
     take,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
@@ -126,7 +123,13 @@ export class MeetingController {
             ),
         );
 
-        const items = list.pipe(
+        const sorted = this.meetingService.sortMeetings(
+            list,
+            query.sortBy,
+            query.orderBy,
+        );
+
+        const items = sorted.pipe(
             map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
         );
 
@@ -536,7 +539,6 @@ export class MeetingController {
         const busyTime$ = from(this.getBusyTime(user, id, query)).pipe(
             flatMap(identity),
             flatMap(({ items }) => items),
-            map(item => item as BusyTimeDto),
             shareReplay(),
         );
 

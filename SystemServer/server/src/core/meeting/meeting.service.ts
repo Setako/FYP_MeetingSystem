@@ -7,7 +7,11 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
-import { MeetingQueryDto } from './dto/meeting-query.dto';
+import {
+    MeetingQueryDto,
+    MeetingSortBy,
+    MeetingOrderBy,
+} from './dto/meeting-query.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import {
     Invitation,
@@ -16,8 +20,17 @@ import {
     MeetingStatus,
     AttendanceStatus,
 } from './meeting.model';
-import { from, merge, identity, of, empty, defer } from 'rxjs';
-import { map, flatMap, filter, toArray, tap } from 'rxjs/operators';
+import {
+    from,
+    merge,
+    identity,
+    of,
+    empty,
+    defer,
+    Observable,
+    concat,
+} from 'rxjs';
+import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 
 @Injectable()
@@ -177,6 +190,118 @@ export class MeetingService {
         return options;
     }
 
+    getQuerySortOption(sortBy: MeetingSortBy, orderBy: MeetingOrderBy) {
+        const orderByNum = orderBy === MeetingOrderBy.ASC ? 1 : -1;
+        if (sortBy === MeetingSortBy.Date) {
+            return {
+                realStartTime: orderByNum,
+                plannedStartTime: orderByNum,
+                length: orderByNum,
+            };
+        } else if (sortBy === MeetingSortBy.Owner) {
+            return {
+                'owner.username': orderByNum,
+            };
+        } else {
+            return {
+                title: orderByNum,
+            };
+        }
+    }
+
+    sortMeetings(
+        list: Observable<InstanceType<Meeting>>,
+        sortBy: MeetingSortBy = MeetingSortBy.Date,
+        orderBy: MeetingOrderBy = MeetingOrderBy.DESC,
+    ) {
+        const haveRealStartTime = list.pipe(
+            filter(item => Boolean(item.realStartTime)),
+            toArray(),
+            flatMap(items =>
+                items.sort((a, b) =>
+                    orderBy === MeetingOrderBy.ASC
+                        ? a.realStartTime.getTime() - b.realStartTime.getTime()
+                        : b.realStartTime.getTime() - a.realStartTime.getTime(),
+                ),
+            ),
+        );
+
+        const havePlannedStartTime = list.pipe(
+            filter(
+                item =>
+                    !Boolean(item.realStartTime) &&
+                    Boolean(item.plannedStartTime),
+            ),
+            toArray(),
+            flatMap(items =>
+                items.sort((a, b) =>
+                    orderBy === MeetingOrderBy.ASC
+                        ? a.plannedStartTime.getTime() -
+                          b.plannedStartTime.getTime()
+                        : b.plannedStartTime.getTime() -
+                          a.plannedStartTime.getTime(),
+                ),
+            ),
+        );
+
+        const haveCreateDate = list.pipe(
+            filter(
+                item =>
+                    !Boolean(item.realStartTime) &&
+                    !Boolean(item.plannedStartTime),
+            ),
+            toArray(),
+            flatMap(items =>
+                items.sort((a, b) =>
+                    orderBy === MeetingOrderBy.ASC
+                        ? (a._id as Types.ObjectId).getTimestamp().getTime() -
+                          (b._id as Types.ObjectId).getTimestamp().getTime()
+                        : (b._id as Types.ObjectId).getTimestamp().getTime() -
+                          (a._id as Types.ObjectId).getTimestamp().getTime(),
+                ),
+            ),
+        );
+
+        if (sortBy === MeetingSortBy.Date) {
+            const order = [
+                haveCreateDate,
+                havePlannedStartTime,
+                haveRealStartTime,
+            ];
+            return orderBy === MeetingOrderBy.ASC
+                ? concat(...order)
+                : concat(...order.reverse());
+        } else if (sortBy === MeetingSortBy.Owner) {
+            return list.pipe(
+                toArray(),
+                map(items =>
+                    items.sort((a, b) =>
+                        a.title > b.title ? -1 : a.title < b.title ? 1 : 0,
+                    ),
+                ),
+                flatMap(items =>
+                    orderBy === MeetingOrderBy.ASC ? items : items.reverse(),
+                ),
+            );
+        } else {
+            return list.pipe(
+                toArray(),
+                map(items =>
+                    items.sort((a, b) => {
+                        const aOwner = (a.owner as InstanceType<User>)
+                            .displayName;
+                        const bOwner = (b.owner as InstanceType<User>)
+                            .displayName;
+                        return aOwner > bOwner ? -1 : aOwner < bOwner ? 1 : 0;
+                    }),
+                ),
+                flatMap(items =>
+                    orderBy === MeetingOrderBy.ASC ? items : items.reverse(),
+                ),
+            );
+        }
+    }
+
     async countDocumentsByIds(ids: string[]) {
         return this.meetingModel
             .find({
@@ -195,15 +320,24 @@ export class MeetingService {
             .exec();
     }
 
-    async getAll(options = {}) {
-        return this.meetingModel.find(options).exec();
+    async getAll(options = {}, sortOptions = {}) {
+        return this.meetingModel
+            .find(options)
+            .sort(sortOptions)
+            .exec();
     }
 
-    async getAllWithPage(pageSize: number, pageNum = 1, options = {}) {
+    async getAllWithPage(
+        pageSize: number,
+        pageNum = 1,
+        options = {},
+        sortOptions = {},
+    ) {
         return this.meetingModel
             .find(options)
             .skip(pageSize * (pageNum - 1))
             .limit(pageSize)
+            .sort(sortOptions)
             .exec();
     }
 

@@ -9,6 +9,7 @@ import { NotificationModule } from './core/notification/notification.module';
 import { UserModule } from './core/user/user.module';
 import { GoogleModule } from './core/google/google.module';
 import { WebsocketModule } from './core/websocket/websocket.module';
+import { SearchModule } from './core/search/search.module';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { WebsocketModule } from './core/websocket/websocket.module';
         FriendModule,
         FriendRequestModule,
         GoogleModule,
+        SearchModule,
         WebsocketModule,
     ],
     controllers: [],

@@ -22,7 +22,6 @@ import {
     catchError,
     map,
     tap,
-    mapTo,
     flatMap,
     filter,
     defaultIfEmpty,
