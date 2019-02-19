@@ -28,24 +28,23 @@ export class SearchController {
         const likeCondition = { $regex: query.q, $options: 'i' };
 
         if (query.type === SearchType.Meeting) {
-            const meeting$ = from(
-                this.meetingService.getAll({
+            const meeting$ = this.meetingService
+                .getAll({
                     $and: [
                         await this.meetingService.getQueryOption({}, user.id),
                         {
                             title: likeCondition,
                         },
                     ],
-                }),
-            ).pipe(
-                flatMap(identity),
-                filter(item => Boolean(item)),
-                flatMap(item =>
-                    item
-                        .populate('owner invitations.user attendance.user')
-                        .execPopulate(),
-                ),
-            );
+                })
+                .pipe(
+                    filter(Boolean.bind(null)),
+                    flatMap(item =>
+                        item
+                            .populate('owner invitations.user attendance.user')
+                            .execPopulate(),
+                    ),
+                );
 
             const sorted = this.meetingService.sortMeetings(meeting$);
 
