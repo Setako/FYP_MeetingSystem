@@ -7,6 +7,8 @@ import {
     NotificationObjectModel,
     NotificationType,
 } from './notification.model';
+import { of, identity } from 'rxjs';
+import { flatMap } from 'rxjs/operators';
 
 @Injectable()
 export class NotificationService {
@@ -16,50 +18,61 @@ export class NotificationService {
             ModelType<Notification>,
     ) {}
 
-    async getById(id: string) {
-        return this.notificationModuel.findById(id).exec();
+    getById(id: string) {
+        return of(id).pipe(
+            flatMap(notificationId =>
+                this.notificationModuel.findById(notificationId).exec(),
+            ),
+        );
     }
 
-    async getAllByReceiverId(receiverId: string, options = {}) {
-        return this.notificationModuel
-            .find({
-                ...options,
-                receiver: receiverId,
-            })
-            .exec();
+    getAllByReceiverId(receiverId: string, options = {}) {
+        return of({ ...options, receiver: receiverId }).pipe(
+            flatMap(conditions =>
+                this.notificationModuel.find(conditions).exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
-    async getAllByReceiverIdWithPage(
+    getAllByReceiverIdWithPage(
         receiverId: string,
         pageSize: number,
         pageNum = 1,
         options = {},
     ) {
-        return this.notificationModuel
-            .find({
-                ...options,
-                receiver: receiverId,
-            })
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+        return of({ ...options, receiver: receiverId }).pipe(
+            flatMap(conditions =>
+                this.notificationModuel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
-    async countDocuments(options) {
-        return this.notificationModuel
-            .find(options)
-            .countDocuments()
-            .exec();
+    countDocuments(options = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.notificationModuel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async countDocumentsByReceiverId(receiverId: string, options = {}) {
-        return this.notificationModuel
-            .find({
-                ...options,
-                receiver: receiverId,
-            })
-            .countDocuments()
-            .exec();
+    countDocumentsByReceiverId(receiverId: string, options = {}) {
+        return of({ ...options, receiver: receiverId }).pipe(
+            flatMap(conditions =>
+                this.notificationModuel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
     async create(createDto: {

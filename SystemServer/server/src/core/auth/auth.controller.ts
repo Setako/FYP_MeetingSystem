@@ -14,7 +14,7 @@ export class AuthController {
 
     @Post('login')
     @HttpCode(200)
-    async login(@Body() loginDto: LoginDto) {
+    login(@Body() loginDto: LoginDto) {
         return from(this.authService.login(loginDto)).pipe(
             map(token => ({ token })),
         );
@@ -28,7 +28,7 @@ export class AuthController {
     @Post('refresh')
     @HttpCode(200)
     @UseGuards(AuthGuard('jwt'))
-    async refresh(@Auth() user: User) {
+    refresh(@Auth() user: User) {
         return from(this.authService.refresh(user)).pipe(
             map(token => ({ token })),
         );

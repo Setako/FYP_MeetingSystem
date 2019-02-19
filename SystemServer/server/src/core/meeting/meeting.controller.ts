@@ -81,6 +81,7 @@ import { DeviceService } from '../device/device.service';
 import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
 import { MeetingSuggestTimeQuery } from './dto/meeting-suggest-time-query';
 import { SuggestTimeDto } from './dto/suggest-time.dto';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -105,17 +106,16 @@ export class MeetingController {
             user.id,
         );
 
-        const list = defer(() =>
-            query.resultPageSize
-                ? this.meetingService.getAllWithPage(
-                      NumberUtils.parseOrThrow(query.resultPageSize),
-                      NumberUtils.parseOr(query.resultPageNum, 1),
-                      options,
-                  )
-                : this.meetingService.getAll(options),
-        ).pipe(
-            flatMap(identity),
-            filter(item => Boolean(item)),
+        const meeting$ = query.resultPageSize
+            ? this.meetingService.getAllWithPage(
+                  NumberUtils.parseOrThrow(query.resultPageSize),
+                  NumberUtils.parseOr(query.resultPageNum, 1),
+                  options,
+              )
+            : this.meetingService.getAll(options);
+
+        const populated$ = meeting$.pipe(
+            filter(Boolean.bind(null)),
             flatMap(item =>
                 item
                     .populate('owner invitations.user attendance.user')
@@ -123,19 +123,20 @@ export class MeetingController {
             ),
         );
 
-        const sorted = this.meetingService.sortMeetings(
-            list,
+        const sorted$ = this.meetingService.sortMeetings(
+            populated$,
             query.sortBy,
             query.orderBy,
         );
 
-        const items = sorted.pipe(
+        const items = sorted$.pipe(
             map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            toArray(),
         );
 
-        const length = from(this.meetingService.countDocuments(options));
+        const length = this.meetingService.countDocuments(options);
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -153,9 +154,9 @@ export class MeetingController {
             new FilterNotObjectIdStringPipe(),
         )
         ids: string[],
-        @Query() query,
+        @Query() query: PaginationQueryDto,
     ) {
-        const { resultPageNum = 1, resultPageSize } = query;
+        const { resultPageNum = '1', resultPageSize } = query;
 
         ids = await from(ids)
             .pipe(
@@ -171,16 +172,15 @@ export class MeetingController {
             )
             .toPromise();
 
-        const list = defer(() =>
-            resultPageSize
-                ? this.meetingService.getByIdsWithPage(
-                      ids,
-                      NumberUtils.parseOrThrow(resultPageSize),
-                      NumberUtils.parseOrThrow(resultPageNum),
-                  )
-                : this.meetingService.getByIds(ids),
-        ).pipe(
-            flatMap(identity),
+        const meeting$ = resultPageSize
+            ? this.meetingService.getByIdsWithPage(
+                  ids,
+                  NumberUtils.parseOrThrow(resultPageSize),
+                  NumberUtils.parseOrThrow(resultPageNum),
+              )
+            : this.meetingService.getByIds(ids);
+
+        const populated$ = meeting$.pipe(
             flatMap(item =>
                 item
                     .populate('owner invitations.user attendance.user')
@@ -188,13 +188,14 @@ export class MeetingController {
             ),
         );
 
-        const items = list.pipe(
+        const items = populated$.pipe(
             map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            toArray(),
         );
 
-        const length = from(this.meetingService.countDocumentsByIds(ids));
+        const length = this.meetingService.countDocumentsByIds(ids);
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -220,7 +221,8 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() editMeetingDto: EditMeetingDto,
     ) {
-        const sendNotification$ = from(this.meetingService.getById(id))
+        const sendNotification$ = this.meetingService
+            .getById(id)
             .pipe(
                 filter(
                     item =>
@@ -276,7 +278,7 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() { status, ...editStatusDto }: EditMeetingStatusDto,
     ) {
-        const meeting = await this.meetingService.getById(id);
+        const meeting = await this.meetingService.getById(id).toPromise();
 
         const allowStatusTo = new Map([
             [
@@ -466,8 +468,8 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() acceptDto: AcceptDto,
     ) {
-        const isInvited$ = from(
-            this.meetingService.countDocuments({
+        const isInvited$ = this.meetingService
+            .countDocuments({
                 $and: [
                     { _id: { $eq: Types.ObjectId(id) } },
                     {
@@ -481,16 +483,16 @@ export class MeetingController {
                         },
                     },
                 ],
-            }),
-        ).pipe(
-            tap(item => {
-                if (item === 0) {
-                    throw new BadRequestException(
-                        'You have not been invited to this meeting or have accepted or rejected this invitation.',
-                    );
-                }
-            }),
-        );
+            })
+            .pipe(
+                tap(item => {
+                    if (item === 0) {
+                        throw new BadRequestException(
+                            'You have not been invited to this meeting or have accepted or rejected this invitation.',
+                        );
+                    }
+                }),
+            );
 
         const addAttendance$ = defer(() =>
             acceptDto.accept
@@ -542,7 +544,7 @@ export class MeetingController {
             shareReplay(),
         );
 
-        const meeting$ = from(this.meetingService.getById(id)).pipe();
+        const meeting$ = this.meetingService.getById(id);
 
         const meetingLength$ = meeting$.pipe(
             map(item => item.length),
@@ -620,7 +622,7 @@ export class MeetingController {
 
         const friend$ = friendsId$.pipe(
             flatMap(friendId => this.userService.getById(friendId)),
-            filter(item => Boolean(item)),
+            filter(Boolean.bind(null)),
             shareReplay(),
         );
 
@@ -753,9 +755,7 @@ export class MeetingController {
         @Param('attendee') attendeeUsername: string,
         @Body() editAttendeeStatusDto: EditAttendeeStatusDto,
     ) {
-        const attendee$ = from(
-            this.userService.getByUsername(attendeeUsername),
-        ).pipe(
+        const attendee$ = this.userService.getByUsername(attendeeUsername).pipe(
             tap(attendee => {
                 if (!attendee) {
                     throw new BadRequestException(

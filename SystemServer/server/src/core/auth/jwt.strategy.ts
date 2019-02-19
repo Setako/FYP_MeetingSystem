@@ -16,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: JwtPayload) {
-        const user = await this.authService.validateUser(payload);
+        const user = await this.authService.validateUser(payload).toPromise();
         if (!user) {
             throw new TokenOwnerNotExistException();
         }

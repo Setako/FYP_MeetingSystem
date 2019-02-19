@@ -13,7 +13,7 @@ import {
     UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { combineLatest, defer, from, identity } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { filter, flatMap, map, toArray } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { User } from '../user/user.model';
@@ -28,22 +28,20 @@ export class NotificationController {
     constructor(private readonly notificationService: NotificationService) {}
 
     @Get()
-    async getAll(
+    getAll(
         @Auth() user: InstanceType<User>,
         @Query() query: PaginationQueryDto,
     ) {
-        const list = defer(() =>
-            query.resultPageSize
-                ? this.notificationService.getAllByReceiverIdWithPage(
-                      user.id,
-                      NumberUtils.parseOrThrow(query.resultPageSize),
-                      NumberUtils.parseOr(query.resultPageNum, 1),
-                  )
-                : this.notificationService.getAllByReceiverId(user.id),
-        ).pipe(flatMap(identity));
+        const list = query.resultPageSize
+            ? this.notificationService.getAllByReceiverIdWithPage(
+                  user.id,
+                  NumberUtils.parseOrThrow(query.resultPageSize),
+                  NumberUtils.parseOr(query.resultPageNum, 1),
+              )
+            : this.notificationService.getAllByReceiverId(user.id);
 
-        const length = from(
-            this.notificationService.countDocumentsByReceiverId(user.id),
+        const length = this.notificationService.countDocumentsByReceiverId(
+            user.id,
         );
 
         const populated$ = list.pipe(

@@ -5,7 +5,6 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { from } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
 
 @Injectable()
@@ -17,7 +16,7 @@ export class UserGuard implements CanActivate {
             params: { username },
         } = context.switchToHttp().getRequest();
 
-        return from(this.userSerice.getByUsername(username)).pipe(
+        return this.userSerice.getByUsername(username).pipe(
             map(item => Boolean(item)),
             tap(item => {
                 if (!item) {

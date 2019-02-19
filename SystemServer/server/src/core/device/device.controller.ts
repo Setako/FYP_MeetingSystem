@@ -20,12 +20,13 @@ export class DeviceController {
     constructor(private readonly deviceService: DeviceService) {}
 
     @Get()
-    async getAll() {
+    getAll() {
         return this.deviceService.getAll().pipe(
-            map(device => device.id),
+            map(({ id }) => id),
             toArray(),
             map(items => ({
                 items,
+                length: items.length,
             })),
         );
     }

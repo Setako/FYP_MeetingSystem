@@ -4,6 +4,7 @@ import { FriendRequest, FriendRequestStatus } from './friend-request.model';
 import { ModelType } from 'typegoose';
 import { UserService } from '../user/user.service';
 import { AcceptDto } from '../../shared/dto/accept.dto';
+import { toArray } from 'rxjs/operators';
 
 @Injectable()
 export class FriendRequestService {
@@ -26,8 +27,10 @@ export class FriendRequestService {
         return this.friendRequestModel
             .findOne({
                 ...options,
-                user: await this.userService.getByUsername(user),
-                targetUser: await this.userService.getByUsername(target),
+                user: await this.userService.getByUsername(user).toPromise(),
+                targetUser: await this.userService
+                    .getByUsername(target)
+                    .toPromise(),
             })
             .populate('user')
             .populate('targetUser')
@@ -38,7 +41,9 @@ export class FriendRequestService {
         return this.friendRequestModel
             .find({
                 ...options,
-                targetUser: await this.userService.getByUsername(target),
+                targetUser: await this.userService
+                    .getByUsername(target)
+                    .toPromise(),
             })
             .populate('user')
             .populate('targetUser')
@@ -54,7 +59,9 @@ export class FriendRequestService {
         return this.friendRequestModel
             .find({
                 ...options,
-                targetUser: await this.userService.getByUsername(target),
+                targetUser: await this.userService
+                    .getByUsername(target)
+                    .toPromise(),
             })
             .populate('user')
             .populate('targetUser')
@@ -67,14 +74,16 @@ export class FriendRequestService {
         return this.friendRequestModel
             .find({
                 ...options,
-                targetUser: await this.userService.getByUsername(target),
+                targetUser: await this.userService
+                    .getByUsername(target)
+                    .toPromise(),
             })
             .countDocuments()
             .exec();
     }
 
     async countDocumentsByUser(username: string, options = {}) {
-        const user = await this.userService.getByUsername(username);
+        const user = await this.userService.getByUsername(username).toPromise();
         return this.friendRequestModel
             .find({
                 ...options,
@@ -85,7 +94,7 @@ export class FriendRequestService {
     }
 
     async getAllByUser(username: string, options = {}) {
-        const user = await this.userService.getByUsername(username);
+        const user = await this.userService.getByUsername(username).toPromise();
         return this.friendRequestModel
             .find({
                 ...options,
@@ -102,7 +111,7 @@ export class FriendRequestService {
         pageNum = 1,
         options = {},
     ) {
-        const user = await this.userService.getByUsername(username);
+        const user = await this.userService.getByUsername(username).toPromise();
         return this.friendRequestModel
             .find({
                 ...options,
@@ -116,10 +125,10 @@ export class FriendRequestService {
     }
 
     async create(userStr: string, target: string) {
-        const [user, targetUser] = await this.userService.getByUsernames([
-            userStr,
-            target,
-        ]);
+        const [user, targetUser] = await this.userService
+            .getByUsernames([userStr, target])
+            .pipe(toArray())
+            .toPromise();
 
         const created = new this.friendRequestModel({
             user,
@@ -138,8 +147,10 @@ export class FriendRequestService {
     ) {
         return this.friendRequestModel.deleteMany({
             ...options,
-            user: await this.userService.getByUsername(user),
-            targetUser: await this.userService.getByUsername(target),
+            user: await this.userService.getByUsername(user).toPromise(),
+            targetUser: await this.userService
+                .getByUsername(target)
+                .toPromise(),
         });
     }
 
@@ -166,8 +177,10 @@ export class FriendRequestService {
     async hasReqeustedRequest(user: string, target: string) {
         return this.friendRequestModel
             .find({
-                user: await this.userService.getByUsername(user),
-                targetUser: await this.userService.getByUsername(target),
+                user: await this.userService.getByUsername(user).toPromise(),
+                targetUser: await this.userService
+                    .getByUsername(target)
+                    .toPromise(),
                 status: FriendRequestStatus.Requested,
             })
             .countDocuments()

@@ -59,18 +59,16 @@ export class SearchController {
             );
         }
 
-        const user$ = from(
-            this.userService.getAll({
-                $or: [
-                    {
-                        username: likeCondition,
-                    },
-                    {
-                        displayName: likeCondition,
-                    },
-                ],
-            }),
-        ).pipe(flatMap(identity));
+        const user$ = this.userService.getAll({
+            $or: [
+                {
+                    username: likeCondition,
+                },
+                {
+                    displayName: likeCondition,
+                },
+            ],
+        });
 
         return user$.pipe(
             map(item => ObjectUtils.DocumentToPlain(item, SimpleUserDto)),

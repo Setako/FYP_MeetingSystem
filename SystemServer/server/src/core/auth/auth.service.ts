@@ -8,7 +8,7 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { JwtPayload } from './dto/jwt-payload.dto';
 import { LoginDto } from './dto/login.dto';
-import { from, of, empty } from 'rxjs';
+import { of, empty } from 'rxjs';
 import { flatMap } from 'rxjs/operators';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class AuthService {
         private readonly jwtService: JwtService,
     ) {}
 
-    async validateUser(payload: JwtPayload) {
+    validateUser(payload: JwtPayload) {
         return this.userService.getByUsername(payload.username);
     }
 
@@ -36,7 +36,10 @@ export class AuthService {
         loginDto: LoginDto,
         options: SignOptions = { expiresIn: '7d' },
     ) {
-        const user = await this.userService.getByUsername(loginDto.username);
+        const user = await this.userService
+            .getByUsername(loginDto.username)
+            .toPromise();
+
         if (!user) {
             throw new LoginFailedException();
         }
@@ -67,9 +70,9 @@ export class AuthService {
     }
 
     async logout(user: User) {
-        const user$ = from(this.userService.getByUsername(user.username)).pipe(
-            flatMap(item => (item ? of(item) : empty())),
-        );
+        const user$ = this.userService
+            .getByUsername(user.username)
+            .pipe(flatMap(item => (item ? of(item) : empty())));
 
         return user$
             .pipe(

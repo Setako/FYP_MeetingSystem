@@ -6,7 +6,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { from, of, empty } from 'rxjs';
+import { of, empty } from 'rxjs';
 import { catchError, map, tap, flatMap, defaultIfEmpty } from 'rxjs/operators';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class NotificationGuard implements CanActivate {
             params: { id },
         } = context.switchToHttp().getRequest();
 
-        return from(this.notificationService.getById(id)).pipe(
+        return this.notificationService.getById(id).pipe(
             flatMap(item => (item ? of(item.receiver) : empty())),
             map(receiver => Types.ObjectId(user.id).equals(receiver as any)),
             defaultIfEmpty(false),

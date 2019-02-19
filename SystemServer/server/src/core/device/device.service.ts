@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType, InstanceType } from 'typegoose';
 import { Device } from './device.model';
-import { from, of, empty, defer, identity } from 'rxjs';
+import { from, of, empty, identity } from 'rxjs';
 import { flatMap, defaultIfEmpty, map } from 'rxjs/operators';
 import { JwtService } from '@nestjs/jwt';
 import { DeviceSecretDto } from './dto/device-secret.dto';
@@ -15,29 +15,34 @@ export class DeviceService {
         private readonly jwtService: JwtService,
     ) {}
 
-    async getById(id: string) {
-        return this.deviceModel.findById(id).exec();
+    getById(id: string) {
+        return of(id).pipe(
+            flatMap(deviceId => this.deviceModel.findById(deviceId).exec()),
+        );
     }
 
     getAll(options = {}) {
-        return defer(() => this.deviceModel.find(options).exec()).pipe(
+        return of(options).pipe(
+            flatMap(conditions => this.deviceModel.find(conditions).exec()),
             flatMap(identity),
         );
     }
 
-    async getOne(options = []) {
-        return this.deviceModel.findOne(options).exec();
+    getOne(options = []) {
+        return of(options).pipe(
+            flatMap(conditions => this.deviceModel.findOne(conditions).exec()),
+        );
     }
 
-    async countDocumentsByIds(ids: string[]) {
-        return this.deviceModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .countDocuments()
-            .exec();
+    countDocumentsByIds(ids: string[]) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions =>
+                this.deviceModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
     async create(createDeviceDto: DeviceSecretDto) {
@@ -71,13 +76,14 @@ export class DeviceService {
     }
 
     isDeviceSecretAvailable(id: string, secret: string) {
-        return defer(() =>
-            this.deviceModel
-                .find({
-                    $and: [{ _id: Types.ObjectId(id) }, { secret }],
-                })
-                .countDocuments()
-                .exec(),
-        ).pipe(map(Boolean));
+        return of({ $and: [{ _id: Types.ObjectId(id) }, { secret }] }).pipe(
+            flatMap(conditions =>
+                this.deviceModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+            map(Boolean),
+        );
     }
 }

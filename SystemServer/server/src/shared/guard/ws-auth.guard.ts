@@ -20,7 +20,9 @@ export class WsAuthGuard implements CanActivate {
         );
 
         const jwtPayload = this.authService.decodeToken(authenticationToken);
-        const user = await this.authService.validateUser(jwtPayload);
+        const user = await this.authService
+            .validateUser(jwtPayload)
+            .toPromise();
 
         const client: Socket = context.switchToWs().getClient();
         client.request.user = user;

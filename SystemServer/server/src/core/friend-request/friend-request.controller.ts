@@ -105,12 +105,16 @@ export class FriendRequestController {
             throw new BadRequestException('You cannot add youself as friend');
         }
 
-        const target = await this.userService.getByUsername(username);
+        const target = await this.userService
+            .getByUsername(username)
+            .toPromise();
         if (!target) {
             throw new NotFoundException('Target user not found');
         }
 
-        if (await this.friendService.isFriends(user.id, target.id)) {
+        if (
+            await this.friendService.isFriends(user.id, target.id).toPromise()
+        ) {
             throw new BadRequestException('Target user already is friend');
         }
 

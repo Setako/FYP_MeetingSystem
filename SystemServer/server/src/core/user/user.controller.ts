@@ -27,12 +27,13 @@ import { UserDto } from './dto/user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
-import { defer, combineLatest, from, identity } from 'rxjs';
-import { map, flatMap, filter, toArray } from 'rxjs/operators';
+import { combineLatest, from } from 'rxjs';
+import { map, filter, toArray } from 'rxjs/operators';
 import { SimpleUserDto } from './dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { User } from './user.model';
 import { InstanceType } from 'typegoose';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 
 @Controller('user')
 export class UsersController {
@@ -44,25 +45,24 @@ export class UsersController {
 
     @Get()
     @UseGuards(AuthGuard('jwt'))
-    async getAll(@Query() query) {
-        const { resultPageNum, resultPageSize } = query;
+    getAll(@Query()
+    {
+        resultPageNum,
+        resultPageSize,
+    }: PaginationQueryDto) {
+        const user$ = resultPageSize
+            ? this.userService.getAllWithPage(
+                  NumberUtils.parseOrThrow(resultPageSize),
+                  NumberUtils.parseOr(resultPageNum, 1),
+              )
+            : this.userService.getAll();
 
-        const items = defer(() =>
-            resultPageSize
-                ? this.userService.getAllWithPage(
-                      NumberUtils.parseOrThrow(resultPageSize),
-                      NumberUtils.parseOr(resultPageNum, 1),
-                  )
-                : this.userService.getAll(),
-        ).pipe(
-            map(item =>
-                item.map(val =>
-                    ObjectUtils.DocumentToPlain(val, SimpleUserDto),
-                ),
-            ),
+        const items = user$.pipe(
+            map(item => ObjectUtils.DocumentToPlain(item, SimpleUserDto)),
+            toArray(),
         );
 
-        const length = from(this.userService.countDocuments());
+        const length = this.userService.countDocuments();
 
         return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
@@ -75,26 +75,21 @@ export class UsersController {
 
     @Get(':usernames')
     @UseGuards(AuthGuard('jwt'))
-    async get(
+    get(
         @Auth() user: InstanceType<User>,
         @Param('usernames', new SplitSemicolonPipe()) usernames: string[],
-        @Query() query,
+        @Query() { resultPageNum = '1', resultPageSize }: PaginationQueryDto,
     ) {
-        const { resultPageNum = 1, resultPageSize } = query;
+        const user$ = resultPageSize
+            ? this.userService.getByUsernamesWithPage(
+                  usernames,
+                  NumberUtils.parseOrThrow(resultPageSize),
+                  NumberUtils.parseOrThrow(resultPageNum),
+              )
+            : this.userService.getByUsernames(usernames);
 
-        const list = defer(() =>
-            resultPageSize
-                ? this.userService.getByUsernamesWithPage(
-                      usernames,
-                      NumberUtils.parseOrThrow(resultPageSize),
-                      NumberUtils.parseOrThrow(resultPageNum),
-                  )
-                : this.userService.getByUsernames(usernames),
-        );
-
-        const items = list.pipe(
-            flatMap(identity),
-            filter(item => Boolean(item)),
+        const items = user$.pipe(
+            filter(Boolean.bind(null)),
             map(item =>
                 ObjectUtils.DocumentToPlain(
                     item!,
@@ -103,9 +98,7 @@ export class UsersController {
             ),
         );
 
-        const length = from(
-            this.userService.countDocumentsByUsernames(usernames),
-        );
+        const length = this.userService.countDocumentsByUsernames(usernames);
 
         return combineLatest(items.pipe(toArray()), length).pipe(
             map(([itemList, totalLength]) => ({
@@ -120,7 +113,7 @@ export class UsersController {
     @UseGuards(UserGuard)
     @UseGuards(SelfGuard)
     @UseGuards(AuthGuard('jwt'))
-    async edit(
+    edit(
         @Param('username') username: string,
         @Body() editUserDto: EditUserDto,
     ) {
@@ -153,9 +146,7 @@ export class UsersController {
             return res.sendFile(FileUtils.normalize(root + '/' + filename));
         }
 
-        const user = (await this.userService.getByUsername(
-            username,
-        )) as InstanceType<User>;
+        const user = await this.userService.getByUsername(username).toPromise();
         if (!user.avatar) {
             if (this.DEFAULT_USER_AVATAR) {
                 const defaultAvatar = parseDataURL(this.DEFAULT_USER_AVATAR);

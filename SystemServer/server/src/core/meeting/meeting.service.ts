@@ -23,12 +23,12 @@ import {
 import {
     from,
     merge,
-    identity,
     of,
     empty,
     defer,
     Observable,
     concat,
+    identity,
 } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
@@ -41,30 +41,30 @@ export class MeetingService {
         private readonly friendService: FriendService,
     ) {}
 
-    async getById(id: string) {
-        return this.meetingModel.findById(id).exec();
+    getById(id: string) {
+        return of(id).pipe(
+            flatMap(meetingId => this.meetingModel.findById(meetingId).exec()),
+        );
     }
 
-    async getByIds(ids: string[]) {
-        return this.meetingModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .exec();
+    getByIds(ids: string[]) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions => this.meetingModel.find(conditions).exec()),
+            flatMap(identity),
+        );
     }
 
-    async getByIdsWithPage(ids: string[], pageSize: number, pageNum = 1) {
-        return this.meetingModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+    getByIdsWithPage(ids: string[], pageSize: number, pageNum = 1) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
     async getQueryOption(query: MeetingQueryDto, ownerId: string) {
@@ -95,11 +95,9 @@ export class MeetingService {
                         };
                     }
 
-                    const friends = await from(
-                        this.friendService.getAllByUserId(ownerId),
-                    )
+                    const friends = await this.friendService
+                        .getAllByUserId(ownerId)
                         .pipe(
-                            flatMap(identity),
                             flatMap(item =>
                                 item.friends.filter(
                                     friend =>
@@ -188,25 +186,6 @@ export class MeetingService {
         }
 
         return options;
-    }
-
-    getQuerySortOption(sortBy: MeetingSortBy, orderBy: MeetingOrderBy) {
-        const orderByNum = orderBy === MeetingOrderBy.ASC ? 1 : -1;
-        if (sortBy === MeetingSortBy.Date) {
-            return {
-                realStartTime: orderByNum,
-                plannedStartTime: orderByNum,
-                length: orderByNum,
-            };
-        } else if (sortBy === MeetingSortBy.Owner) {
-            return {
-                'owner.username': orderByNum,
-            };
-        } else {
-            return {
-                title: orderByNum,
-            };
-        }
     }
 
     sortMeetings(
@@ -302,43 +281,57 @@ export class MeetingService {
         }
     }
 
-    async countDocumentsByIds(ids: string[]) {
-        return this.meetingModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .countDocuments()
-            .exec();
+    countDocumentsByIds(ids: string[]) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async countDocuments(options = {}) {
-        return this.meetingModel
-            .find(options)
-            .countDocuments()
-            .exec();
+    countDocuments(options = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async getAll(options = {}, sortOptions = {}) {
-        return this.meetingModel
-            .find(options)
-            .sort(sortOptions)
-            .exec();
+    getAll(options = {}, sortOptions = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .sort(sortOptions)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
-    async getAllWithPage(
+    getAllWithPage(
         pageSize: number,
         pageNum = 1,
         options = {},
         sortOptions = {},
     ) {
-        return this.meetingModel
-            .find(options)
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .sort(sortOptions)
-            .exec();
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .sort(sortOptions)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
     findAll(options = {}) {
@@ -564,18 +557,15 @@ export class MeetingService {
         });
 
         const friendIds$ = from(friends.values()).pipe(
-            flatMap(item => from(this.userService.getByUsername(item))),
-            filter(item => Boolean(item)),
-            map(item => item.id as string),
+            flatMap(item => this.userService.getByUsername(item)),
+            filter(Boolean.bind(null)),
+            map(({ id }) => id as string),
         );
 
         const emailOnwerId$ = from(emails.values()).pipe(
-            flatMap(email =>
-                from(this.userService.getByEmail(email)).pipe(
-                    filter(item => Boolean(item)),
-                    map(item => item.id as string),
-                ),
-            ),
+            flatMap(email => this.userService.getByEmail(email)),
+            filter(Boolean.bind(null)),
+            map(item => item.id as string),
         );
 
         return merge(friendIds$, emailOnwerId$)
@@ -612,28 +602,20 @@ export class MeetingService {
         );
 
         const friends$ = from(friends.values()).pipe(
-            flatMap(item => from(this.userService.getByUsername(item))),
-            filter(Boolean.bind(Boolean)),
-            map(item => ({
+            flatMap(item => this.userService.getByUsername(item)),
+            filter(Boolean.bind(null)),
+            map(({ _id }) => ({
                 id: uuidv4(),
-                user: item._id,
+                user: _id as Types.ObjectId,
                 status: InvitationStatus.Waiting,
             })),
         );
 
         const emails$ = from(emails.values()).pipe(
             flatMap(email =>
-                from(this.userService.getByEmail(email)).pipe(
-                    map(user =>
-                        user
-                            ? {
-                                  user: user._id,
-                                  email,
-                              }
-                            : {
-                                  email,
-                              },
-                    ),
+                this.userService.getByEmail(email).pipe(
+                    map(({ _id } = {} as any) => _id as Types.ObjectId),
+                    map(user => (user ? { user, email } : { email })),
                 ),
             ),
             map(item => ({
