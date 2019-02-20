@@ -67,7 +67,10 @@ export class MeetingService {
         );
     }
 
-    async getQueryOption(query: MeetingQueryDto, ownerId: string) {
+    async getQueryOption(
+        query: MeetingQueryDto,
+        ownerId: string,
+    ): Promise<object> {
         let options = {} as any;
 
         if (query.status) {
@@ -768,7 +771,7 @@ export class MeetingService {
         return new Date(meeting.realEndTime.getTime() + oneHour) >= now;
     }
 
-    async hasViewPermission(meetingId: string, userId: string) {
+    hasViewPermission(meetingId: string, userId: string) {
         const meetingObjectId = Types.ObjectId(meetingId);
         const userObjectId = Types.ObjectId(userId);
         const options = {
@@ -795,8 +798,8 @@ export class MeetingService {
             ],
         };
 
-        return from(this.meetingModel.countDocuments(options).exec())
-            .pipe(map(n => n !== 0))
-            .toPromise();
+        return from(this.meetingModel.countDocuments(options).exec()).pipe(
+            map(n => n !== 0),
+        );
     }
 }

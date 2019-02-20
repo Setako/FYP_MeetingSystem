@@ -3,14 +3,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { SearchQueryDto, SearchType } from './dto/search-query.dto';
 import { UserService } from '../user/user.service';
 import { MeetingService } from '../meeting/meeting.service';
-import { from, identity } from 'rxjs';
-import { flatMap, filter, map, toArray } from 'rxjs/operators';
-import { ObjectUtils } from '@commander/shared/utils/object.utils';
+import { map, toArray } from 'rxjs/operators';
 import { GetMeetingDto } from '../meeting/dto/get-meeting.dto';
 import { SimpleUserDto } from '../user/dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { User } from '../user/user.model';
 import { InstanceType } from 'typegoose';
+import { skipFalsy } from '@commander/shared/operator/function';
+import { populate, documentToPlain } from '@commander/shared/operator/document';
 
 @Controller('search')
 export class SearchController {
@@ -38,18 +38,14 @@ export class SearchController {
                     ],
                 })
                 .pipe(
-                    filter(Boolean.bind(null)),
-                    flatMap(item =>
-                        item
-                            .populate('owner invitations.user attendance.user')
-                            .execPopulate(),
-                    ),
+                    skipFalsy(),
+                    populate('owner', 'invitations.user', 'attendance.user'),
                 );
 
-            const sorted = this.meetingService.sortMeetings(meeting$);
+            const sorted$ = this.meetingService.sortMeetings(meeting$);
 
-            return sorted.pipe(
-                map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            return sorted$.pipe(
+                documentToPlain(GetMeetingDto),
                 toArray(),
                 map(items => ({
                     items,
@@ -70,7 +66,7 @@ export class SearchController {
         });
 
         return user$.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, SimpleUserDto)),
+            documentToPlain(SimpleUserDto),
             toArray(),
             map(items => ({
                 items,

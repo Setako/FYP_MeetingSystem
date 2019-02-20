@@ -37,6 +37,7 @@ import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { defer, identity, from, combineLatest } from 'rxjs';
 import { map, flatMap, toArray } from 'rxjs/operators';
 import { GetSentReqeustQuery } from './dto/get-sent-request.dto';
+import { documentToPlain } from '@commander/shared/operator/document';
 
 @Controller('friend-request')
 @UseGuards(AuthGuard('jwt'))
@@ -76,7 +77,8 @@ export class FriendRequestController {
         ).pipe(flatMap(identity));
 
         const items = list.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetFriendRequestDto)),
+            documentToPlain(GetFriendRequestDto),
+            toArray(),
         );
 
         const length = from(
@@ -86,7 +88,7 @@ export class FriendRequestController {
             ),
         );
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -185,14 +187,15 @@ export class FriendRequestController {
         ).pipe(flatMap(identity));
 
         const items = list.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetFriendRequestDto)),
+            documentToPlain(GetFriendRequestDto),
+            toArray(),
         );
 
         const length = from(
             this.friendRequestService.countDocumentsByTarget(user.username),
         );
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,

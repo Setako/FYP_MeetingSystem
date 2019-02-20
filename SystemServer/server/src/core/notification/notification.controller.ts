@@ -20,7 +20,7 @@ import { User } from '../user/user.model';
 import { NotificationDto } from './dto/notification.dto';
 import { NotificationObjectModel } from './notification.model';
 import { NotificationService } from './notification.service';
-import { ObjectUtils } from '@commander/shared/utils/object.utils';
+import { documentToPlain } from '@commander/shared/operator/document';
 
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
@@ -32,7 +32,7 @@ export class NotificationController {
         @Auth() user: InstanceType<User>,
         @Query() query: PaginationQueryDto,
     ) {
-        const list = query.resultPageSize
+        const notification$ = query.resultPageSize
             ? this.notificationService.getAllByReceiverIdWithPage(
                   user.id,
                   NumberUtils.parseOrThrow(query.resultPageSize),
@@ -44,7 +44,7 @@ export class NotificationController {
             user.id,
         );
 
-        const populated$ = list.pipe(
+        const populated$ = notification$.pipe(
             flatMap(item => {
                 return item
                     .populate({
@@ -63,7 +63,7 @@ export class NotificationController {
 
         const items$ = populated$.pipe(
             filter(item => Boolean(item.object)),
-            map(item => ObjectUtils.DocumentToPlain(item, NotificationDto)),
+            documentToPlain(NotificationDto),
             toArray(),
         );
 

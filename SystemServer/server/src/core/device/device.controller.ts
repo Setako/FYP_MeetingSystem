@@ -13,7 +13,7 @@ import { DeviceService } from './device.service';
 import { DeviceGuard } from '@commander/shared/guard/device.guard';
 import { DeviceSecretDto } from './dto/device-secret.dto';
 import { of, from } from 'rxjs';
-import { tap, map, concatAll, toArray } from 'rxjs/operators';
+import { tap, map, concatAll, toArray, pluck } from 'rxjs/operators';
 
 @Controller('device')
 export class DeviceController {
@@ -22,7 +22,7 @@ export class DeviceController {
     @Get()
     getAll() {
         return this.deviceService.getAll().pipe(
-            map(({ id }) => id),
+            pluck('id'),
             toArray(),
             map(items => ({
                 items,

@@ -27,13 +27,15 @@ import { UserDto } from './dto/user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
-import { combineLatest, from } from 'rxjs';
-import { map, filter, toArray } from 'rxjs/operators';
+import { combineLatest, from, of, pipe, identity } from 'rxjs';
+import { map, filter, toArray, flatMap } from 'rxjs/operators';
 import { SimpleUserDto } from './dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { User } from './user.model';
 import { InstanceType } from 'typegoose';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { documentToPlain } from '@commander/shared/operator/document';
+import { skipFalsy } from '@commander/shared/operator/function';
 
 @Controller('user')
 export class UsersController {
@@ -58,7 +60,7 @@ export class UsersController {
             : this.userService.getAll();
 
         const items = user$.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, SimpleUserDto)),
+            documentToPlain(SimpleUserDto),
             toArray(),
         );
 
@@ -89,18 +91,22 @@ export class UsersController {
             : this.userService.getByUsernames(usernames);
 
         const items = user$.pipe(
-            filter(Boolean.bind(null)),
-            map(item =>
-                ObjectUtils.DocumentToPlain(
-                    item!,
-                    item!.username === user.username ? UserDto : SimpleUserDto,
+            skipFalsy(),
+            flatMap(item =>
+                of(item).pipe(
+                    documentToPlain(
+                        item.username === user.username
+                            ? UserDto
+                            : SimpleUserDto,
+                    ),
                 ),
             ),
+            toArray(),
         );
 
         const length = this.userService.countDocumentsByUsernames(usernames);
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -118,7 +124,7 @@ export class UsersController {
         @Body() editUserDto: EditUserDto,
     ) {
         return from(this.userService.edit(username, editUserDto)).pipe(
-            map(item => ObjectUtils.DocumentToPlain(item!, UserDto)),
+            documentToPlain(UserDto),
         );
     }
 

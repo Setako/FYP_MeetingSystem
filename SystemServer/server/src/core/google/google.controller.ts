@@ -23,7 +23,6 @@ import {
     map,
     tap,
     flatMap,
-    filter,
     defaultIfEmpty,
     shareReplay,
 } from 'rxjs/operators';
@@ -31,6 +30,7 @@ import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
 import { Response } from 'express';
 import { GetAuthUrlQueryDto } from './dto/get-auth-url-query.dto';
+import { skipFalsy } from '@commander/shared/operator/function';
 
 @Controller('google')
 export class GoogleController {
@@ -41,12 +41,12 @@ export class GoogleController {
 
     @Get('auth/url')
     @UseGuards(AuthGuard('jwt'))
-    async getAuthUrl(
+    getAuthUrl(
         @Auth() user: InstanceType<User>,
         @Query() query: GetAuthUrlQueryDto,
     ) {
         const isTokenAvailable$ = of(user.googleRefreshToken).pipe(
-            filter(Boolean),
+            skipFalsy(),
             flatMap(token => this.authService.isRefreshTokenAvailable(token)),
             tap(available => {
                 if (available) {

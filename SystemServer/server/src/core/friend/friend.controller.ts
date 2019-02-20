@@ -20,10 +20,12 @@ import { UserService } from '../user/user.service';
 import { GetFriendDto } from './dto/get-friend.dto';
 import { FriendService } from './friend.service';
 import { combineLatest } from 'rxjs';
-import { flatMap, map, toArray, filter } from 'rxjs/operators';
+import { flatMap, map, toArray } from 'rxjs/operators';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { Friend } from './friend.model';
+import { populate } from '@commander/shared/operator/document';
+import { skipFalsy } from '@commander/shared/operator/function';
 
 @Controller('friend')
 @UseGuards(AuthGuard('jwt'))
@@ -48,9 +50,7 @@ export class FriendController {
               )
             : this.friendService.getAllByUserId(user.id);
 
-        const populated$ = friend$.pipe(
-            flatMap(item => item.populate('friends').execPopulate()),
-        );
+        const populated$ = friend$.pipe(populate('friends'));
 
         const items = populated$.pipe(
             map(item => ({
@@ -84,12 +84,12 @@ export class FriendController {
             .getByUsernames(
                 usernames.filter(username => username !== user.username),
             )
-            .pipe(filter(Boolean.bind(null)));
+            .pipe(skipFalsy());
 
         const friends = users.pipe(
             flatMap(item => this.friendService.getByFriends(user.id, item.id)),
-            filter(Boolean.bind(null)),
-            flatMap(item => item!.populate('friends').execPopulate()),
+            skipFalsy(),
+            populate('friends'),
         );
 
         const items = friends.pipe(

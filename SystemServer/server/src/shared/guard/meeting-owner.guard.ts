@@ -1,8 +1,9 @@
 import { MeetingService } from '@commander/core/meeting/meeting.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { of, empty } from 'rxjs';
-import { map, flatMap, catchError, defaultIfEmpty } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { map, catchError, defaultIfEmpty, pluck } from 'rxjs/operators';
 import { Types } from 'mongoose';
+import { skipFalsy } from '../operator/function';
 
 @Injectable()
 export class MeetingOwnerGuard implements CanActivate {
@@ -19,10 +20,11 @@ export class MeetingOwnerGuard implements CanActivate {
 
     protected validate(meetingId: string, userId: string) {
         return this.meetingService.getById(meetingId).pipe(
-            flatMap(item => (item ? of(item.owner) : empty())),
+            pluck('owner'),
+            skipFalsy(),
             map(owner => Types.ObjectId(userId).equals(owner as any)),
-            defaultIfEmpty(false),
             catchError(() => of(false)),
+            defaultIfEmpty(false),
         );
     }
 }

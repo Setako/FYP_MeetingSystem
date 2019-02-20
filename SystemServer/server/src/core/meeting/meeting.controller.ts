@@ -52,6 +52,7 @@ import {
     takeWhile,
     every,
     take,
+    pluck,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -82,6 +83,9 @@ import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
 import { MeetingSuggestTimeQuery } from './dto/meeting-suggest-time-query';
 import { SuggestTimeDto } from './dto/suggest-time.dto';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
+import { skipFalsy } from '@commander/shared/operator/function';
+import { populate, documentToPlain } from '@commander/shared/operator/document';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -115,12 +119,8 @@ export class MeetingController {
             : this.meetingService.getAll(options);
 
         const populated$ = meeting$.pipe(
-            filter(Boolean.bind(null)),
-            flatMap(item =>
-                item
-                    .populate('owner invitations.user attendance.user')
-                    .execPopulate(),
-            ),
+            skipFalsy(),
+            populate('owner', 'invitations.user', 'attendance.user'),
         );
 
         const sorted$ = this.meetingService.sortMeetings(
@@ -130,7 +130,7 @@ export class MeetingController {
         );
 
         const items = sorted$.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            documentToPlain(GetMeetingDto),
             toArray(),
         );
 
@@ -151,6 +151,7 @@ export class MeetingController {
         @Param(
             'ids',
             new SplitSemicolonPipe(),
+            new UniqueArrayPipe(),
             new FilterNotObjectIdStringPipe(),
         )
         ids: string[],
@@ -160,11 +161,9 @@ export class MeetingController {
 
         ids = await from(ids)
             .pipe(
-                switchMap(id =>
-                    from(
-                        this.meetingService.hasViewPermission(id, user.id),
-                    ).pipe(
-                        filter(Boolean),
+                flatMap(id =>
+                    this.meetingService.hasViewPermission(id, user.id).pipe(
+                        skipFalsy(),
                         mapTo(id),
                     ),
                 ),
@@ -181,15 +180,11 @@ export class MeetingController {
             : this.meetingService.getByIds(ids);
 
         const populated$ = meeting$.pipe(
-            flatMap(item =>
-                item
-                    .populate('owner invitations.user attendance.user')
-                    .execPopulate(),
-            ),
+            populate('owner', 'invitations.user', 'attendance.user'),
         );
 
         const items = populated$.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            documentToPlain(GetMeetingDto),
             toArray(),
         );
 
@@ -205,12 +200,10 @@ export class MeetingController {
     }
 
     @Post()
-    async create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
+    create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
         return from(this.meetingService.create(meeting, owner)).pipe(
-            flatMap(item =>
-                item.populate('owner invitations.user').execPopulate(),
-            ),
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            populate('owner', 'invitations.user'),
+            documentToPlain(GetMeetingDto),
         );
     }
 
@@ -224,13 +217,11 @@ export class MeetingController {
         const sendNotification$ = this.meetingService
             .getById(id)
             .pipe(
-                filter(
-                    item =>
-                        Boolean(item) &&
-                        [
-                            MeetingStatus.Planned,
-                            MeetingStatus.Confirmed,
-                        ].includes(item.status),
+                skipFalsy(),
+                filter(({ status }) =>
+                    [MeetingStatus.Planned, MeetingStatus.Confirmed].includes(
+                        status,
+                    ),
                 ),
             )
             .pipe(
@@ -243,7 +234,7 @@ export class MeetingController {
                 flatMap(identity),
             )
             .pipe(
-                filter(inviteeId => Boolean(inviteeId)),
+                skipFalsy(),
                 flatMap(inviteeId =>
                     this.notificationService.create({
                         receiver: Types.ObjectId(inviteeId),
@@ -256,7 +247,7 @@ export class MeetingController {
             );
 
         return from(this.meetingService.edit(id, editMeetingDto)).pipe(
-            map(item => item!._id),
+            pluck('_id'),
             flatMap(_id =>
                 this.meetingService
                     .findAll({ _id: { $eq: _id } })
@@ -264,7 +255,7 @@ export class MeetingController {
                     .exec(),
             ),
             flatMap(identity),
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            documentToPlain(GetMeetingDto),
             tap(() => sendNotification$.subscribe()),
         );
     }
@@ -547,7 +538,7 @@ export class MeetingController {
         const meeting$ = this.meetingService.getById(id);
 
         const meetingLength$ = meeting$.pipe(
-            map(item => item.length),
+            pluck('length'),
             shareReplay(),
         );
 
@@ -622,7 +613,7 @@ export class MeetingController {
 
         const friend$ = friendsId$.pipe(
             flatMap(friendId => this.userService.getById(friendId)),
-            filter(Boolean.bind(null)),
+            skipFalsy(),
             shareReplay(),
         );
 
@@ -652,13 +643,13 @@ export class MeetingController {
         );
 
         const userRefreshToken$ = whoHasGoogleService$.pipe(
-            map(friend => friend.googleRefreshToken),
+            pluck('googleRefreshToken'),
             shareReplay(),
         );
 
         const userCalendarIdList$ = userRefreshToken$.pipe(
             flatMap(token => this.googleCalendarService.getAllCalendars(token)),
-            map(calendar => calendar.id),
+            pluck('id'),
             toArray(),
         );
 

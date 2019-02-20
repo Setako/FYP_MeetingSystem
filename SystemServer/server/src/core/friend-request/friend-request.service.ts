@@ -4,7 +4,8 @@ import { FriendRequest, FriendRequestStatus } from './friend-request.model';
 import { ModelType } from 'typegoose';
 import { UserService } from '../user/user.service';
 import { AcceptDto } from '../../shared/dto/accept.dto';
-import { toArray } from 'rxjs/operators';
+import { toArray, flatMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Injectable()
 export class FriendRequestService {
@@ -15,26 +16,25 @@ export class FriendRequestService {
         private readonly userService: UserService,
     ) {}
 
-    async getById(id: string) {
-        return this.friendRequestModel
-            .findById(id)
-            .populate('user')
-            .populate('targetUser')
-            .exec();
+    getById(id: string) {
+        return of(id).pipe(
+            flatMap(() => this.friendRequestModel.findById(id).exec()),
+        );
     }
 
-    async getByUserAndTarget(user: string, target: string, options = {}) {
-        return this.friendRequestModel
-            .findOne({
-                ...options,
+    getByUserAndTarget(user: string, target: string, options = {}) {
+        return of(options).pipe(
+            flatMap(async conditions => ({
+                ...conditions,
                 user: await this.userService.getByUsername(user).toPromise(),
                 targetUser: await this.userService
                     .getByUsername(target)
                     .toPromise(),
-            })
-            .populate('user')
-            .populate('targetUser')
-            .exec();
+            })),
+            flatMap(conditions =>
+                this.friendRequestModel.findOne(conditions).exec(),
+            ),
+        );
     }
 
     async getAllByTarget(target: string, options = {}) {
@@ -161,7 +161,7 @@ export class FriendRequestService {
     ) {
         const request = await this.getByUserAndTarget(user, target, {
             status: FriendRequestStatus.Requested,
-        });
+        }).toPromise();
 
         if (!request) {
             return null;
