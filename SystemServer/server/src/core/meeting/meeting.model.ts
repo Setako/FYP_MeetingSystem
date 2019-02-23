@@ -1,6 +1,7 @@
 import { arrayProp, prop, Ref, Typegoose, pre } from 'typegoose';
 import { Device } from '../device/device.model';
 import { User } from '../user/user.model';
+import { Types } from 'mongoose';
 
 export enum InvitationStatus {
     Accepted = 'accepted',
@@ -114,12 +115,88 @@ export enum MeetingType {
     Presentation = 'presentation',
 }
 
+export enum ResourcesSharing {
+    None = 'none',
+    PreMeeting = 'pre_meeting',
+    InMeeting = 'in_meeting',
+    PostMeeting = 'post_meeting',
+}
+
+export class GoogleDriveResource {
+    resId: string;
+    sharing: ResourcesSharing;
+}
+
+export class Resources {
+    googleDriveResources: GoogleDriveResource[];
+
+    constructor() {
+        this.googleDriveResources = [];
+    }
+}
+
+export class UserSharedResources {
+    @prop({
+        ref: User,
+    })
+    sharer: Ref<User>;
+
+    @prop()
+    resources: Resources;
+}
+
+export class MeetingResources {
+    @prop()
+    main: Resources;
+
+    @arrayProp({
+        _id: false,
+        items: UserSharedResources,
+    })
+    user: UserSharedResources[];
+
+    group: Array<[string, Resources]>;
+
+    constructor() {
+        this.main = new Resources();
+        this.user = [];
+        this.group = [];
+    }
+}
+
 @pre<Meeting>('save', function(next) {
     if (this.plannedStartTime && this.length) {
         this.plannedEndTime = new Date(
             new Date(this.plannedStartTime).getTime() + this.length,
         );
     }
+    next();
+})
+@pre<Meeting>('save', function(next) {
+    const users = this.resources.user.map(
+        item => item.sharer as Types.ObjectId,
+    );
+
+    const invitations = this.invitations
+        .filter(item => item.status !== InvitationStatus.Declined)
+        .map(item => item.user as Types.ObjectId);
+
+    const attendance = this.attendance.map(item => item.user as Types.ObjectId);
+
+    const notExistUser = users.filter(user => {
+        return !(
+            user.equals(this.owner as any) ||
+            invitations.some(item => user.equals(item)) ||
+            attendance.some(item => user.equals(item))
+        );
+    });
+
+    if (notExistUser.length) {
+        this.resources.user = this.resources.user.filter(user =>
+            notExistUser.some(notExist => notExist.equals(user.sharer as any)),
+        );
+    }
+
     next();
 })
 export class Meeting extends Typegoose {
@@ -201,4 +278,11 @@ export class Meeting extends Typegoose {
         default: () => new AccessPostMeetingPermission(),
     })
     public generalPermission!: AccessPostMeetingPermission;
+
+    @prop({
+        _id: false,
+        required: true,
+        default: () => new MeetingResources(),
+    })
+    public resources: MeetingResources;
 }

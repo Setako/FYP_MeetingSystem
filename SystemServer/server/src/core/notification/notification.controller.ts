@@ -11,6 +11,8 @@ import {
     Param,
     Query,
     UseGuards,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { combineLatest } from 'rxjs';
@@ -21,11 +23,17 @@ import { NotificationDto } from './dto/notification.dto';
 import { NotificationObjectModel } from './notification.model';
 import { NotificationService } from './notification.service';
 import { documentToPlain } from '@commander/shared/operator/document';
+import { Meeting } from '../meeting/meeting.model';
+import { MeetingService } from '../meeting/meeting.service';
 
 @Controller('notification')
 @UseGuards(AuthGuard('jwt'))
 export class NotificationController {
-    constructor(private readonly notificationService: NotificationService) {}
+    constructor(
+        private readonly notificationService: NotificationService,
+        @Inject(forwardRef(() => MeetingService))
+        private readonly meetingService: MeetingService,
+    ) {}
 
     @Get()
     getAll(
@@ -54,10 +62,23 @@ export class NotificationController {
                                 item.objectModel ===
                                 NotificationObjectModel.FriendRequest
                                     ? 'user targetUser'
-                                    : 'owner invitations.user',
+                                    : 'owner invitations.user attendance.user resources.user.sharer',
                         },
                     })
                     .execPopulate();
+            }),
+            flatMap(async item => {
+                if (item.objectModel === NotificationObjectModel.Meeting) {
+                    const meeting = (item.object as unknown) as InstanceType<
+                        Meeting
+                    >;
+                    meeting.resources = await this.meetingService.getAccessableResources(
+                        meeting.id,
+                        user.id,
+                    );
+                }
+
+                return item;
             }),
         );
 

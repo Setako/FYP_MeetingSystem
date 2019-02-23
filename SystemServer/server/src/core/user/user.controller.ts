@@ -2,7 +2,6 @@ import { UserGuard } from '@commander/shared/guard/user.guard';
 import { SplitSemicolonPipe } from '@commander/shared/pipe/split-semicolon.pipe';
 import { FileUtils } from '@commander/shared/utils/file.utils';
 import { NumberUtils } from '@commander/shared/utils/number.utils';
-import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import {
     BadRequestException,
     Body,
@@ -27,8 +26,8 @@ import { UserDto } from './dto/user.dto';
 import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
-import { combineLatest, from, of, pipe, identity } from 'rxjs';
-import { map, filter, toArray, flatMap } from 'rxjs/operators';
+import { combineLatest, from, of } from 'rxjs';
+import { map, toArray, flatMap } from 'rxjs/operators';
 import { SimpleUserDto } from './dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { User } from './user.model';

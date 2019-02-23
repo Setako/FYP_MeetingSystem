@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypegooseModule } from 'nestjs-typegoose';
 import { UserModule } from '../user/user.module';
 import { MeetingController } from './meeting.controller';
@@ -14,9 +14,9 @@ import { DeviceModule } from '../device/device.module';
         TypegooseModule.forFeature(Meeting),
         UserModule,
         FriendModule,
-        NotificationModule,
         GoogleModule,
         DeviceModule,
+        forwardRef(() => NotificationModule),
     ],
     controllers: [MeetingController],
     providers: [MeetingService],

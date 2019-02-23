@@ -5,11 +5,13 @@ import { UserModule } from '../user/user.module';
 import { NotificationController } from './notification.controller';
 import { Notification } from './notification.model';
 import { NotificationService } from './notification.service';
+import { MeetingModule } from '../meeting/meeting.module';
 
 @Module({
     imports: [
         TypegooseModule.forFeature(Notification),
         forwardRef(() => FriendRequestModule),
+        forwardRef(() => MeetingModule),
         UserModule,
     ],
     controllers: [NotificationController],

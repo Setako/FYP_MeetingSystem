@@ -17,6 +17,9 @@ import {
     BadRequestException,
     HttpStatus,
     HttpCode,
+    ForbiddenException,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '../user/user.model';
@@ -43,7 +46,6 @@ import {
     map,
     toArray,
     mapTo,
-    switchMap,
     tap,
     groupBy,
     catchError,
@@ -53,6 +55,7 @@ import {
     every,
     take,
     pluck,
+    defaultIfEmpty,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -62,6 +65,7 @@ import {
     MeetingStatus,
     Meeting,
     AttendanceStatus,
+    Resources,
 } from './meeting.model';
 import { AcceptDto } from '@commander/shared/dto/accept.dto';
 import { EditMeetingStatusDto } from './dto/edit-meeting.status.dto';
@@ -86,6 +90,7 @@ import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
 import { skipFalsy } from '@commander/shared/operator/function';
 import { populate, documentToPlain } from '@commander/shared/operator/document';
+import { MeetingResourcesDto } from './dto/meeting-resouces.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -93,11 +98,12 @@ export class MeetingController {
     constructor(
         private readonly meetingService: MeetingService,
         private readonly userService: UserService,
-        private readonly notificationService: NotificationService,
         private readonly googleAuthService: GoogleAuthService,
         private readonly googleEventService: GoogleEventService,
         private readonly googleCalendarService: GoogleCalendarService,
         private readonly deviceService: DeviceService,
+        @Inject(forwardRef(() => NotificationService))
+        private readonly notificationService: NotificationService,
     ) {}
 
     @Get()
@@ -120,7 +126,19 @@ export class MeetingController {
 
         const populated$ = meeting$.pipe(
             skipFalsy(),
-            populate('owner', 'invitations.user', 'attendance.user'),
+            flatMap(async meeting => {
+                meeting.resources = await this.meetingService.getAccessableResources(
+                    meeting.id,
+                    user.id,
+                );
+                return meeting;
+            }),
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
+            ),
         );
 
         const sorted$ = this.meetingService.sortMeetings(
@@ -180,7 +198,19 @@ export class MeetingController {
             : this.meetingService.getByIds(ids);
 
         const populated$ = meeting$.pipe(
-            populate('owner', 'invitations.user', 'attendance.user'),
+            flatMap(async meeting => {
+                meeting.resources = await this.meetingService.getAccessableResources(
+                    meeting.id,
+                    user.id,
+                );
+                return meeting;
+            }),
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
+            ),
         );
 
         const items = populated$.pipe(
@@ -211,53 +241,102 @@ export class MeetingController {
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async edit(
+        @Auth() user: InstanceType<User>,
         @Param('id') id: string,
         @Body() editMeetingDto: EditMeetingDto,
     ) {
-        const sendNotification$ = this.meetingService
-            .getById(id)
-            .pipe(
-                skipFalsy(),
-                filter(({ status }) =>
-                    [MeetingStatus.Planned, MeetingStatus.Confirmed].includes(
-                        status,
-                    ),
+        const sendNotification$ = this.meetingService.getById(id).pipe(
+            skipFalsy(),
+            filter(({ status }) =>
+                [MeetingStatus.Planned, MeetingStatus.Confirmed].includes(
+                    status,
                 ),
-            )
-            .pipe(
-                flatMap(() =>
-                    this.meetingService.findNewInviteeIds(
-                        id,
-                        editMeetingDto.invitations,
-                    ),
+            ),
+            flatMap(() =>
+                this.meetingService.findNewInviteeIds(
+                    id,
+                    editMeetingDto.invitations,
                 ),
-                flatMap(identity),
-            )
-            .pipe(
-                skipFalsy(),
-                flatMap(inviteeId =>
-                    this.notificationService.create({
-                        receiver: Types.ObjectId(inviteeId),
-                        type: NotificationType.MeetingInviteReceived,
-                        time: new Date(),
-                        object: Types.ObjectId(id),
-                        objectModel: NotificationObjectModel.Meeting,
-                    }),
-                ),
-            );
-
-        return from(this.meetingService.edit(id, editMeetingDto)).pipe(
-            pluck('_id'),
-            flatMap(_id =>
-                this.meetingService
-                    .findAll({ _id: { $eq: _id } })
-                    .populate('owner invitations.user attendance.user')
-                    .exec(),
             ),
             flatMap(identity),
-            documentToPlain(GetMeetingDto),
-            tap(() => sendNotification$.subscribe()),
+            skipFalsy(),
+            flatMap(inviteeId =>
+                this.notificationService.create({
+                    receiver: Types.ObjectId(inviteeId),
+                    type: NotificationType.MeetingInviteReceived,
+                    time: new Date(),
+                    object: Types.ObjectId(id),
+                    objectModel: NotificationObjectModel.Meeting,
+                }),
+            ),
         );
+
+        const meeting$ = from(
+            this.meetingService.edit(id, editMeetingDto),
+        ).pipe(
+            flatMap(async meeting => {
+                meeting.resources = await this.meetingService.getAccessableResources(
+                    meeting.id,
+                    user.id,
+                );
+                return meeting;
+            }),
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
+            ),
+            documentToPlain(GetMeetingDto),
+        );
+
+        return meeting$.pipe(tap(() => sendNotification$.subscribe()));
+    }
+
+    @Get(':id/resources/:username')
+    @UseGuards(MeetingGuard)
+    async getUserSharedResource(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Param('username') username: string,
+    ) {
+        const targetUser = await this.userService
+            .getByUsername(username)
+            .toPromise();
+
+        return from(
+            this.meetingService.getAccessableResources(id, user.id),
+        ).pipe(
+            pluck('user'),
+            flatMap(identity),
+            filter(({ sharer }) => {
+                return (sharer as Types.ObjectId).equals(targetUser._id);
+            }),
+            tap(console.log),
+            pluck('resources'),
+            defaultIfEmpty(new Resources()),
+        );
+    }
+
+    @Put(':id/resources/:username')
+    @UseGuards(MeetingGuard)
+    updateUserSharedResource(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Param('username') username: string,
+        @Body() resourcesDto: MeetingResourcesDto,
+    ) {
+        if (user.username !== username) {
+            throw new ForbiddenException();
+        }
+
+        return from(
+            this.meetingService.updateUserSharedResource(
+                id,
+                user.id,
+                resourcesDto,
+            ),
+        ).pipe(flatMap(() => this.getUserSharedResource(user, id, username)));
     }
 
     @Put(':id/status')

@@ -19,6 +19,8 @@ import {
     Meeting,
     MeetingStatus,
     AttendanceStatus,
+    Resources,
+    ResourcesSharing,
 } from './meeting.model';
 import {
     from,
@@ -384,6 +386,9 @@ export class MeetingService {
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
 
+        edited.resources.main =
+            editMeetingDto.mainResources || edited.resources.main;
+
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
             : edited.plannedStartTime;
@@ -395,6 +400,101 @@ export class MeetingService {
             : edited.realEndTime;
 
         return edited.save();
+    }
+
+    async updateUserSharedResource(
+        meetingId: string,
+        userId: string,
+        newResources: Resources,
+    ) {
+        const meeting = await this.getById(meetingId).toPromise();
+
+        const userResourcesMap = new Map(
+            meeting.resources.user.map(
+                ({ sharer, resources }) =>
+                    [(sharer as Types.ObjectId).toHexString(), resources] as [
+                        string,
+                        Resources
+                    ],
+            ),
+        );
+
+        if (newResources.googleDriveResources.length === 0) {
+            userResourcesMap.delete(userId);
+        } else {
+            userResourcesMap.set(userId, newResources);
+        }
+
+        meeting.resources.user = [...userResourcesMap.entries()].map(
+            ([sharer, resources]) => ({
+                sharer: Types.ObjectId(sharer),
+                resources,
+            }),
+        );
+
+        meeting.resources.user = meeting.resources.user.filter(
+            item => item.resources.googleDriveResources.length,
+        );
+
+        return meeting.save();
+    }
+
+    async getAccessableResources(meetingId: string, operatorId: string) {
+        const meeting = await this.getById(meetingId).toPromise();
+        const resources = meeting.resources;
+
+        if (!(meeting.owner as Types.ObjectId).equals(operatorId)) {
+            resources.main = this.filterNoPublicResourcesBySharingStatus(
+                resources.main,
+                meeting.status,
+            );
+        }
+
+        const operatorShared = resources.user.filter(({ sharer }) =>
+            (sharer as Types.ObjectId).equals(operatorId),
+        );
+
+        const otherShared = resources.user.filter(
+            ({ sharer }) => !(sharer as Types.ObjectId).equals(operatorId),
+        );
+
+        const otherAccessable = otherShared.map(item => {
+            item.resources = this.filterNoPublicResourcesBySharingStatus(
+                item.resources,
+                meeting.status,
+            );
+            return item;
+        });
+
+        resources.user = operatorShared
+            .concat(otherAccessable)
+            .filter(item => item.resources.googleDriveResources.length);
+
+        return resources;
+    }
+
+    filterNoPublicResourcesBySharingStatus(
+        resources: Resources,
+        status: MeetingStatus,
+    ) {
+        resources.googleDriveResources = resources.googleDriveResources.filter(
+            ({ sharing }) => {
+                switch (sharing) {
+                    case ResourcesSharing.PreMeeting:
+                        return true;
+                    case ResourcesSharing.InMeeting:
+                        return [
+                            MeetingStatus.Started,
+                            MeetingStatus.Ended,
+                        ].includes(status);
+                    case ResourcesSharing.PostMeeting:
+                        return MeetingStatus.Ended === status;
+                    default:
+                        return false;
+                }
+            },
+        );
+        return resources;
     }
 
     async addAttendance(id: string, attendeeId: string) {

@@ -6,15 +6,8 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { of, empty } from 'rxjs';
-import {
-    catchError,
-    map,
-    tap,
-    flatMap,
-    defaultIfEmpty,
-    pluck,
-} from 'rxjs/operators';
+import { of } from 'rxjs';
+import { catchError, map, tap, defaultIfEmpty, pluck } from 'rxjs/operators';
 import { skipFalsy } from '../operator/function';
 
 @Injectable()

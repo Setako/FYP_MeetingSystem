@@ -13,6 +13,7 @@ import {
 import { MeetingStatus, MeetingType, MeetingPriority } from '../meeting.model';
 import { InvitationsDto } from './invitations.dto';
 import { PermissionDto } from './permission.dto';
+import { MeetingResourcesDto } from './meeting-resouces.dto';
 
 export class EditMeetingDto {
     @IsOptional()
@@ -74,4 +75,9 @@ export class EditMeetingDto {
     @ValidateNested()
     @Type(() => InvitationsDto)
     readonly invitations?: InvitationsDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => MeetingResourcesDto)
+    readonly mainResources?: MeetingResourcesDto;
 }
