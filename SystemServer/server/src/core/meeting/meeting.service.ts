@@ -69,6 +69,22 @@ export class MeetingService {
         );
     }
 
+    turnAllStartedMeetingsToEnded(realEndTime = new Date()) {
+        return from(
+            this.meetingModel
+                .updateMany(
+                    {
+                        status: MeetingStatus.Started,
+                    },
+                    {
+                        status: MeetingStatus.Ended,
+                        realEndTime,
+                    },
+                )
+                .exec(),
+        );
+    }
+
     async getQueryOption(
         query: MeetingQueryDto,
         ownerId: string,
@@ -450,12 +466,14 @@ export class MeetingService {
             );
         }
 
-        const operatorShared = resources.user.filter(({ sharer }) =>
-            (sharer as Types.ObjectId).equals(operatorId),
+        const userResources = resources.user.filter(item => item);
+
+        const operatorShared = userResources.filter(({ sharer }) =>
+            Types.ObjectId(operatorId).equals(sharer as any),
         );
 
-        const otherShared = resources.user.filter(
-            ({ sharer }) => !(sharer as Types.ObjectId).equals(operatorId),
+        const otherShared = userResources.filter(
+            ({ sharer }) => !Types.ObjectId(operatorId).equals(sharer as any),
         );
 
         const otherAccessable = otherShared.map(item => {
