@@ -68,6 +68,8 @@ export class MeetingOperationsBottomSheetsComponent implements OnInit {
       () => {
         this.refreshCallback();
         this.snackBar.open('Status updated!', 'Dismiss', {duration: 4000});
+      }, (err) => {
+        this.snackBar.open('Update state failed, ' + err.error.message, 'Dismiss', {duration: 4000});
       }
     );
     event.preventDefault();
