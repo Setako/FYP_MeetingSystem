@@ -719,10 +719,9 @@ export class MeetingService {
 
         const emails$ = from(emails.values()).pipe(
             flatMap(email =>
-                this.userService.getByEmail(email).pipe(
-                    map(({ _id } = {} as any) => _id as Types.ObjectId),
-                    map(user => (user ? { user, email } : { email })),
-                ),
+                this.userService
+                    .getByEmail(email)
+                    .pipe(map(user => (user ? { user, email } : { email }))),
             ),
             map(item => ({
                 ...item,
