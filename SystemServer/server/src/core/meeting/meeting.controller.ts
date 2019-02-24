@@ -543,13 +543,15 @@ export class MeetingController {
                 $and: [
                     { _id: { $eq: Types.ObjectId(id) } },
                     {
-                        'invitations.user': {
-                            $eq: Types.ObjectId(user.id),
-                        },
-                    },
-                    {
-                        'invitations.status': {
-                            $in: [InvitationStatus.Waiting],
+                        invitations: {
+                            $elemMatch: {
+                                user: {
+                                    $eq: Types.ObjectId(user.id),
+                                },
+                                status: {
+                                    $in: [InvitationStatus.Waiting],
+                                },
+                            },
                         },
                     },
                 ],

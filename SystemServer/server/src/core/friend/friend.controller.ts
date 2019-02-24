@@ -54,8 +54,8 @@ export class FriendController {
 
         const items = populated$.pipe(
             map(item => ({
-                user: item.friends.find((friend: InstanceType<User>) =>
-                    !friend._id.equals(user.id),
+                user: item.friends.find(
+                    (friend: InstanceType<User>) => !friend._id.equals(user.id),
                 ) as InstanceType<User>,
                 stared: item.stared.some((id: Types.ObjectId) =>
                     id.equals(user.id),
@@ -94,8 +94,8 @@ export class FriendController {
 
         const items = friends.pipe(
             map(item => ({
-                user: item.friends.find((friend: InstanceType<User>) =>
-                    !friend._id.equals(user.id),
+                user: item.friends.find(
+                    (friend: InstanceType<User>) => !friend._id.equals(user.id),
                 ),
                 stared: item.stared.some((id: Types.ObjectId) =>
                     id.equals(user.id),
