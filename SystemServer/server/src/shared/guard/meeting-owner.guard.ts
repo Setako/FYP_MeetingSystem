@@ -7,7 +7,7 @@ import { skipFalsy } from '../operator/function';
 
 @Injectable()
 export class MeetingOwnerGuard implements CanActivate {
-    constructor(private readonly meetingService: MeetingService) {}
+    constructor(protected readonly meetingService: MeetingService) {}
 
     canActivate(context: ExecutionContext) {
         const {

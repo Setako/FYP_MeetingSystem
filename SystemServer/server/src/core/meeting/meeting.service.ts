@@ -595,7 +595,10 @@ export class MeetingService {
                         return of(item);
                     }
 
-                    attendee.arrivalTime = arrivalTime;
+                    attendee.status = arrivalTime
+                        ? AttendanceStatus.Present
+                        : AttendanceStatus.Absent;
+                    attendee.arrivalTime = arrivalTime || undefined;
                     return item.save();
                 }),
             )

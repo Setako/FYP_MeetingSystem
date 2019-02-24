@@ -20,6 +20,7 @@ export class AttendanceDto {
     status?: AttendanceStatus;
 
     @Expose()
+    @Type(() => PermissionDto)
     permission?: PermissionDto;
 
     googleCalendarEventId?: string;

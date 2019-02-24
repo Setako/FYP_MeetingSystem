@@ -7,6 +7,7 @@ import { Socket } from 'socket.io';
 @Catch()
 export class WsExceptionFilter extends BaseWsExceptionFilter {
     constructor(
+        @Optional() private readonly action = 'unknown',
         @Optional() private readonly event = 'exception',
         @Optional() private readonly isDisconnectWhenException = false,
     ) {
@@ -16,15 +17,20 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
     catch(exception: any, host: ArgumentsHost) {
         const client: Socket = host.switchToWs().getClient();
 
+        console.error(exception);
+
         if (!(exception instanceof WsException)) {
-            client.emit(this.event, MESSAGES.UNKNOWN_EXCEPTION_MESSAGE);
+            client.emit(this.event, {
+                action: this.action,
+                message: MESSAGES.UNKNOWN_EXCEPTION_MESSAGE,
+            });
             this.disconnect(client);
             return;
         }
 
         const result = exception.getError();
         const message = isObject(result) ? result : { message: result };
-        client.emit(this.event, message);
+        client.emit(this.event, { action: this.action, ...message });
         this.disconnect(client);
     }
 
