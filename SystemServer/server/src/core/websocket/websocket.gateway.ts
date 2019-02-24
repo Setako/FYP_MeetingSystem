@@ -9,6 +9,7 @@ import {
     WebSocketServer,
     WsException,
     OnGatewayDisconnect,
+    OnGatewayInit,
 } from '@nestjs/websockets';
 import { defer, from, of, concat } from 'rxjs';
 import {
@@ -40,7 +41,7 @@ import { Types } from 'mongoose';
 @UseFilters(WsExceptionFilter)
 @UsePipes(WsValidationPipe)
 @WebSocketGateway()
-export class WebsocketGateway implements OnGatewayDisconnect {
+export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     @WebSocketServer() server: Server;
 
     constructor(
@@ -48,6 +49,10 @@ export class WebsocketGateway implements OnGatewayDisconnect {
         private readonly meetingService: MeetingService,
         private readonly userService: UserService,
     ) {}
+
+    afterInit(_server: Socket) {
+        this.meetingService.turnAllStartedMeetingsToEnded().subscribe();
+    }
 
     handleDisconnect(client: Socket) {
         const {
@@ -58,14 +63,22 @@ export class WebsocketGateway implements OnGatewayDisconnect {
             meeting: InstanceType<Meeting>;
         } = client.request;
 
-        if (user && meeting && meeting.status === MeetingStatus.Started) {
-            const isOwner = Types.ObjectId(user.id).equals(
-                meeting.owner as any,
-            );
-
-            if (isOwner) {
-                this.onClientEndMeeting(client, null).subscribe();
-            }
+        if (
+            user &&
+            meeting &&
+            Types.ObjectId(user.id).equals(meeting.owner as any)
+        ) {
+            this.meetingService
+                .getById(meeting.id)
+                .pipe(
+                    filter(item => item.status === MeetingStatus.Started),
+                    flatMap(item => {
+                        item.realEndTime = new Date();
+                        item.status = MeetingStatus.Ended;
+                        return item.save();
+                    }),
+                )
+                .subscribe();
         }
     }
 

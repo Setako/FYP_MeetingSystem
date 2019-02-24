@@ -69,6 +69,22 @@ export class MeetingService {
         );
     }
 
+    turnAllStartedMeetingsToEnded(realEndTime = new Date()) {
+        return from(
+            this.meetingModel
+                .updateMany(
+                    {
+                        status: MeetingStatus.Started,
+                    },
+                    {
+                        status: MeetingStatus.Ended,
+                        realEndTime,
+                    },
+                )
+                .exec(),
+        );
+    }
+
     async getQueryOption(
         query: MeetingQueryDto,
         ownerId: string,
