@@ -69,7 +69,6 @@ export class WebsocketGateway implements OnGatewayDisconnect {
         }
     }
 
-    // todo: test the pi connect
     @UseFilters(new WsExceptionFilter('device-online'))
     @SubscribeMessage('device-online')
     onDeviceOnline(client: Socket, { deviceId, secret }: DeviceOnlineDto) {
@@ -292,7 +291,7 @@ export class WebsocketGateway implements OnGatewayDisconnect {
                 this.meetingService.editStatus(meeting.id, MeetingStatus.Ended),
             ),
             map(({ realEndTime }) => ({
-                event: 'client-end-meeting',
+                event: 'client-end-meeting-success',
                 data: {
                     realEndTime,
                 },
@@ -333,8 +332,12 @@ export class WebsocketGateway implements OnGatewayDisconnect {
             populate('attendance.user'),
             map(updatedMeeting => ({
                 event: 'client-attendance-updated',
-                data: ObjectUtils.DocumentToPlain(updatedMeeting, GetMeetingDto)
-                    .attendance,
+                data: {
+                    attendance: ObjectUtils.DocumentToPlain(
+                        updatedMeeting,
+                        GetMeetingDto,
+                    ).attendance,
+                },
             })),
             tap(({ data }) =>
                 client
