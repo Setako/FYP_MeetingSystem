@@ -22,6 +22,8 @@ import {TokenQrcodeWindowComponent} from './shared/components/window/token-qrcod
 import {QueryingContentHiderComponent} from './shared/components/querying-content-hider/querying-content-hider.component';
 import {HttpClientModule} from '@angular/common/http';
 import {WebviewDirective} from './shared/directives/WebviewDirective';
+import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
+import { ControllableComponent } from './shared/components/controllable/controllable.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +34,9 @@ import {WebviewDirective} from './shared/directives/WebviewDirective';
     NotificationContentComponent,
     TokenQrcodeWindowComponent,
     QueryingContentHiderComponent,
-    WebviewDirective
+    WebviewDirective,
+    SlideShowPlayerComponent,
+    ControllableComponent
   ],
   imports: [
     BrowserAnimationsModule,

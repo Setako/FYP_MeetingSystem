@@ -3,7 +3,7 @@ const {Router} = require("express");
 const ipcChannels = require("../../../utils/ipc-channels");
 const windowUtils = require("../../../utils/window-utils");
 const promiseExec = require("../../../utils/exec-utils").promiseExec;
-const app = require("../../../../app");
+const app = require("../../../../app-old");
 
 let router = new Router();
 
