@@ -27,6 +27,10 @@ export class WsExceptionFilter extends BaseWsExceptionFilter {
             return;
         }
 
+        if (client.disconnected) {
+            console.error('WsException: Disconnected', exception);
+        }
+
         const result = exception.getError();
         const message = isObject(result) ? result : { message: result };
         client.emit(this.event, { action: this.action, ...message });

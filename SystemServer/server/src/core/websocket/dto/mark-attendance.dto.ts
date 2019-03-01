@@ -2,7 +2,7 @@ import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
 import { IsDate, IsArray, ValidateNested, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class ClientMarkAttendanceDto {
+export class MarkAttendanceDto {
     @IsArray()
     @ValidateNested({
         each: true,

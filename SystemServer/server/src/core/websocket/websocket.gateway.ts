@@ -30,13 +30,14 @@ import { DeviceOnlineDto } from './dto/device-online.dto';
 import { OwnerAuthDto } from './dto/owner-auth.dto';
 import { InstanceType } from 'typegoose';
 import { Meeting, MeetingStatus } from '../meeting/meeting.model';
-import { ClientMarkAttendanceDto } from './dto/client-mark-attendance.dto';
+import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { UserService } from '../user/user.service';
 import { populate } from '@commander/shared/operator/document';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GetMeetingDto } from '../meeting/dto/get-meeting.dto';
 import { User } from '../user/user.model';
 import { Types } from 'mongoose';
+import { WsDeviceHoldMeetingGuard } from '@commander/shared/guard/ws-device-hold-meeting.guard';
 
 @UseFilters(WsExceptionFilter)
 @UsePipes(WsValidationPipe)
@@ -63,15 +64,14 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             meeting: InstanceType<Meeting>;
         } = client.request;
 
-        if (
-            user &&
-            meeting &&
-            Types.ObjectId(user.id).equals(meeting.owner as any)
-        ) {
+        if (user && meeting) {
             this.meetingService
                 .getById(meeting.id)
                 .pipe(
                     filter(item => item.status === MeetingStatus.Started),
+                    filter(item =>
+                        Types.ObjectId(user.id).equals(item.owner as any),
+                    ),
                     flatMap(item => {
                         item.realEndTime = new Date();
                         item.status = MeetingStatus.Ended;
@@ -102,13 +102,17 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             }),
         );
 
+        const bindDevice$ = this.deviceService
+            .getById(deviceId)
+            .pipe(tap(device => (client.request.device = device)));
+
         const token$ = of(deviceId).pipe(
             map(deviceid => ({
                 accessToken: this.deviceService.signToken(deviceid),
             })),
         );
 
-        return of(checkSecret$, joinRoom$, token$).pipe(
+        return of(checkSecret$, bindDevice$, joinRoom$, token$).pipe(
             concatAll(),
             takeLast(1),
             map(data => ({
@@ -190,14 +194,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             .toPromise();
     }
 
+    @UseGuards(WsDeviceHoldMeetingGuard)
     @UseFilters(new WsExceptionFilter('device-lan-ip'))
     @SubscribeMessage('device-lan-ip')
     onDeviceLanIp(client: Socket, { lanIP, controlToken }: DeviceLanIpDto) {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
-
-        if (!meeting) {
-            throw new WsException('device should first connect to the meeting');
-        }
 
         client.to(`meeting:${meeting.id}`).emit('client-access-allowed', {
             deviceLanIP: lanIP,
@@ -254,9 +255,13 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                   ),
         );
 
-        const updatedMeeting$ = this.meetingService.editStatus(
-            meeting.id,
-            MeetingStatus.Started,
+        const updatedMeeting$ = of(meeting.id).pipe(
+            flatMap(meetingId =>
+                this.meetingService.editStatus(
+                    meetingId,
+                    MeetingStatus.Started,
+                ),
+            ),
         );
 
         const joinRooms = () =>
@@ -316,10 +321,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     @UseGuards(WsAuthGuard)
     @UseFilters(new WsExceptionFilter('client-mark-attendance'))
     @SubscribeMessage('client-mark-attendance')
-    onClientMarkAttendance(
-        client: Socket,
-        { attendance }: ClientMarkAttendanceDto,
-    ) {
+    onClientMarkAttendance(client: Socket, { attendance }: MarkAttendanceDto) {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
         const updatedAttendance$ = from(attendance).pipe(
@@ -354,8 +356,52 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             })),
             tap(({ data }) =>
                 client
-                    .to(`meeting:${meeting.id}_drive`)
+                    .to(`meeting:${meeting.id}_device`)
                     .emit('server-attendance-updated', data),
+            ),
+        );
+    }
+
+    @UseGuards(WsDeviceHoldMeetingGuard)
+    @UseFilters(new WsExceptionFilter('device-mark-attendance'))
+    @SubscribeMessage('device-mark-attendance')
+    onDeviceMarkAttendance(client: Socket, { attendance }: MarkAttendanceDto) {
+        const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
+
+        const updatedAttendance$ = from(attendance).pipe(
+            flatMap(({ username, time }) =>
+                this.userService.getByUsername(username).pipe(
+                    map(user => ({
+                        user,
+                        arrivalTime: time,
+                    })),
+                ),
+            ),
+            filter(item => Boolean(item.user)),
+            flatMap(item =>
+                this.meetingService.updateAttendeeArrivalTime(
+                    meeting.id,
+                    item.user.id,
+                    item.arrivalTime,
+                ),
+            ),
+        );
+
+        return updatedAttendance$.pipe(
+            populate('attendance.user'),
+            map(updatedMeeting => ({
+                event: 'server-attendance-updated',
+                data: {
+                    attendance: ObjectUtils.DocumentToPlain(
+                        updatedMeeting,
+                        GetMeetingDto,
+                    ).attendance,
+                },
+            })),
+            tap(({ data }) =>
+                client
+                    .to(`meeting:${meeting.id}_client`)
+                    .emit('client-attendance-updated', data),
             ),
         );
     }
