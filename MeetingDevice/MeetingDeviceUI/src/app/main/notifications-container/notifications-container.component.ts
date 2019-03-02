@@ -1,13 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { NotificationService } from '../../services/notification/notification.service';
-import { IconSysNotification } from '../../shared/components/notification-block/icon-notification-block.component';
+import {Component, OnInit} from '@angular/core';
+import {NotificationService} from '../../services/notification/notification.service';
+import {IconSysNotification} from '../../shared/components/notification-block/icon-notification-block.component';
 
 @Component({
     selector: 'app-notifications-container',
     templateUrl: './notifications-container.component.html',
 })
 export class NotificationsContainerComponent implements OnInit {
-    constructor(public notificationService: NotificationService) {}
+    constructor(public notificationService: NotificationService) {
+    }
 
     ngOnInit() {
         this.notificationService.addNotification(

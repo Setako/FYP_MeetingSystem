@@ -1,10 +1,15 @@
 # Compiled Files
-/build
+build/
+dist/
 *.class
 
 #Logs
 /logs
 *.log
+
+# IDEA
+.idea/
+
 
 # Node
 node_modules/
@@ -12,3 +17,11 @@ node_modules/
 # Python
 __pycache__/
 
+# Vscode
+.vscode/
+
+# Environment
+.env
+
+# User Data
+data/

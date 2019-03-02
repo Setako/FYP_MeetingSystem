@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
-import { SysNotification } from '../../shared/components/notification-block/notification-block.component';
+import {Injectable} from '@angular/core';
+import {SysNotification} from '../../shared/components/notification-block/notification-block.component';
 
 @Injectable({
     providedIn: 'root',
 })
 export class NotificationService {
-    constructor() {}
+    constructor() {
+    }
 
     private _notifications: SysNotification[] = [];
 

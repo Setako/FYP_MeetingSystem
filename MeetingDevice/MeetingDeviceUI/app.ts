@@ -1,4 +1,4 @@
-import { app, BrowserWindow, protocol, remote } from 'electron';
+import {app, BrowserWindow, protocol} from 'electron';
 import * as commander from 'commander';
 import * as url from 'url';
 import * as path from 'path';
@@ -14,10 +14,10 @@ const commandInput = commander
 const loadURL = commandInput.url
     ? commandInput.url
     : url.format({
-          pathname: path.join(__dirname, 'dist/MeetingDeviceUI/index.html'),
-          protocol: 'file:',
-          slashes: true,
-      });
+        pathname: path.join(__dirname, 'dist/MeetingDeviceUI/index.html'),
+        protocol: 'file:',
+        slashes: true,
+    });
 
 // @ts-ignore
 global.device = {
@@ -43,8 +43,7 @@ app.on('ready', () => {
         rendererWindow = new BrowserWindow({
             width: 99999,
             height: 99999,
-            frame: false,
-            transparent: true,
+            frame: false
         });
 
         rendererWindow.loadURL(loadURL);
@@ -54,10 +53,10 @@ app.on('ready', () => {
         } else {
             rendererWindow.setVisibleOnAllWorkspaces(true);
             rendererWindow.setAlwaysOnTop(true);
-            rendererWindow.setIgnoreMouseEvents(true, { forward: true });
+            rendererWindow.setIgnoreMouseEvents(true, {forward: true});
+            rendererWindow.setSkipTaskbar(true);
         }
 
-        rendererWindow.setSkipTaskbar(true);
 
         // Prevent automatic maximize and resize
         rendererWindow.setResizable(false);
