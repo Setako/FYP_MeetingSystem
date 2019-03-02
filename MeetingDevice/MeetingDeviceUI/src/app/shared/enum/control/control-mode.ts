@@ -1,6 +1,6 @@
 export enum ControlMode {
-  WindowControl,
-  DRAWING,
-  NORMAL,
-  SETTING
+    WindowControl,
+    DRAWING,
+    NORMAL,
+    SETTING,
 }

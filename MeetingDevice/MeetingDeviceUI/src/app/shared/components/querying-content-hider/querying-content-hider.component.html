@@ -1,8 +1,11 @@
 <div class="d-flex h-100 w-100" *ngIf="querying">
-  <div class="d-inline-block align-self-center mx-auto d-flex flex-column align-items-center py-5">
-    <mat-spinner>
-    </mat-spinner>
-    <div class="d-inline-block p-1 mt-3" *ngIf="queryingAction!=null">{{queryingAction}}</div>
-  </div>
+    <div
+        class="d-inline-block align-self-center mx-auto d-flex flex-column align-items-center py-5"
+    >
+        <mat-spinner> </mat-spinner>
+        <div class="d-inline-block p-1 mt-3" *ngIf="queryingAction != null">
+            {{ queryingAction }}
+        </div>
+    </div>
 </div>
 <ng-content *ngIf="!querying"></ng-content>
