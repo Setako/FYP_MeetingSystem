@@ -3,13 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "dev": "concurrently \"npm run serve\" \"npm run devstart\"",
+    "dev": "concurrently --kill-others \"npm run serve\" \"npm run devstart\"",
     "start": "tsc --module commonjs && electron .",
     "devstart": "tsc --module commonjs && electron . -u http://localhost:4200 -d",
     "serve": "ng serve",
     "build": "ng build --base-href ./",
-    "devbuild": "ng build --watch --base-href ./",
-    "postinstall": "ng build --base-href ./"
+    "devbuild": "ng build --watch --base-href ./"
   },
   "main": "dist/out-tsc/app.js",
   "private": true,

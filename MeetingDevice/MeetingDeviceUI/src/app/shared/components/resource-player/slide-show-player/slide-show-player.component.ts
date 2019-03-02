@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {ControllableComponent} from '../../controllable/controllable.component';
+import {MatDialog} from '@angular/material';
 
 @Component({
   selector: 'app-slide-show-player',
