@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-querying-content-hider',
@@ -9,9 +9,7 @@ export class QueryingContentHiderComponent implements OnInit {
     @Input() querying: boolean;
     @Input() queryingAction: string;
 
-    constructor() {
-    }
+    constructor() {}
 
-    ngOnInit() {
-    }
+    ngOnInit() {}
 }

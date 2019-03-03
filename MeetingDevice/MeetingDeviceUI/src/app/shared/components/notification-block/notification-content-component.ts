@@ -1,5 +1,17 @@
-import {Component, ComponentFactoryResolver, ComponentRef, Input, OnDestroy, OnInit, ViewChild, ViewContainerRef,} from '@angular/core';
-import {NotificationBlockComponent, SysNotification,} from './notification-block.component';
+import {
+    Component,
+    ComponentFactoryResolver,
+    ComponentRef,
+    Input,
+    OnDestroy,
+    OnInit,
+    ViewChild,
+    ViewContainerRef,
+} from '@angular/core';
+import {
+    NotificationBlockComponent,
+    SysNotification,
+} from './notification-block.component';
 
 @Component({
     selector: 'app-notification-content',
@@ -12,12 +24,11 @@ import {NotificationBlockComponent, SysNotification,} from './notification-block
 export class NotificationContentComponent implements OnInit, OnDestroy {
     private componentRef: ComponentRef<NotificationBlockComponent>;
 
-    @ViewChild('blockFrame', {read: ViewContainerRef})
+    @ViewChild('blockFrame', { read: ViewContainerRef })
     blockFrame: ViewContainerRef;
     @Input() notification: SysNotification;
 
-    constructor(private componentFactoryResolver: ComponentFactoryResolver) {
-    }
+    constructor(private componentFactoryResolver: ComponentFactoryResolver) {}
 
     ngOnInit() {
         const componentFactory = this.componentFactoryResolver.resolveComponentFactory(

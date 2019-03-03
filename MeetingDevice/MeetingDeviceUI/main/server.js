@@ -5,7 +5,7 @@ let http = require('http');
 let exec = require('child_process').exec;
 const controlRouter = require('./api-controller/control-api/control-router');
 
-module.exports = function () {
+module.exports = function() {
     app.use(bodyParser.json());
     app.use('/control', controlRouter);
 

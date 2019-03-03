@@ -1,4 +1,4 @@
-import {Component, HostBinding, OnInit} from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-controllable',
@@ -9,12 +9,9 @@ export class ControllableComponent implements OnInit {
     @HostBinding('style.zIndex')
     zIndex: number;
 
-    constructor() {
-    }
+    constructor() {}
 
-    remoteControl(action: number, data: object) {
-    }
+    remoteControl(action: number, data: object) {}
 
-    ngOnInit() {
-    }
+    ngOnInit() {}
 }

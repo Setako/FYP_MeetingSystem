@@ -1,5 +1,9 @@
-import {NotificationBlockComponent, SysNotification, SysNotificationColor,} from './notification-block.component';
-import {Component} from '@angular/core';
+import {
+    NotificationBlockComponent,
+    SysNotification,
+    SysNotificationColor,
+} from './notification-block.component';
+import { Component } from '@angular/core';
 
 @Component({
     selector: 'app-icon-notification-block',

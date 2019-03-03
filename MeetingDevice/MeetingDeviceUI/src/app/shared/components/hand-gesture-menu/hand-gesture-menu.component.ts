@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-hand-gesture-menu',
@@ -6,9 +6,7 @@ import {Component, OnInit} from '@angular/core';
     styleUrls: ['./hand-gesture-menu.component.css'],
 })
 export class HandGestureMenuComponent implements OnInit {
-    constructor() {
-    }
+    constructor() {}
 
-    ngOnInit() {
-    }
+    ngOnInit() {}
 }

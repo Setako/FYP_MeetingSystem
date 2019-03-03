@@ -1,4 +1,4 @@
-const {Router} = require('express');
+const { Router } = require('express');
 
 const ipcChannels = require('../../../utils/ipc-channels');
 const windowUtils = require('../../../utils/window-utils');
@@ -9,7 +9,7 @@ let router = new Router();
 
 let originalWindowSize;
 let lastResizeSessionIdentifier = null;
-router.post('/resize', async function (req, res) {
+router.post('/resize', async function(req, res) {
     let rootWindowInfo = await windowUtils.getWindowInformation(null, [
         '-root',
     ]);
@@ -30,11 +30,11 @@ router.post('/resize', async function (req, res) {
     promiseExec(
         `xdotool windowsize ${
             currentWindowInfo['Window id']
-            } ${newWidth} ${newHeight}`,
+        } ${newWidth} ${newHeight}`,
     ).catch(e => console.log(e));
     app.rendererWindow.webContents.send(
         ipcChannels.IPC_CHANNEL_DEVICE_CONTROL,
-        {test: 'testmsg'},
+        { test: 'testmsg' },
     );
     console.log('sended');
 
@@ -43,7 +43,7 @@ router.post('/resize', async function (req, res) {
 
 let originalWindowLocation;
 let lastDragSessionIdentifier = null;
-router.post('/drag', async function (req, res) {
+router.post('/drag', async function(req, res) {
     let rootWindowInfo = await windowUtils.getWindowInformation(null, [
         '-root',
     ]);

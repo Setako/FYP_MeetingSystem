@@ -1,9 +1,9 @@
-import {Component, OnInit} from '@angular/core';
-import {DeviceService} from '../../../../services/device.service';
-import {QRCodeUtil} from '../../../../utils/QRCodeUtil';
-import {mergeMap, retry} from 'rxjs/operators';
-import {MatSnackBar} from '@angular/material';
-import {timer} from 'rxjs';
+import { Component, OnInit } from '@angular/core';
+import { DeviceService } from '../../../../services/device.service';
+import { QRCodeUtil } from '../../../../utils/QRCodeUtil';
+import { mergeMap, retry } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material';
+import { timer } from 'rxjs';
 
 @Component({
     selector: 'app-token-qrcode-window',
@@ -17,8 +17,7 @@ export class TokenQrcodeWindowComponent implements OnInit {
     constructor(
         private deviceService: DeviceService,
         private snackBar: MatSnackBar,
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         timer(0, 50000).subscribe(_ => {

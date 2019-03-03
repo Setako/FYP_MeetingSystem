@@ -1,23 +1,24 @@
-import {ComponentFactoryResolver, Injectable, Injector, Type, ViewContainerRef} from '@angular/core';
-import {WINDOW_DATA, WindowRef} from './WindowRef';
+import {
+    ComponentFactoryResolver,
+    Injectable,
+    Injector,
+    Type,
+    ViewContainerRef,
+} from '@angular/core';
+import { WINDOW_DATA, WindowRef } from './WindowRef';
 
 @Injectable({
-    providedIn: 'root'
+    providedIn: 'root',
 })
 export class WindowStackService {
-
     private windowComponentPool: WindowRef<any>[] = [];
     private windowComponentsContainer: ViewContainerRef;
 
-    constructor(
-        private resolver: ComponentFactoryResolver
-    ) {
-    }
+    constructor(private resolver: ComponentFactoryResolver) {}
 
     public registerWindowsContainer(viewContainerRef: ViewContainerRef) {
         this.windowComponentsContainer = viewContainerRef;
     }
-
 
     showWindow<T>(type: Type<T>, data: any): WindowRef<T> {
         this.windowComponentPool.forEach(ref => ref.placeBehind());
@@ -26,11 +27,15 @@ export class WindowStackService {
             providers: [
                 {
                     provide: WINDOW_DATA,
-                    useValue: data // edit
-                }
-            ]
+                    useValue: data, // edit
+                },
+            ],
         });
-        const compRef = this.windowComponentsContainer.createComponent(factory, 0, injector);
+        const compRef = this.windowComponentsContainer.createComponent(
+            factory,
+            0,
+            injector,
+        );
         const windowRef = new WindowRef(compRef);
         windowRef.placeTop();
         return windowRef;
