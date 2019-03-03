@@ -10,7 +10,10 @@ import {SelectFriendsDialogComponent} from '../../../../shared/components/dialog
 import {User} from '../../../../shared/models/user';
 import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
-import {mapTo} from 'rxjs/operators';
+import {flatMap, map, mapTo, tap} from 'rxjs/operators';
+import {from, Observable} from 'rxjs';
+
+declare var gapi: any;
 
 @Component({
   selector: 'app-meeting-edit',
@@ -30,12 +33,14 @@ export class MeetingEditComponent implements OnInit {
 
   @ViewChild('selectFriend') selectFriend: MatSelectionList;
 
+  @ViewChild('selectGoogleDriveFolder') selectFolder: MatSelectionList;
+
   public meeting: Meeting;
   public meetingParticipantFriends: User[] = [];
   public meetingParticipantEmails = '';
 
 
-  public pickedFolders: string[] = [];
+  public pickedFolders: { resId: string, name: string }[] = [];
 
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
@@ -99,6 +104,24 @@ export class MeetingEditComponent implements OnInit {
             this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
           });
         break;
+      case 2:
+        this.queryingAction = 'Updating resources';
+        this.meetingService.saveMeeting({
+          id: this.meeting.id,
+          mainResources: {
+            googleDriveResources: this.pickedFolders.map(folder => {
+              return {resId: folder.resId, sharing: 'pre_meeting'};
+            })
+          }
+        } as Meeting).pipe(mapTo(this.updateMeeting(this.meeting.id))).subscribe(
+          () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
+          }, () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
+          });
+        break;
       case 3:
         this.queryingAction = 'Updating planned start time';
         this.meetingService.saveMeeting({
@@ -112,6 +135,22 @@ export class MeetingEditComponent implements OnInit {
             this.queryingAction = null;
             this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
           });
+    }
+  }
+
+
+  public deleteSelectedFolders() {
+    const deletingFoldersId = this.selectFolder.selectedOptions.selected.map(opt => opt.value.resId);
+    if (deletingFoldersId.length === 0) {
+      this.dialog.open(ConfirmationDialogComponent, {
+        data: {title: 'Confirmation', content: 'Delete all Folders?'}
+      }).afterClosed().subscribe(res => {
+        this.pickedFolders = res ? [] : this.pickedFolders;
+      });
+
+    } else {
+      this.pickedFolders = this.pickedFolders
+        .filter(folder => deletingFoldersId.indexOf(folder.resId) === -1);
     }
   }
 
@@ -165,6 +204,8 @@ export class MeetingEditComponent implements OnInit {
           .filter(invitation => invitation.email != null)
           .map(invitation => invitation.email).join('\n');
 
+        this.updateFolder();
+
         this.queryingAction = null;
         this.meeting = meeting;
       },
@@ -176,18 +217,58 @@ export class MeetingEditComponent implements OnInit {
     );
   }
 
+  public updateFolder() {
+    this.pickedFolders = [];
+    this.googleOauthService.gapiInit().subscribe(() => {
+    }, err => {
+    }, () => {
+      this.googleOauthService.doRequest<any>(
+        (token) => {
+          return from(this.meeting.resources.main.googleDriveResources)
+            .pipe(
+              map(resource => resource.resId),
+              tap((s) => console.log(s)),
+              flatMap(id => this.getFileById(id)),
+              tap((s) => console.log(s))
+            );
+        }
+      ).subscribe(
+        res => {
+          this.pickedFolders.push({
+            resId: res.id,
+            name: res.title
+          });
+        }
+      );
+    });
+  }
+
+  public getFileById(id: string): Observable<any> {
+    return Observable.create((observer) => {
+      gapi.client.drive.files.get({'fileId': id}).execute(resp => {
+        observer.next(resp);
+        observer.complete();
+      });
+    });
+  }
+
   addFolder() {
     this.googleOauthService.gapiInit().subscribe(() => {
-      console.log('ok');
     }, err => {
       console.log('e ' + err);
     }, () => {
-      console.log('c');
       this.googleOauthService.doRequest<any>(
         (token) => this.googleOauthService.test(token),
       ).subscribe(
         (res) => {
-          res.docs.map(doc => doc.name).forEach((doc) => this.pickedFolders.push(doc));
+          res.docs.forEach((doc) => {
+            if (this.pickedFolders.map(folder => folder.resId).indexOf(doc.id) == -1) {
+              this.pickedFolders.push({
+                resId: doc.id,
+                name: doc.name
+              });
+            }
+          });
         }, err => console.log(err)
       );
 
