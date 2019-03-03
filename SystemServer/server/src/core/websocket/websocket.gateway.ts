@@ -137,7 +137,8 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     ) {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
-        const checkAccessTokenValid$ = await of(accessToken)
+        // checkAccessTokenValid
+        await of(accessToken)
             .pipe(
                 map(token => this.deviceService.verifyToken(token)),
                 catchError(e => {

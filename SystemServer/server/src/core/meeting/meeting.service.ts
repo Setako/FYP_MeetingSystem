@@ -403,7 +403,9 @@ export class MeetingService {
         );
 
         edited.resources.main =
-            editMeetingDto.mainResources || edited.resources.main;
+            editMeetingDto.mainResources ||
+            (editMeetingDto.resources && editMeetingDto.resources.main) ||
+            edited.resources.main;
 
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
