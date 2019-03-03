@@ -18,7 +18,7 @@ import { WsExceptionFilter } from '../shared/ws-exception.filter';
 import { WsValidationPipe } from '../shared/ws-validation.pipe';
 import { ClientOnlineDto } from './dto/client-online.dto';
 
-@UseFilters(WsExceptionFilter)
+@UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
 @WebSocketGateway()
 export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
@@ -39,7 +39,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     handleDisconnect(client: Socket) {}
 
     setupSocketClinet() {
-        this.ipcService.getMessage('ready-to-connect').subscribe(() => {
+        this.ipcService.getMessage('ready-to-connect-socket').subscribe(() => {
             this.socketClient = io(
                 'https://conference-commander.herokuapp.com',
             );
@@ -49,6 +49,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                     deviceId: this.ipcService.electronGlobal.device.id,
                     secret: this.ipcService.electronGlobal.device.secret,
                 });
+            });
+
+            this.socketClient.on('exception', (data: any) => {
+                this.ipcService.sendMessage('server-exception', data);
             });
 
             this.socketClient.on('device-access-token', (data: any) => {
@@ -73,7 +77,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             });
 
             this.socketClient.on('server-attendance-updated', (data: any) => {
-                this.ipcService.sendMessage("attendance-updated'", data);
+                this.ipcService.sendMessage('attendance-updated', data);
             });
 
             this.socketClient.on('client-end-meeting', () => {

@@ -4,6 +4,7 @@ import { ControlIpcListenerService } from './services/control/control-ipc-listen
 import { WindowStackService } from './services/window/window-stack.service';
 import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
 import { ElectronService } from 'ngx-electron';
+import { IPCService } from './services/common/ipc.service';
 
 declare let electron: any;
 
@@ -31,14 +32,70 @@ export class AppComponent implements OnInit {
         this.windowStackService.registerWindowsContainer(this.viewContainerRef);
         this.windowStackService.showWindow(SlideShowPlayerComponent, {
             url:
-                'https://docs.google.com/presentation/d/1w1o063S3-pA-YVJrflBQ9sQeyjU3UPLnajhru5UbVIw/present',
+                'https://docs.google.com/presentation/d/1j77Ah9lFS_KlmWejBTJRimDPgy87W2s7xuApJ4lv9lg/present',
         });
 
-        this.electronService.ipcRenderer.on('show-token', (event, arg) => {
-            console.log(arg);
+        // 1. tell socket that it is ready to connect
+        this.electronService.ipcRenderer.send('ready-to-connect-socket');
+
+        // 2. list of event
+        this.electronService.ipcRenderer.on(
+            'show-token',
+            (event: any, data: { accessToken: string }) => {
+                console.log('show-token', data);
+            },
+        );
+
+        this.electronService.ipcRenderer.on(
+            'take-over',
+            (event: any, data: { controlToken: string; meetingId: string }) => {
+                console.log('take-over', data);
+            },
+        );
+
+        this.electronService.ipcRenderer.on(
+            'attendance-updated',
+            (
+                event: any,
+                data: {
+                    attendance: {
+                        user: {
+                            username: string;
+                            email: string;
+                            displayName: string;
+                        };
+                        priority?: number;
+                        arrivalTime?: number;
+                        status?: string;
+                        permission?: {
+                            accessShareResources: boolean;
+                            accessRecordedVoice: boolean;
+                            accessTextRecordOfSpeech: boolean;
+                            accessAttendanceRecord: boolean;
+                            makeMeetingMinute: boolean;
+                            reviewMeetingMinute: boolean;
+                        };
+                    }[];
+                },
+            ) => {
+                console.log('attendance-updated', data);
+            },
+        );
+
+        this.electronService.ipcRenderer.on('server-disconnected', () => {
+            console.log('server-disconnected');
         });
 
-        this.electronService.ipcRenderer.send('ready-to-connect');
+        this.electronService.ipcRenderer.on('server-exception', (data: any) => {
+            console.log('server-exception', data);
+        });
+
+        this.electronService.ipcRenderer.on(
+            'send-action',
+            (event: any, data: any) => {
+                console.log('send-action', data);
+            },
+        );
     }
 
     openSnackBar(message: any) {

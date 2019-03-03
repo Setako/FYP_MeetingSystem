@@ -55,6 +55,9 @@ app.on('ready', () => {
             width: 99999,
             height: 99999,
             frame: false,
+            webPreferences: {
+                nodeIntegration: true,
+            },
         });
 
         rendererWindow.loadURL(loadURL);
