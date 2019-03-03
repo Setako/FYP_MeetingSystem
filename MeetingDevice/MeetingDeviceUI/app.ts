@@ -23,7 +23,9 @@ const loadURL = commandInput.url
           slashes: true,
       });
 
-const socketServerPort = commandInput.port ? parseInt(commandInput.port) : 3000;
+const socketServerPort = commandInput.port
+    ? parseInt(commandInput.port, 10)
+    : 3000;
 
 // @ts-ignore
 global.device = {

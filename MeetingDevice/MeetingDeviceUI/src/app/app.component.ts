@@ -5,6 +5,7 @@ import { WindowStackService } from './services/window/window-stack.service';
 import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
 import { ElectronService } from 'ngx-electron';
 import { IPCService } from './services/common/ipc.service';
+import { RobotService, NormalKeys } from './services/robot.service';
 
 declare let electron: any;
 
@@ -25,6 +26,7 @@ export class AppComponent implements OnInit {
         private controlIPCListener: ControlIpcListenerService,
         private windowStackService: WindowStackService,
         private readonly electronService: ElectronService,
+        private readonly robotService: RobotService,
     ) {}
 
     ngOnInit() {
@@ -43,6 +45,18 @@ export class AppComponent implements OnInit {
             'show-token',
             (event: any, data: { accessToken: string }) => {
                 console.log('show-token', data);
+
+                // 'console.log'
+                //     .split('')
+                //     .forEach(item => this.robotService.keyDown(item));
+
+                // this.robotService.keyDown('9', [NormalKeys.SHIFT]);
+                // "'hello world'"
+                //     .split('')
+                //     .forEach(item => this.robotService.keyDown(item));
+                // this.robotService.keyDown('0', [NormalKeys.SHIFT]);
+
+                // this.robotService.keyDown(NormalKeys.ENTER);
             },
         );
 
