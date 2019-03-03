@@ -85,7 +85,6 @@ export class GoogleOauthService {
   test(token: GoogleAccessToken) {
     return Observable.create(
       (observer) => {
-        console.log('created');
         // gapi.client.drive.files.list({
         //   'pageSize': 10,
         //   'fields': 'nextPageToken, files(id, name)'
@@ -124,7 +123,6 @@ export class GoogleOauthService {
         picker.setVisible(true);
       }
     );
-
   }
 
   public doRequest<T>(func: (token: GoogleAccessToken) => Observable<T>): Observable<T> {

@@ -30,6 +30,8 @@ export interface Meeting {
   // optional: ownername
   owner?: User;
   invitations: MeetingInvitation[];
+  resources: MeetingResources;
+  mainResources?: Resources;
 }
 
 export interface MeetingInvitation {
@@ -47,6 +49,19 @@ export interface MeetingAttendance {
   status?: MeetingAttendanceStatus;
   permission: AccessPostMeetingPermission;
   googleCalendarEventId?: string;
+}
+
+export interface MeetingResources {
+  main: Resources;
+  user: Map<string, Resources>;
+  group: Map<string, Resources>;
+}
+
+export interface Resources {
+  googleDriveResources: {
+    resId: string,
+    sharing: string
+  }[];
 }
 
 export class AccessPostMeetingPermission {
