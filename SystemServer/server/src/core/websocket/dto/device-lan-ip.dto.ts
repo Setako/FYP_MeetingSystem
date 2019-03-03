@@ -1,7 +1,7 @@
-import { IsIP, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class DeviceLanIpDto {
-    @IsIP()
+    @IsString()
     readonly lanIP: string;
 
     @IsString()
