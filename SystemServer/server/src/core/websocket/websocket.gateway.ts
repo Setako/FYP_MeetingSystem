@@ -137,15 +137,17 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     ) {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
-        const checkAccessTokenValid$ = of(accessToken).pipe(
-            map(token => this.deviceService.verifyToken(token)),
-            catchError(e => {
-                const message = e.message
-                    .replace('token', 'state')
-                    .replace('jwt', 'accessoken');
-                throw new WsException(message);
-            }),
-        );
+        const checkAccessTokenValid$ = await of(accessToken)
+            .pipe(
+                map(token => this.deviceService.verifyToken(token)),
+                catchError(e => {
+                    const message = e.message
+                        .replace('token', 'state')
+                        .replace('jwt', 'accessoken');
+                    throw new WsException(message);
+                }),
+            )
+            .toPromise();
 
         const deviceId = this.deviceService.decodeToken(accessToken);
 
@@ -189,7 +191,6 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         );
 
         await from([
-            checkAccessTokenValid$,
             updateDevice$,
             deviceTakeOver$,
             joinRoom$,
