@@ -77,6 +77,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                         item.status = MeetingStatus.Ended;
                         return item.save();
                     }),
+                    tap(item => {
+                        this.server
+                            .to(`meeting:${item.id}_device`)
+                            .emit('client-end-meeting');
+                    }),
                 )
                 .subscribe();
         }
@@ -300,6 +305,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             );
         }
 
+        client
+            .to(`meeting:${meeting.id}_device`)
+            .emit('server-attendance-updated', '');
+
         return from(
             this.meetingService.edit(meeting.id, {
                 realEndTime: new Date().toISOString(),
@@ -314,6 +323,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                     realEndTime,
                 },
             })),
+            tap(() => {
+                client
+                    .to(`meeting:${meeting.id}_device`)
+                    .emit('client-end-meeting');
+            }),
         );
     }
 
