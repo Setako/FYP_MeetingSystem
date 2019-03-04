@@ -144,7 +144,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     ) {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
-        if (this.accessTokenDeviceIdMap.has(accessToken)) {
+        if (!this.accessTokenDeviceIdMap.has(accessToken)) {
             throw new WsException('access token does not match any device');
         }
 
