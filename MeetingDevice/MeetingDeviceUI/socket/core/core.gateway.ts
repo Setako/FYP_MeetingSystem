@@ -30,6 +30,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
     holdingMeetingId: string;
 
+    holdingMeeting: any;
+
     constructor(private readonly ipcService: CoreService) {
         this.setupSocketClinet();
     }
@@ -63,13 +65,19 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                 this.controlToken = uuidv4();
                 this.holdingMeetingId = meetingId;
 
+                this.socketClient.emit('device-get-meeting');
+            });
+
+            this.socketClient.on('device-get-meeting-reply', (meeting: any) => {
+                this.holdingMeeting = meeting;
+
                 this.ipcService.sendMessage('take-over', {
                     controlToken: this.controlToken,
-                    meetingId: this.holdingMeetingId,
+                    meeting,
                 });
 
                 this.socketClient.emit('device-lan-ip', {
-                    lanIP: `${ip.address}:${
+                    lanIP: `${ip.address()}:${
                         this.ipcService.electronGlobal.socket.port
                     }`,
                     controlToken: this.controlToken,
@@ -83,6 +91,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             this.socketClient.on('client-end-meeting', () => {
                 this.socketClient.disconnect();
                 this.socketClient.connect();
+
+                this.holdingMeeting = null;
                 this.holdingMeetingId = null;
                 this.controlToken = uuidv4();
 
@@ -91,6 +101,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
             this.socketClient.on('disconnect', () => {
                 this.socketClient.connect();
+
+                this.holdingMeeting = null;
                 this.holdingMeetingId = null;
                 this.controlToken = uuidv4();
 
@@ -107,6 +119,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         client.request.controlToken = this.controlToken;
+
+        return {
+            event: 'client-online-success',
+        };
     }
 
     @UseFilters(new WsExceptionFilter('send-action'))
@@ -119,5 +135,9 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         this.ipcService.sendMessage('send-action', data);
+
+        return {
+            event: 'send-action-success',
+        };
     }
 }

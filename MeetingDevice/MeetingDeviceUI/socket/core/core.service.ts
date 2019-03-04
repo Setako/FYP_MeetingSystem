@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IpcMain, WebContents, ipcMain, Event } from 'electron';
+import { IpcMain, WebContents, Event } from 'electron';
 import { fromEvent, Observable } from 'rxjs';
 
 @Injectable()
@@ -15,6 +15,6 @@ export class CoreService {
     }
 
     getMessage(channel: string): Observable<[Event, any]> {
-        return fromEvent(ipcMain, channel);
+        return fromEvent(this.ipcMain, channel);
     }
 }
