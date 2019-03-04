@@ -119,6 +119,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         client.request.controlToken = this.controlToken;
+
+        return {
+            event: 'client-online-success',
+        };
     }
 
     @UseFilters(new WsExceptionFilter('send-action'))
@@ -131,5 +135,9 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         this.ipcService.sendMessage('send-action', data);
+
+        return {
+            event: 'send-action-success',
+        };
     }
 }
