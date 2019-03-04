@@ -396,7 +396,6 @@ export class MeetingService {
             'location',
             'language',
             'priority',
-            'status',
             'generalPermission',
         ].forEach(
             item => (edited[item] = editMeetingDto[item] || edited[item]),

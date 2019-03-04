@@ -4,7 +4,6 @@ import { ModelType } from 'typegoose';
 import { Device } from './device.model';
 import { from, of, identity } from 'rxjs';
 import { flatMap, map } from 'rxjs/operators';
-import { JwtService } from '@nestjs/jwt';
 import { DeviceSecretDto } from './dto/device-secret.dto';
 import { Types } from 'mongoose';
 import { skipFalsy } from '@commander/shared/operator/function';
@@ -13,7 +12,6 @@ import { skipFalsy } from '@commander/shared/operator/function';
 export class DeviceService {
     constructor(
         @InjectModel(Device) private readonly deviceModel: ModelType<Device>,
-        private readonly jwtService: JwtService,
     ) {}
 
     getById(id: string) {
@@ -61,18 +59,6 @@ export class DeviceService {
                 flatMap(device => device.remove()),
             )
             .toPromise();
-    }
-
-    signToken(id: string) {
-        return this.jwtService.sign({ deviceId: id });
-    }
-
-    verifyToken(token: string) {
-        return this.jwtService.verify(token);
-    }
-
-    decodeToken(token: string): string {
-        return (this.jwtService.decode(token) as any).deviceId;
     }
 
     isDeviceSecretAvailable(id: string, secret: string) {
