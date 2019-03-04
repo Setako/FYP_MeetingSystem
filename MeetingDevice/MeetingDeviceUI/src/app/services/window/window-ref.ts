@@ -1,11 +1,12 @@
-import { ComponentRef } from '@angular/core';
+import {ComponentRef} from '@angular/core';
+import {WindowComponent} from '../../shared/components/window/window.component';
 
 export const WINDOW_DATA = 'windata';
 
 export class WindowRef<T> {
-    readonly componentRef: ComponentRef<T>;
+    readonly componentRef: ComponentRef<WindowComponent<T>>;
 
-    constructor(componentRef: ComponentRef<T>) {
+    constructor(componentRef: ComponentRef<WindowComponent<T>>) {
         this.componentRef = componentRef;
     }
 

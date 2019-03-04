@@ -1,28 +1,28 @@
-import {
-    ComponentFactoryResolver,
-    Injectable,
-    Injector,
-    Type,
-    ViewContainerRef,
-} from '@angular/core';
-import { WINDOW_DATA, WindowRef } from './WindowRef';
+import {ApplicationRef, ChangeDetectorRef, ComponentFactoryResolver, ComponentRef, Injectable, Injector,} from '@angular/core';
+import {WINDOW_DATA, WindowRef} from './window-ref';
+import {WindowData} from './window-data';
+import {WindowComponent} from '../../shared/components/window/window.component';
+import {AppComponent} from '../../app.component';
 
 @Injectable({
     providedIn: 'root',
 })
 export class WindowStackService {
-    private windowComponentPool: WindowRef<any>[] = [];
-    private windowComponentsContainer: ViewContainerRef;
+    private windowComponentStack: WindowRef<any>[] = [];
+    private windowComponentsContainer: AppComponent;
 
-    constructor(private resolver: ComponentFactoryResolver) {}
-
-    public registerWindowsContainer(viewContainerRef: ViewContainerRef) {
-        this.windowComponentsContainer = viewContainerRef;
+    constructor(private resolver: ComponentFactoryResolver) {
     }
 
-    showWindow<T>(type: Type<T>, data: any): WindowRef<T> {
-        this.windowComponentPool.forEach(ref => ref.placeBehind());
-        const factory = this.resolver.resolveComponentFactory(type);
+    public registerWindowsContainer(app: AppComponent) {
+        this.windowComponentsContainer = app;
+    }
+
+    showWindow<T>(data: WindowData<T>): WindowRef<T> {
+        console.log('show' + data.type.name);
+        this.windowComponentStack.forEach(ref => ref.placeBehind());
+        const factory = this.resolver.resolveComponentFactory(WindowComponent);
+
         const injector = Injector.create({
             providers: [
                 {
@@ -31,13 +31,29 @@ export class WindowStackService {
                 },
             ],
         });
-        const compRef = this.windowComponentsContainer.createComponent(
+        const windowCompRef: ComponentRef<WindowComponent<T>> = this.windowComponentsContainer.createComponent(
             factory,
             0,
-            injector,
-        );
-        const windowRef = new WindowRef(compRef);
+            injector
+        ) as ComponentRef<WindowComponent<T>>;
+
+        const windowRef = new WindowRef<T>(windowCompRef);
         windowRef.placeTop();
+        this.windowComponentStack.push(windowRef);
         return windowRef;
+    }
+
+    closeCurrentWindow() {
+        this.windowComponentStack.pop().close();
+    }
+
+    getCurrentWindow() {
+        return this.windowComponentStack.length > 0 ? this.windowComponentStack[this.windowComponentStack.length - 1] : null;
+    }
+
+    closeAllWindow() {
+        while (this.windowComponentStack.length > 0) {
+            this.closeCurrentWindow();
+        }
     }
 }

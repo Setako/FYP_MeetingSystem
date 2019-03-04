@@ -1,6 +1,7 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { ControllableComponent } from '../../controllable/controllable.component';
-import { WINDOW_DATA } from '../../../../services/window/WindowRef';
+import {Component, Inject, OnInit} from '@angular/core';
+import {ControllableComponent} from '../../controllable/controllable.component';
+import {WINDOW_DATA} from '../../../../services/window/window-ref';
+import {WindowData} from '../../../../services/window/window-data';
 
 @Component({
     selector: 'app-slide-show-player',
@@ -14,12 +15,12 @@ export class SlideShowPlayerComponent extends ControllableComponent
 
     slideUrl: string;
 
-    constructor(@Inject(WINDOW_DATA) data: any) {
+    constructor(@Inject(WINDOW_DATA) data: WindowData<SlideShowPlayerComponent>) {
         super();
-        this.slideUrl = data.url;
+        this.slideUrl = data.data;
     }
 
-    remoteControl(action: number, data: object) {
+    remoteControl(action: number, data: any) {
         switch (action) {
             case SlideShowPlayerComponent.REMOTE_ACTION_NEXT_PAGE:
                 break;
@@ -28,5 +29,6 @@ export class SlideShowPlayerComponent extends ControllableComponent
         }
     }
 
-    ngOnInit() {}
+    ngOnInit() {
+    }
 }

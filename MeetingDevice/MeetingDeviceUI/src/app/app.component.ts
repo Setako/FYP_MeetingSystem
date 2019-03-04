@@ -1,11 +1,22 @@
-import { Component, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
-import { MatSnackBar } from '@angular/material';
-import { ControlIpcListenerService } from './services/control/control-ipc-listener.service';
-import { WindowStackService } from './services/window/window-stack.service';
-import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
-import { ElectronService } from 'ngx-electron';
-import { IPCService } from './services/common/ipc.service';
-import { RobotService, NormalKeys } from './services/robot.service';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ComponentFactory,
+    ComponentRef,
+    Injector,
+    OnInit,
+    ViewChild,
+    ViewContainerRef
+} from '@angular/core';
+import {MatSnackBar} from '@angular/material';
+import {ControlIpcListenerService} from './services/control/control-ipc-listener.service';
+import {WindowStackService} from './services/window/window-stack.service';
+import {ElectronService} from 'ngx-electron';
+import {RobotService} from './services/robot.service';
+import {IPCService} from './services/common/ipc.service';
+import {MeetingStateHolderService} from './services/interact/meeting-state-holder.service';
+import {SlideShowPlayerComponent} from './shared/components/resource-player/slide-show-player/slide-show-player.component';
 
 declare let electron: any;
 
@@ -15,36 +26,43 @@ declare let electron: any;
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css'],
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
     title = 'MeetingDeviceUI';
 
-    @ViewChild('windowContainer', { read: ViewContainerRef })
+    @ViewChild('windowContainer', {read: ViewContainerRef})
     viewContainerRef: ViewContainerRef;
 
     constructor(
+        private cdr: ChangeDetectorRef,
         public snackBar: MatSnackBar,
         private controlIPCListener: ControlIpcListenerService,
         private windowStackService: WindowStackService,
         private readonly electronService: ElectronService,
         private readonly robotService: RobotService,
-    ) {}
+        private ipcService: IPCService,
+        private meetingStateHolderService: MeetingStateHolderService
+    ) {
+        ipcService.addCdr(cdr);
+    }
+
+    test() {
+        this.windowStackService.showWindow({
+            type: SlideShowPlayerComponent,
+            data: 'https://docs.google.com/presentation/d/1j77Ah9lFS_KlmWejBTJRimDPgy87W2s7xuApJ4lv9lg/present',
+        });
+    }
 
     ngOnInit() {
         this.controlIPCListener.init();
-        this.windowStackService.registerWindowsContainer(this.viewContainerRef);
-        this.windowStackService.showWindow(SlideShowPlayerComponent, {
-            url:
-                'https://docs.google.com/presentation/d/1j77Ah9lFS_KlmWejBTJRimDPgy87W2s7xuApJ4lv9lg/present',
-        });
+        this.windowStackService.registerWindowsContainer(this);
 
-        // 1. tell socket that it is ready to connect
-        this.electronService.ipcRenderer.send('ready-to-connect-socket');
 
         // 2. list of event
         this.electronService.ipcRenderer.on(
             'show-token',
             (event: any, data: { accessToken: string }) => {
                 console.log('show-token', data);
+
 
                 // 'console.log'
                 //     .split('')
@@ -100,10 +118,6 @@ export class AppComponent implements OnInit {
             console.log('server-disconnected');
         });
 
-        this.electronService.ipcRenderer.on('server-exception', (data: any) => {
-            console.log('server-exception', data);
-        });
-
         this.electronService.ipcRenderer.on(
             'send-action',
             (event: any, data: any) => {
@@ -111,6 +125,15 @@ export class AppComponent implements OnInit {
             },
         );
     }
+
+    createComponent<C>(componentFactory: ComponentFactory<C>, index?: number, injector?: Injector): ComponentRef<C> {
+        return this.viewContainerRef.createComponent(componentFactory, index, injector);
+    }
+
+    ngAfterViewInit(): void {
+        this.ipcService.send('ready-to-connect-socket');
+    }
+
 
     openSnackBar(message: any) {
         // this.snackBar.open(message, null, {duration: 5000});
