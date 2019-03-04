@@ -61,8 +61,8 @@ export class WeekFreetimeComponent implements OnInit {
 
   update() {
     if (this.meeting != null) {
-      const start = moment(this.viewDate).isoWeekday(0).hour(0).minute(0).second(0).toDate();
-      const end = moment(this.viewDate).isoWeekday(6).hour(23).minute(59).second(59).toDate();
+      const start = moment(this.viewDate).startOf('week').hour(0).minute(0).second(0).toDate();
+      const end = moment(this.viewDate).endOf('week').minute(59).second(59).toDate();
 
       if (this.queryingSubscription != null) {
         this.queryingSubscription.unsubscribe();

@@ -72,7 +72,7 @@ export class MeetingEditComponent implements OnInit {
           this.meeting.title = this.basicForm.value.title;
           this.meeting.length = this.basicForm.value.length * Millisecond.Hour;
           this.meeting.type = this.basicForm.value.type;
-          this.meeting.priority = parseInt(this.basicForm.value.title, 10);
+          this.meeting.priority = parseInt(this.basicForm.value.priority, 10);
           this.meeting.location = this.basicForm.value.location;
           this.meeting.description = this.basicForm.value.description;
 
