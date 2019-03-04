@@ -32,7 +32,7 @@ import { InstanceType } from 'typegoose';
 import { Meeting, MeetingStatus } from '../meeting/meeting.model';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { UserService } from '../user/user.service';
-import { populate } from '@commander/shared/operator/document';
+import { populate, documentToPlain } from '@commander/shared/operator/document';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GetMeetingDto } from '../meeting/dto/get-meeting.dto';
 import { User } from '../user/user.model';
@@ -211,6 +211,34 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             deviceLanIP: lanIP,
             controlToken,
         });
+    }
+
+    @UseGuards(WsDeviceHoldMeetingGuard)
+    @UseFilters(new WsExceptionFilter('device-get-meeting'))
+    @SubscribeMessage('device-get-meeting')
+    onDeviceGetMeeting(client: Socket) {
+        const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
+
+        return this.meetingService.getById(meeting.id).pipe(
+            documentToPlain(GetMeetingDto),
+            map(updatedMeeting => ({
+                event: 'device-get-meeting-reply',
+                data: updatedMeeting,
+            })),
+        );
+    }
+
+    @UseGuards(WsMeetingOwnerGuard)
+    @UseGuards(WsAuthGuard)
+    @UseFilters(new WsExceptionFilter('client-get-meeting'))
+    @SubscribeMessage('client-get-meeting')
+    onClientGetMeeting(client: Socket) {
+        return this.onDeviceGetMeeting(client).pipe(
+            map(item => ({
+                ...item,
+                event: 'client-get-meeting-reply',
+            })),
+        );
     }
 
     @UseGuards(WsMeetingOwnerGuard)
