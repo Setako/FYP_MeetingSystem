@@ -1,29 +1,9 @@
-import { Module, DynamicModule } from '@nestjs/common';
-import { IpcMain, WebContents } from 'electron';
-import { CoreService } from './core.service';
+import { Module } from '@nestjs/common';
+import { IpcService } from './ipc.service';
 import { CoreGateway } from './core.gateway';
+import { ConfigService } from './config.service';
 
 @Module({
-    providers: [CoreService, CoreGateway],
+    providers: [CoreGateway, IpcService, ConfigService],
 })
-export class CoreModule {
-    static forRoot(
-        ipcMain: IpcMain,
-        webContents: WebContents,
-        global: any,
-    ): DynamicModule {
-        // const coreService = new CoreService(ipcMain, webContents, global);
-        const coreService = new CoreService();
-        return {
-            module: CoreModule,
-            providers: [
-                {
-                    provide: CoreService,
-                    useValue: coreService,
-                },
-                CoreGateway,
-            ],
-            exports: [CoreService],
-        };
-    }
-}
+export class CoreModule {}

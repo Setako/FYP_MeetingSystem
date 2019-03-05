@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 config();
 
-import { app, BrowserWindow, protocol, ipcMain } from 'electron';
+import { app, BrowserWindow, protocol } from 'electron';
 import * as commander from 'commander';
 import * as url from 'url';
 import * as path from 'path';
@@ -43,16 +43,12 @@ if (global.device.id == null || global.device.secret == null) {
     throw new Error('Missing device id or secret!');
 }
 
-let rendererWindow = null;
+let rendererWindow: BrowserWindow;
 app.disableHardwareAcceleration();
 app.on('ready', () => {
     console.log(loadURL);
     console.log('OK');
     protocol.unregisterProtocol('', () => {
-        const screen = require('electron').screen;
-        const display = screen.getPrimaryDisplay();
-        const area = display.workArea;
-
         rendererWindow = new BrowserWindow({
             width: 99999,
             height: 99999,
@@ -65,7 +61,7 @@ app.on('ready', () => {
         rendererWindow.loadURL(loadURL);
 
         if (commandInput.dev) {
-            rendererWindow.toggleDevTools();
+            rendererWindow.webContents.toggleDevTools();
         } else {
             rendererWindow.setVisibleOnAllWorkspaces(true);
             rendererWindow.setAlwaysOnTop(true);
@@ -76,12 +72,7 @@ app.on('ready', () => {
         // Prevent automatic maximize and resize
         rendererWindow.setResizable(false);
         rendererWindow.setMaximizable(false);
-        module.exports.rendererWindow = rendererWindow;
-        startNest(
-            socketServerPort,
-            ipcMain,
-            rendererWindow.webContents,
-            global,
-        );
+
+        startNest(socketServerPort);
     });
 });

@@ -24,7 +24,7 @@ export class MeetingStateHolderService {
         );
         ipc.on('server-disconnected', () => this.disconnected());
 
-        ipc.on('server-exception', (data: any) => {
+        ipc.on('server-exception', (event, data: any) => {
             snackBar.open('Server exception catched', 'Dismiss', {
                 duration: 4000,
             });
