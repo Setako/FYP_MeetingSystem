@@ -36,12 +36,16 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         this.setupSocketClinet();
     }
 
-    afterInit(_server: Socket) {}
+    afterInit(_server: Socket) {
+        // console.log('hello')
+    }
 
     handleDisconnect(client: Socket) {}
 
     setupSocketClinet() {
-        this.ipcService.getMessage('ready-to-connect-socket').subscribe(() => {
+        this.ipcService.getMessage('ready-to-connect-socket').subscribe((event) => {
+            this.ipcService.webContents = event;
+
             this.socketClient = io(
                 'https://conference-commander.herokuapp.com',
             );

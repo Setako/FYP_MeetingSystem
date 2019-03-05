@@ -1,14 +1,22 @@
-import { Injectable } from '@nestjs/common';
-import { IpcMain, WebContents, Event } from 'electron';
+import { Injectable, Optional } from '@nestjs/common';
+import { IpcMain, WebContents, Event, ipcMain as main } from 'electron';
 import { fromEvent, Observable } from 'rxjs';
 
 @Injectable()
 export class CoreService {
-    constructor(
-        public readonly ipcMain: IpcMain,
-        public readonly webContents: WebContents,
-        public readonly electronGlobal: any,
-    ) {}
+    ipcMain = main;
+
+    webContents: any;
+
+    electronGlobal:any = global;
+
+    constructor() // @Optional()
+    // public readonly ipcMain: IpcMain = main,
+    // @Optional()
+    // public webContents: WebContents,
+    // @Optional()
+    // public readonly electronGlobal: any,
+    {}
 
     sendMessage(channel: string, ...args: any[]) {
         this.webContents.send(channel, ...args);

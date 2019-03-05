@@ -9,9 +9,16 @@ export async function startNest(
     webContents: WebContents,
     global: any,
 ) {
-    const app = await NestFactory.create(AppModule, {
-        import: [CoreModule.forRoot(ipcMain, webContents, global)],
+    const app = await NestFactory.create(AppModule);
+
+    app.enableCors();
+
+    app.use((req, res, next) => {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Accept');
+        next();
     });
 
-    app.listen(port);
+    await app.listen(port);
 }

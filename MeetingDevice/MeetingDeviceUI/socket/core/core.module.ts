@@ -4,7 +4,7 @@ import { CoreService } from './core.service';
 import { CoreGateway } from './core.gateway';
 
 @Module({
-    providers: [CoreService],
+    providers: [CoreService, CoreGateway],
 })
 export class CoreModule {
     static forRoot(
@@ -12,7 +12,8 @@ export class CoreModule {
         webContents: WebContents,
         global: any,
     ): DynamicModule {
-        const coreService = new CoreService(ipcMain, webContents, global);
+        // const coreService = new CoreService(ipcMain, webContents, global);
+        const coreService = new CoreService();
         return {
             module: CoreModule,
             providers: [
@@ -20,10 +21,7 @@ export class CoreModule {
                     provide: CoreService,
                     useValue: coreService,
                 },
-                {
-                    provide: CoreGateway,
-                    useValue: new CoreGateway(coreService),
-                },
+                CoreGateway
             ],
             exports: [CoreService],
         };
