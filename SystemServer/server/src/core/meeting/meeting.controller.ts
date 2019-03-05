@@ -783,8 +783,64 @@ export class MeetingController {
 
     @Put(':id/calendar')
     @UseGuards(MeetingGuard)
-    async markOrUnMarkCalendar() {
-        // Todo: mark the calendar
+    async markOrUnMarkCalendar(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+    ) {
+        // Todo: [test] mark the vent on calendar
+
+        if (!user.googleRefreshToken) {
+            throw new BadRequestException(
+                'user should first connect to Google',
+            );
+        }
+
+        if (!user.setting.markEventOnCalendarId) {
+            throw new BadRequestException(
+                'user should first set up a calendar to mark events',
+            );
+        }
+
+        const meeting = await this.meetingService.getById(id).toPromise();
+
+        const attendee = meeting.attendance.find(item =>
+            Types.ObjectId(user.id).equals(item.user as any),
+        );
+
+        if (!attendee) {
+            throw new BadRequestException(
+                'user should first accept the meeting invitation',
+            );
+        }
+
+        if (attendee.googleCalendarEventId) {
+            await this.googleCalendarService
+                .unmarkEventOnCalendar(
+                    user.googleRefreshToken,
+                    attendee.googleCalendarEventId,
+                )
+                .toPromise();
+
+            attendee.googleCalendarEventId = undefined;
+
+            await meeting.save();
+            return;
+        }
+
+        const event = this.googleCalendarService.generateEventFromMeeting(
+            meeting,
+        );
+
+        const markedEvent = await this.googleCalendarService
+            .markEventOnCalendar(
+                user.googleRefreshToken,
+                user.setting.markEventOnCalendarId,
+                event,
+            )
+            .toPromise();
+
+        attendee.googleCalendarEventId = markedEvent.data.id;
+        await meeting.save();
     }
 
     @Put(':id/attendance/:attendee')

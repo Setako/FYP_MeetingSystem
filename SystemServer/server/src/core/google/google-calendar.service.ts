@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { google } from 'googleapis';
-import { defer, empty } from 'rxjs';
+import { google, calendar_v3 } from 'googleapis';
+import { defer, empty, of } from 'rxjs';
 import { expand, flatMap } from 'rxjs/operators';
+import { InstanceType } from 'typegoose';
+import { Meeting } from '../meeting/meeting.model';
 
 @Injectable()
 export class GoogleCalendarService {
@@ -49,5 +51,53 @@ export class GoogleCalendarService {
             ),
             flatMap(item => item.data.items),
         );
+    }
+
+    markEventOnCalendar(
+        refeshToken: string,
+        calendarId: string,
+        event: calendar_v3.Schema$Event,
+    ) {
+        return of(this.getCalendar(refeshToken)).pipe(
+            flatMap(calendar =>
+                calendar.events.insert({
+                    calendarId,
+                    requestBody: event,
+                }),
+            ),
+        );
+    }
+
+    unmarkEventOnCalendar(refeshToken: string, eventId: string) {
+        return of(this.getCalendar(refeshToken)).pipe(
+            flatMap(calendar =>
+                calendar.events.delete({
+                    eventId,
+                }),
+            ),
+        );
+    }
+
+    generateEventFromMeeting(
+        meeting: InstanceType<Meeting>,
+    ): calendar_v3.Schema$Event {
+        return {
+            summary: meeting.title,
+            location: meeting.location,
+            description: meeting.description,
+            start: {
+                dateTime: meeting.plannedStartTime.toISOString(),
+            },
+            end: {
+                dateTime: meeting.plannedEndTime.toISOString(),
+            },
+            reminders: {
+                useDefault: false,
+                overrides: [
+                    { method: 'popup', minutes: 30 },
+                    { method: 'popup', minutes: 60 },
+                ],
+            },
+        };
     }
 }
