@@ -7,27 +7,29 @@ import {
     Injector,
     OnInit,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef,
 } from '@angular/core';
-import {WINDOW_DATA} from '../../../services/window/window-ref';
-import {WindowData} from '../../../services/window/window-data';
+import { WINDOW_DATA } from '../../../services/window/window-ref';
+import { WindowData } from '../../../services/window/window-data';
 
 @Component({
     selector: 'app-window',
     templateUrl: './window.component.html',
-    styleUrls: ['./window.component.css']
+    styleUrls: ['./window.component.css'],
 })
 export class WindowComponent<T> implements OnInit {
     @HostBinding('style.zIndex')
     zIndex: number;
 
-    @ViewChild('content', {read: ViewContainerRef})
+    @ViewChild('content', { read: ViewContainerRef })
     viewContentRef: ViewContainerRef;
 
     compRef: ComponentRef<T>;
 
-    constructor(private resolver: ComponentFactoryResolver,
-                @Inject(WINDOW_DATA) private data: WindowData<T>) {
+    constructor(
+        private resolver: ComponentFactoryResolver,
+        @Inject(WINDOW_DATA) private data: WindowData<T>,
+    ) {
         console.log('created');
     }
 
@@ -48,5 +50,4 @@ export class WindowComponent<T> implements OnInit {
             injector,
         );
     }
-
 }

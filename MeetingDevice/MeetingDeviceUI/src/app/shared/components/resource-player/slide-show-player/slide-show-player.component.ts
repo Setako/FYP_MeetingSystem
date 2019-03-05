@@ -1,7 +1,7 @@
-import {Component, Inject, OnInit} from '@angular/core';
-import {ControllableComponent} from '../../controllable/controllable.component';
-import {WINDOW_DATA} from '../../../../services/window/window-ref';
-import {WindowData} from '../../../../services/window/window-data';
+import { Component, Inject, OnInit } from '@angular/core';
+import { ControllableComponent } from '../../controllable/controllable.component';
+import { WINDOW_DATA } from '../../../../services/window/window-ref';
+import { WindowData } from '../../../../services/window/window-data';
 
 @Component({
     selector: 'app-slide-show-player',
@@ -15,7 +15,9 @@ export class SlideShowPlayerComponent extends ControllableComponent
 
     slideUrl: string;
 
-    constructor(@Inject(WINDOW_DATA) data: WindowData<SlideShowPlayerComponent>) {
+    constructor(
+        @Inject(WINDOW_DATA) data: WindowData<SlideShowPlayerComponent>,
+    ) {
         super();
         this.slideUrl = data.data;
     }
@@ -29,6 +31,5 @@ export class SlideShowPlayerComponent extends ControllableComponent
         }
     }
 
-    ngOnInit() {
-    }
+    ngOnInit() {}
 }

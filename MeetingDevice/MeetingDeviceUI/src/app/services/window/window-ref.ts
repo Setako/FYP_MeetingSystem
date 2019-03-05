@@ -1,5 +1,5 @@
-import {ComponentRef} from '@angular/core';
-import {WindowComponent} from '../../shared/components/window/window.component';
+import { ComponentRef } from '@angular/core';
+import { WindowComponent } from '../../shared/components/window/window.component';
 
 export const WINDOW_DATA = 'windata';
 

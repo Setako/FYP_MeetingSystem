@@ -21,7 +21,7 @@ import { ClientOnlineDto } from './dto/client-online.dto';
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
 @WebSocketGateway()
-export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
+export class CoreGateway implements OnGatewayInit {
     @WebSocketServer() server: Server;
 
     socketClient: SocketIOClient.Socket;
@@ -32,87 +32,91 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
     holdingMeeting: any;
 
-    constructor(private readonly ipcService: CoreService) {
+    constructor(private readonly ipcService: CoreService) {}
+
+    afterInit(_server: Socket) {
         this.setupSocketClinet();
     }
 
-    afterInit(_server: Socket) {
-        // console.log('hello')
-    }
-
-    handleDisconnect(client: Socket) {}
-
     setupSocketClinet() {
-        this.ipcService.getMessage('ready-to-connect-socket').subscribe((event) => {
-            this.ipcService.webContents = event;
+        this.ipcService.getMessage(
+            'ready-to-connect-socket',
+            (event, item?: any) => {
+                this.ipcService.webContents = event.sender;
+                this.socketClient = io(
+                    'https://conference-commander.herokuapp.com',
+                );
 
-            this.socketClient = io(
-                'https://conference-commander.herokuapp.com',
-            );
-
-            this.socketClient.on('connect', () => {
-                this.socketClient.emit('device-online', {
-                    deviceId: this.ipcService.electronGlobal.device.id,
-                    secret: this.ipcService.electronGlobal.device.secret,
-                });
-            });
-
-            this.socketClient.on('exception', (data: any) => {
-                this.ipcService.sendMessage('server-exception', data);
-            });
-
-            this.socketClient.on('device-access-token', (data: any) => {
-                this.ipcService.sendMessage('show-token', data);
-            });
-
-            this.socketClient.on('device-take-over', ({ meetingId }) => {
-                this.controlToken = uuidv4();
-                this.holdingMeetingId = meetingId;
-
-                this.socketClient.emit('device-get-meeting');
-            });
-
-            this.socketClient.on('device-get-meeting-reply', (meeting: any) => {
-                this.holdingMeeting = meeting;
-
-                this.ipcService.sendMessage('take-over', {
-                    controlToken: this.controlToken,
-                    meeting,
+                this.socketClient.on('connect', () => {
+                    this.socketClient.emit('device-online', {
+                        deviceId: this.ipcService.electronGlobal.device.id,
+                        secret: this.ipcService.electronGlobal.device.secret,
+                    });
                 });
 
-                this.socketClient.emit('device-lan-ip', {
-                    lanIP: `${ip.address()}:${
-                        this.ipcService.electronGlobal.socket.port
-                    }`,
-                    controlToken: this.controlToken,
+                this.socketClient.on('exception', (data: any) => {
+                    this.ipcService.sendMessage('server-exception', data);
                 });
-            });
 
-            this.socketClient.on('server-attendance-updated', (data: any) => {
-                this.ipcService.sendMessage('attendance-updated', data);
-            });
+                this.socketClient.on('device-access-token', (data: any) => {
+                    this.ipcService.sendMessage('show-token', data);
+                });
 
-            this.socketClient.on('client-end-meeting', () => {
-                this.socketClient.disconnect();
-                this.socketClient.connect();
+                this.socketClient.on('device-take-over', ({ meetingId }) => {
+                    this.controlToken = uuidv4();
+                    this.holdingMeetingId = meetingId;
 
-                this.holdingMeeting = null;
-                this.holdingMeetingId = null;
-                this.controlToken = uuidv4();
+                    this.socketClient.emit('device-get-meeting');
+                });
 
-                this.ipcService.sendMessage('server-disconnected');
-            });
+                this.socketClient.on(
+                    'device-get-meeting-reply',
+                    (meeting: any) => {
+                        this.holdingMeeting = meeting;
 
-            this.socketClient.on('disconnect', () => {
-                this.socketClient.connect();
+                        this.ipcService.sendMessage('take-over', {
+                            controlToken: this.controlToken,
+                            meeting,
+                        });
 
-                this.holdingMeeting = null;
-                this.holdingMeetingId = null;
-                this.controlToken = uuidv4();
+                        this.socketClient.emit('device-lan-ip', {
+                            lanIP: `${ip.address()}:${
+                                this.ipcService.electronGlobal.socket.port
+                            }`,
+                            controlToken: this.controlToken,
+                        });
+                    },
+                );
 
-                this.ipcService.sendMessage('server-disconnected');
-            });
-        });
+                this.socketClient.on(
+                    'server-attendance-updated',
+                    (data: any) => {
+                        this.ipcService.sendMessage('attendance-updated', data);
+                    },
+                );
+
+                this.socketClient.on('client-end-meeting', () => {
+                    this.socketClient.disconnect();
+                    this.socketClient.connect();
+
+                    this.holdingMeeting = null;
+                    this.holdingMeetingId = null;
+                    this.controlToken = uuidv4();
+
+                    this.ipcService.sendMessage('server-disconnected');
+                });
+
+                this.socketClient.on('disconnect', () => {
+                    this.socketClient.connect();
+
+                    this.holdingMeeting = null;
+                    this.holdingMeetingId = null;
+                    this.controlToken = uuidv4();
+
+                    this.ipcService.sendMessage('server-disconnected');
+                });
+            },
+        );
     }
 
     @UseFilters(new WsExceptionFilter('client-online'))

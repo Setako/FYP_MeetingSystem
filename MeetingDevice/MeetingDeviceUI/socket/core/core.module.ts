@@ -21,7 +21,7 @@ export class CoreModule {
                     provide: CoreService,
                     useValue: coreService,
                 },
-                CoreGateway
+                CoreGateway,
             ],
             exports: [CoreService],
         };

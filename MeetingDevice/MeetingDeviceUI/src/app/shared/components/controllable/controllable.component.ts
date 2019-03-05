@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
     selector: 'app-controllable',
@@ -6,13 +6,9 @@ import {Component, OnInit} from '@angular/core';
     styleUrls: [],
 })
 export class ControllableComponent implements OnInit {
+    constructor() {}
 
-    constructor() {
-    }
+    remoteControl(action: number, data: any) {}
 
-    remoteControl(action: number, data: any) {
-    }
-
-    ngOnInit() {
-    }
+    ngOnInit() {}
 }

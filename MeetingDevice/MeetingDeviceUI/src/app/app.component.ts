@@ -7,16 +7,16 @@ import {
     Injector,
     OnInit,
     ViewChild,
-    ViewContainerRef
+    ViewContainerRef,
 } from '@angular/core';
-import {MatSnackBar} from '@angular/material';
-import {ControlIpcListenerService} from './services/control/control-ipc-listener.service';
-import {WindowStackService} from './services/window/window-stack.service';
-import {ElectronService} from 'ngx-electron';
-import {RobotService} from './services/robot.service';
-import {IPCService} from './services/common/ipc.service';
-import {MeetingStateHolderService} from './services/interact/meeting-state-holder.service';
-import {SlideShowPlayerComponent} from './shared/components/resource-player/slide-show-player/slide-show-player.component';
+import { MatSnackBar } from '@angular/material';
+import { ControlIpcListenerService } from './services/control/control-ipc-listener.service';
+import { WindowStackService } from './services/window/window-stack.service';
+import { ElectronService } from 'ngx-electron';
+import { RobotService } from './services/robot.service';
+import { IPCService } from './services/common/ipc.service';
+import { MeetingStateHolderService } from './services/interact/meeting-state-holder.service';
+import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
 
 declare let electron: any;
 
@@ -29,7 +29,7 @@ declare let electron: any;
 export class AppComponent implements OnInit, AfterViewInit {
     title = 'MeetingDeviceUI';
 
-    @ViewChild('windowContainer', {read: ViewContainerRef})
+    @ViewChild('windowContainer', { read: ViewContainerRef })
     viewContainerRef: ViewContainerRef;
 
     constructor(
@@ -40,7 +40,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         private readonly electronService: ElectronService,
         private readonly robotService: RobotService,
         private ipcService: IPCService,
-        private meetingStateHolderService: MeetingStateHolderService
+        private meetingStateHolderService: MeetingStateHolderService,
     ) {
         ipcService.addCdr(cdr);
     }
@@ -48,7 +48,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     test() {
         this.windowStackService.showWindow({
             type: SlideShowPlayerComponent,
-            data: 'https://docs.google.com/presentation/d/1j77Ah9lFS_KlmWejBTJRimDPgy87W2s7xuApJ4lv9lg/present',
+            data:
+                'https://docs.google.com/presentation/d/1j77Ah9lFS_KlmWejBTJRimDPgy87W2s7xuApJ4lv9lg/present',
         });
     }
 
@@ -56,13 +57,11 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.controlIPCListener.init();
         this.windowStackService.registerWindowsContainer(this);
 
-
         // 2. list of event
         this.electronService.ipcRenderer.on(
             'show-token',
             (event: any, data: { accessToken: string }) => {
                 console.log('show-token', data);
-
 
                 // 'console.log'
                 //     .split('')
@@ -126,14 +125,21 @@ export class AppComponent implements OnInit, AfterViewInit {
         );
     }
 
-    createComponent<C>(componentFactory: ComponentFactory<C>, index?: number, injector?: Injector): ComponentRef<C> {
-        return this.viewContainerRef.createComponent(componentFactory, index, injector);
+    createComponent<C>(
+        componentFactory: ComponentFactory<C>,
+        index?: number,
+        injector?: Injector,
+    ): ComponentRef<C> {
+        return this.viewContainerRef.createComponent(
+            componentFactory,
+            index,
+            injector,
+        );
     }
 
     ngAfterViewInit(): void {
         this.ipcService.send('ready-to-connect-socket');
     }
-
 
     openSnackBar(message: any) {
         // this.snackBar.open(message, null, {duration: 5000});

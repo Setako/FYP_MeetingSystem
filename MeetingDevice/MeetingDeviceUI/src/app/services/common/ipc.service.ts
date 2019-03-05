@@ -1,15 +1,11 @@
-import {ChangeDetectorRef, Injectable} from '@angular/core';
-import {ElectronService} from 'ngx-electron';
+import { ChangeDetectorRef, Injectable } from '@angular/core';
+import { ElectronService } from 'ngx-electron';
 
 @Injectable({
     providedIn: 'root',
 })
 export class IPCService {
-
-
-    constructor(
-        private readonly electronService: ElectronService) {
-    }
+    constructor(private readonly electronService: ElectronService) {}
 
     public static IPC_CHANNEL_DEVICE_CONTROL = 'IPC_CHANNEL_DEVICE_CONTROL';
 

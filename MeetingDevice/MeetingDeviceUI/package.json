@@ -5,7 +5,7 @@
         "ng": "ng",
         "dev": "concurrently --kill-others \"npm run serve\" \"npm run devstart\"",
         "start": "tsc --module commonjs --target esnext && electron .",
-        "devstart": "tsc --module commonjs --target esnext && electron . -d -u http://localhost:4200",
+        "devstart": "concurrently \"tsc --module commonjs --target esnext && electron . -d -u http://localhost:4200\"",
         "serve": "ng serve",
         "build": "ng build --base-href ./",
         "devbuild": "ng build --watch --base-href ./",
