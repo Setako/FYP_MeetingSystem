@@ -17,7 +17,6 @@ import { WsExceptionFilter } from '../shared/ws-exception.filter';
 import { WsValidationPipe } from '../shared/ws-validation.pipe';
 import { ClientOnlineDto } from '../shared/client-online.dto';
 import { ConfigService } from './config.service';
-import { fromEvent } from 'rxjs';
 
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
@@ -44,7 +43,14 @@ export class CoreGateway implements OnGatewayInit {
             .subscribe(([event]) => {
                 this.ipcService.webContents = event.sender;
                 this.setupSocketClinet();
+                this.disconnectAllConnections();
             });
+    }
+
+    disconnectAllConnections() {
+        Object.values(this.server.of('/').connected).forEach(connection =>
+            connection.disconnect(true),
+        );
     }
 
     setupSocketClinet() {
