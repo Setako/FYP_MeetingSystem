@@ -59,4 +59,8 @@ export class RobotService {
     mouseClick(button: 'left' | 'right' | 'middle' = 'left', double = false) {
         this.robot.mouseClick(button, double);
     }
+
+    scrollMouse(x: number, y: number) {
+        this.robot.scrollMouse(x, y);
+    }
 }
