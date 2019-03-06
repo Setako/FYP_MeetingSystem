@@ -32,6 +32,7 @@ import { Types } from 'mongoose';
 import { WsDeviceHoldMeetingGuard } from '@commander/shared/guard/ws-device-hold-meeting.guard';
 
 import uuidv4 = require('uuid/v4');
+import { WsDisconnectMeetingGuard } from '@commander/shared/guard/ws-disconnet-meeting.guard';
 
 @UseFilters(WsExceptionFilter)
 @UsePipes(WsValidationPipe)
@@ -246,6 +247,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
 
     @UseGuards(WsMeetingOwnerGuard)
     @UseGuards(WsAuthGuard)
+    @UseGuards(WsDisconnectMeetingGuard)
     @UseFilters(new WsExceptionFilter('client-start-meeting'))
     @SubscribeMessage('client-start-meeting')
     onClientStartMeeting(client: Socket, _data: OwnerAuthDto) {
