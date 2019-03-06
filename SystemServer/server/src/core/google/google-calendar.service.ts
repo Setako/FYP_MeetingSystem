@@ -68,11 +68,16 @@ export class GoogleCalendarService {
         );
     }
 
-    unmarkEventOnCalendar(refeshToken: string, eventId: string) {
+    unmarkEventOnCalendar(
+        refeshToken: string,
+        eventId: string,
+        calendarId: string,
+    ) {
         return of(this.getCalendar(refeshToken)).pipe(
             flatMap(calendar =>
                 calendar.events.delete({
                     eventId,
+                    calendarId,
                 }),
             ),
         );

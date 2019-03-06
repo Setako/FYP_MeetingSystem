@@ -24,6 +24,7 @@
         "webpack": "rimraf dist/hot && webpack --config webpack.config.js"
     },
     "dependencies": {
+        "@nest-modules/mailer": "^1.0.4",
         "@nestjs/common": "^5.7.3",
         "@nestjs/core": "^5.7.3",
         "@nestjs/jwt": "^0.3.0",

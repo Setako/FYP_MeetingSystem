@@ -818,6 +818,7 @@ export class MeetingController {
                 .unmarkEventOnCalendar(
                     user.googleRefreshToken,
                     attendee.googleCalendarEventId,
+                    user.setting.markEventOnCalendarId,
                 )
                 .toPromise();
 

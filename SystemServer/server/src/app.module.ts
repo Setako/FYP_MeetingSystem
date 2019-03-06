@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypegooseModule } from 'nestjs-typegoose';
+import { MailerModule } from '@nest-modules/mailer';
 import { AuthModule } from './core/auth/auth.module';
 import { DeviceModule } from './core/device/device.module';
 import { FriendRequestModule } from './core/friend-request/friend-request.module';
@@ -18,6 +19,12 @@ import { SearchModule } from './core/search/search.module';
             useCreateIndex: true,
             useFindAndModify: false,
         }),
+        MailerModule.forRoot({
+            transport: JSON.parse(process.env.MAIL_TRANSPORT),
+            defaults: {
+                from: process.env.MAIL_FROM,
+            },
+        }),
         AuthModule,
         UserModule,
         MeetingModule,
@@ -33,3 +40,4 @@ import { SearchModule } from './core/search/search.module';
     providers: [],
 })
 export class AppModule {}
+console.log(process.env.MAIL_FROM);
