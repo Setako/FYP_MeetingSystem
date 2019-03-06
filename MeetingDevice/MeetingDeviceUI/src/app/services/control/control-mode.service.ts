@@ -1,5 +1,5 @@
 import { IPCService } from '../common/ipc.service';
-import { ControlMode } from '../../shared/enum/control/control-mode';
+import { GestureActionType } from '../../shared/enum/control/gesture-action-type';
 import { Subject } from 'rxjs';
 import { Injectable } from '@angular/core';
 
@@ -13,16 +13,16 @@ declare interface ChangeModeMessage {
     providedIn: 'root',
 })
 export class ControlModeService {
-    private _currentMode: Subject<ControlMode> = new Subject();
+    private _currentMode: Subject<GestureActionType> = new Subject();
 
     constructor(private ipcServer: IPCService) {}
 
     changeMode(changeModeMessage: ChangeModeMessage) {
-        const mode: ControlMode = ControlMode[changeModeMessage.mode];
+        const mode: GestureActionType = GestureActionType[changeModeMessage.mode];
         this._currentMode.next(mode);
     }
 
-    get currentMode(): Subject<ControlMode> {
+    get currentMode(): Subject<GestureActionType> {
         return this._currentMode;
     }
 }

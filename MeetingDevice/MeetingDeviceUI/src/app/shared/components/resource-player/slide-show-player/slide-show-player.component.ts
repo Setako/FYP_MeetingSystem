@@ -1,7 +1,9 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { ControllableComponent } from '../../controllable/controllable.component';
-import { WINDOW_DATA } from '../../../../services/window/window-ref';
-import { WindowData } from '../../../../services/window/window-data';
+import {Component, Inject, OnInit} from '@angular/core';
+import {ControllableComponent} from '../../controllable/controllable.component';
+import {WINDOW_DATA} from '../../../../services/window/window-ref';
+import {WindowData} from '../../../../services/window/window-data';
+import {GestureActionType} from '../../../enum/control/gesture-action-type';
+import {NormalKeys, RobotService} from '../../../../services/robot.service';
 
 @Component({
     selector: 'app-slide-show-player',
@@ -10,26 +12,28 @@ import { WindowData } from '../../../../services/window/window-data';
 })
 export class SlideShowPlayerComponent extends ControllableComponent
     implements OnInit {
-    public static REMOTE_ACTION_PREV_PAGE = 0;
-    public static REMOTE_ACTION_NEXT_PAGE = 1;
 
     slideUrl: string;
 
     constructor(
         @Inject(WINDOW_DATA) data: WindowData<SlideShowPlayerComponent>,
+        private robot: RobotService
     ) {
         super();
         this.slideUrl = data.data;
     }
 
-    remoteControl(action: number, data: any) {
+    remoteControl(action: string, data: any) {
         switch (action) {
-            case SlideShowPlayerComponent.REMOTE_ACTION_NEXT_PAGE:
+            case GestureActionType.SWIPE_LEFT:
+                this.robot.keyDown(NormalKeys.LEFT);
                 break;
-            case SlideShowPlayerComponent.REMOTE_ACTION_PREV_PAGE:
+            case GestureActionType.SWIPE_RIGHT:
+                this.robot.keyDown(NormalKeys.RIGHT);
                 break;
         }
     }
 
-    ngOnInit() {}
+    ngOnInit() {
+    }
 }

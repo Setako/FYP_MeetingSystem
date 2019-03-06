@@ -22,6 +22,7 @@ export class MeetingStateHolderService {
             (event, data: { controlToken: string; meeting: any }) =>
                 this.takeOver(data.meeting),
         );
+
         ipc.on('server-disconnected', () => this.disconnected());
 
         ipc.on('server-exception', (event, data: any) => {

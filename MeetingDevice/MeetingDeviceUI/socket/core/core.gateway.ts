@@ -1,4 +1,4 @@
-import { UseFilters, UsePipes } from '@nestjs/common';
+import {UseFilters, UsePipes} from '@nestjs/common';
 import {
     WebSocketGateway,
     WebSocketServer,
@@ -6,17 +6,18 @@ import {
     SubscribeMessage,
     WsException,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import {Server, Socket} from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
 
 const uuidv4 = require('uuid/v4');
 
-import { IpcService } from './ipc.service';
-import { WsExceptionFilter } from '../shared/ws-exception.filter';
-import { WsValidationPipe } from '../shared/ws-validation.pipe';
-import { ClientOnlineDto } from '../shared/client-online.dto';
-import { ConfigService } from './config.service';
+import {IpcService} from './ipc.service';
+import {WsExceptionFilter} from '../shared/ws-exception.filter';
+import {WsValidationPipe} from '../shared/ws-validation.pipe';
+import {ClientOnlineDto} from '../shared/client-online.dto';
+import {ConfigService} from './config.service';
+import {fromEvent} from 'rxjs';
 
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
@@ -35,7 +36,8 @@ export class CoreGateway implements OnGatewayInit {
     constructor(
         private readonly ipcService: IpcService,
         private readonly configService: ConfigService,
-    ) {}
+    ) {
+    }
 
     afterInit(_server: Socket) {
         this.ipcService
@@ -71,7 +73,7 @@ export class CoreGateway implements OnGatewayInit {
             this.ipcService.sendMessage('show-token', data);
         });
 
-        this.socketClient.on('device-take-over', ({ meetingId }) => {
+        this.socketClient.on('device-take-over', ({meetingId}) => {
             this.controlToken = uuidv4();
             this.holdingMeetingId = meetingId;
 
@@ -123,7 +125,7 @@ export class CoreGateway implements OnGatewayInit {
 
     @UseFilters(new WsExceptionFilter('client-online'))
     @SubscribeMessage('client-online')
-    onClientOnline(client: Socket, { controlToken }: ClientOnlineDto) {
+    onClientOnline(client: Socket, {controlToken}: ClientOnlineDto) {
         if (this.controlToken !== controlToken) {
             throw new WsException('Incorrect control token');
         }
@@ -138,7 +140,9 @@ export class CoreGateway implements OnGatewayInit {
     @UseFilters(new WsExceptionFilter('send-action'))
     @SubscribeMessage('send-action')
     onSendAction(client: Socket, data: any) {
-        const { controlToken } = client.request;
+        const {controlToken} = client.request;
+
+        console.log('received', data);
 
         if (this.controlToken !== controlToken) {
             throw new WsException('Control token is fake or expired');

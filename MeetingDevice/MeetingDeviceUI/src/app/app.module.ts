@@ -26,6 +26,7 @@ import { ControllableComponent } from './shared/components/controllable/controll
 
 import { NgxElectronModule } from 'ngx-electron';
 import { WindowComponent } from './shared/components/window/window.component';
+import { DocumentPlayerComponent } from './shared/components/resource-player/document-player/document-player.component';
 
 @NgModule({
     declarations: [
@@ -40,6 +41,7 @@ import { WindowComponent } from './shared/components/window/window.component';
         SlideShowPlayerComponent,
         ControllableComponent,
         WindowComponent,
+        DocumentPlayerComponent,
     ],
     imports: [
         NgxElectronModule,

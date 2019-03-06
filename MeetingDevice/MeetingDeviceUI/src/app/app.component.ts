@@ -17,6 +17,7 @@ import { RobotService } from './services/robot.service';
 import { IPCService } from './services/common/ipc.service';
 import { MeetingStateHolderService } from './services/interact/meeting-state-holder.service';
 import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
+import {ActionReceiverService} from './services/interact/action-receiver.service';
 
 declare let electron: any;
 
@@ -40,6 +41,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         private readonly electronService: ElectronService,
         private readonly robotService: RobotService,
         private ipcService: IPCService,
+        private actionReceiver: ActionReceiverService,
         private meetingStateHolderService: MeetingStateHolderService,
     ) {
         ipcService.addCdr(cdr);
