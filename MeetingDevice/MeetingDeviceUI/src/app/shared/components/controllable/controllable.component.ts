@@ -8,7 +8,7 @@ import { Component, OnInit } from '@angular/core';
 export class ControllableComponent implements OnInit {
     constructor() {}
 
-    remoteControl(action: string, data: any) {}
+    remoteControl(data: any) {}
 
     ngOnInit() {}
 }
