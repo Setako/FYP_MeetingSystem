@@ -31,6 +31,7 @@ import {
     Observable,
     concat,
     identity,
+    fromEvent,
 } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
@@ -42,6 +43,10 @@ export class MeetingService {
         private readonly userService: UserService,
         private readonly friendService: FriendService,
     ) {}
+
+    watchModelSave(): Observable<InstanceType<Meeting>> {
+        return fromEvent(this.meetingModel, 'save');
+    }
 
     getById(id: string) {
         return of(id).pipe(

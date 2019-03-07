@@ -25,6 +25,7 @@ import { SearchModule } from './core/search/search.module';
                 from: process.env.MAIL_FROM,
             },
         }),
+        MailerModule,
         AuthModule,
         UserModule,
         MeetingModule,
