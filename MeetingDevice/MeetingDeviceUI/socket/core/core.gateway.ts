@@ -1,4 +1,4 @@
-import {UseFilters, UsePipes} from '@nestjs/common';
+import { UseFilters, UsePipes, UseGuards } from '@nestjs/common';
 import {
     WebSocketGateway,
     WebSocketServer,
@@ -6,18 +6,20 @@ import {
     SubscribeMessage,
     WsException,
 } from '@nestjs/websockets';
-import {Server, Socket} from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
+import { spawn } from 'child_process';
 
 const uuidv4 = require('uuid/v4');
 
-import {IpcService} from './ipc.service';
-import {WsExceptionFilter} from '../shared/ws-exception.filter';
-import {WsValidationPipe} from '../shared/ws-validation.pipe';
-import {ClientOnlineDto} from '../shared/client-online.dto';
-import {ConfigService} from './config.service';
-import {fromEvent} from 'rxjs';
+import { IpcService } from './ipc.service';
+import { ConfigService } from './config.service';
+import { WsExceptionFilter } from '../shared/ws-exception.filter';
+import { WsValidationPipe } from '../shared/ws-validation.pipe';
+import { ClientOnlineDto } from '../shared/client-online.dto';
+import { RecognitionOnlineDto } from '../shared/recognition-online.dto';
+import { WsRecognitionGuard } from '../shared/ws-recognition.guard';
 
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
@@ -33,20 +35,41 @@ export class CoreGateway implements OnGatewayInit {
 
     holdingMeeting: any;
 
+    recognitionClient: Socket;
+
     constructor(
         private readonly ipcService: IpcService,
         private readonly configService: ConfigService,
-    ) {
-    }
+    ) {}
 
     afterInit(_server: Socket) {
         this.ipcService
             .getMessage('ready-to-connect-socket')
             .subscribe(([event]) => {
+                if (!this.recognitionClient) {
+                    this.newFaceRecognition();
+                }
                 this.ipcService.webContents = event.sender;
                 this.setupSocketClinet();
                 this.disconnectAllConnections();
             });
+
+        this.newFaceRecognition();
+    }
+
+    newFaceRecognition() {
+        return; // prevent bugs now, install all python dependencies first
+        spawn(
+            'pipenv',
+            [
+                'run',
+                'python',
+                `main.py`,
+                '--token',
+                this.configService.fromEnvironment('RECOGNITION_TOKEN'),
+            ],
+            { cwd: `${process.cwd()}/recognition/` },
+        );
     }
 
     disconnectAllConnections() {
@@ -73,11 +96,12 @@ export class CoreGateway implements OnGatewayInit {
             this.ipcService.sendMessage('show-token', data);
         });
 
-        this.socketClient.on('device-take-over', ({meetingId}) => {
+        this.socketClient.on('device-take-over', ({ meetingId }) => {
             this.controlToken = uuidv4();
             this.holdingMeetingId = meetingId;
 
             this.socketClient.emit('device-get-meeting');
+            this.socketClient.emit('device-get-trained-model');
         });
 
         this.socketClient.on('device-get-meeting-reply', (meeting: any) => {
@@ -112,6 +136,10 @@ export class CoreGateway implements OnGatewayInit {
             this.ipcService.sendMessage('server-disconnected');
         });
 
+        this.socketClient.on('device-get-trained-model', (data: any) => {
+            this.server.to('recognition').emit('start-recognition', data);
+        });
+
         this.socketClient.on('disconnect', () => {
             this.socketClient.connect();
 
@@ -125,7 +153,7 @@ export class CoreGateway implements OnGatewayInit {
 
     @UseFilters(new WsExceptionFilter('client-online'))
     @SubscribeMessage('client-online')
-    onClientOnline(client: Socket, {controlToken}: ClientOnlineDto) {
+    onClientOnline(client: Socket, { controlToken }: ClientOnlineDto) {
         if (this.controlToken !== controlToken) {
             throw new WsException('Incorrect control token');
         }
@@ -140,7 +168,7 @@ export class CoreGateway implements OnGatewayInit {
     @UseFilters(new WsExceptionFilter('send-action'))
     @SubscribeMessage('send-action')
     onSendAction(client: Socket, data: any) {
-        const {controlToken} = client.request;
+        const { controlToken } = client.request;
 
         console.log('received', data);
 
@@ -153,5 +181,57 @@ export class CoreGateway implements OnGatewayInit {
         return {
             event: 'send-action-success',
         };
+    }
+
+    @UseGuards(WsRecognitionGuard)
+    @UseFilters(new WsExceptionFilter('recognition-online'))
+    @SubscribeMessage('recognition-online')
+    onRecogntionOnline(client: Socket, _data: RecognitionOnlineDto) {
+        console.log('recognition online');
+
+        client.join('recognition');
+        this.recognitionClient = client;
+
+        // test to start recognition
+        // from(promises.readFile(`${process.cwd()}/knn.clf`)).subscribe(data =>
+        //     client.emit('start-recognition', {
+        //         trainedModel: data,
+        //         showImage: true,
+        //     }),
+        // );
+
+        return {
+            event: 'recognition-online-success',
+        };
+    }
+
+    @UseGuards(WsRecognitionGuard)
+    @UseFilters(new WsExceptionFilter('recognition-exception'))
+    @SubscribeMessage('recognition-exception')
+    onRecognitionException(_client: Socket, data: any) {
+        this.ipcService.sendMessage('recognition-exception', data);
+    }
+
+    @UseGuards(WsRecognitionGuard)
+    @UseFilters(new WsExceptionFilter('recognised-user'))
+    @SubscribeMessage('recognised-user')
+    onRecognisedUser(client: Socket, { userList }: { userList: string[] }) {
+        if (!userList) {
+            return;
+        }
+
+        console.log('recognised-user', userList);
+
+        if (!this.socketClient) {
+            client.emit('end-recognition');
+            return;
+        }
+
+        this.socketClient.emit('device-mark-attendance', {
+            attendance: userList.map(username => ({
+                username,
+                time: Date(),
+            })),
+        });
     }
 }
