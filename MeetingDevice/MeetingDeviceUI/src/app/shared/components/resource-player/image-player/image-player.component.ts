@@ -4,6 +4,7 @@ import {WindowData} from '../../../../services/window/window-data';
 import {RobotService} from '../../../../services/robot.service';
 import {WINDOW_DATA} from '../../../../services/window/window-ref';
 import {interval} from 'rxjs';
+import {IPCService} from '../../../../services/common/ipc.service';
 
 @Component({
     selector: 'app-image-player',
@@ -18,11 +19,12 @@ export class ImagePlayerComponent extends ControllableComponent
 
     constructor(
         @Inject(WINDOW_DATA) data: WindowData<ImagePlayerComponent>,
-        private robot: RobotService
+        private robot: RobotService,
+        private ipc: IPCService
     ) {
         super();
-        this.url = data.data;
-        // this.url = 'http://taiko.pui.pm';
+        // this.url = data.data;
+        this.url = 'http://taiko.bui.pm';
     }
 
     remoteControl(data: any) {
@@ -35,7 +37,15 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     tap(position: number[]) {
-        console.log(position);
+        if (position[0] < 450) {
+            this.ipc.send('exec', 'xdotool keydown d sleep 0.05 keyup d');
+        } else if (position[0] >= 450 && position[0] < 900) {
+            this.ipc.send('exec', 'xdotool keydown f sleep 0.05 keyup f');
+        } else if (position[0] >= 900 && position[0] < 1350) {
+            this.ipc.send('exec', 'xdotool keydown j sleep 0.05 keyup j');
+        } else if (position[0] >= 1350 && position[0] < 1800) {
+            this.ipc.send('exec', 'xdotool keydown k sleep 0.05 keyup k');
+        }
     }
 
     ngOnInit() {

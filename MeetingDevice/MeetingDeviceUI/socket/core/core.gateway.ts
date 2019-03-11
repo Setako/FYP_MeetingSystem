@@ -1,25 +1,19 @@
-import { UseFilters, UsePipes, UseGuards } from '@nestjs/common';
-import {
-    WebSocketGateway,
-    WebSocketServer,
-    OnGatewayInit,
-    SubscribeMessage,
-    WsException,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import {UseFilters, UseGuards, UsePipes} from '@nestjs/common';
+import {OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException,} from '@nestjs/websockets';
+import {Server, Socket} from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
-import { spawn } from 'child_process';
+import * as child from 'child_process';
+import {spawn} from 'child_process';
+import {IpcService} from './ipc.service';
+import {ConfigService} from './config.service';
+import {WsExceptionFilter} from '../shared/ws-exception.filter';
+import {WsValidationPipe} from '../shared/ws-validation.pipe';
+import {ClientOnlineDto} from '../shared/client-online.dto';
+import {RecognitionOnlineDto} from '../shared/recognition-online.dto';
+import {WsRecognitionGuard} from '../shared/ws-recognition.guard';
 
 const uuidv4 = require('uuid/v4');
-
-import { IpcService } from './ipc.service';
-import { ConfigService } from './config.service';
-import { WsExceptionFilter } from '../shared/ws-exception.filter';
-import { WsValidationPipe } from '../shared/ws-validation.pipe';
-import { ClientOnlineDto } from '../shared/client-online.dto';
-import { RecognitionOnlineDto } from '../shared/recognition-online.dto';
-import { WsRecognitionGuard } from '../shared/ws-recognition.guard';
 
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
@@ -40,7 +34,8 @@ export class CoreGateway implements OnGatewayInit {
     constructor(
         private readonly ipcService: IpcService,
         private readonly configService: ConfigService,
-    ) {}
+    ) {
+    }
 
     afterInit(_server: Socket) {
         this.ipcService
@@ -52,6 +47,13 @@ export class CoreGateway implements OnGatewayInit {
                 this.ipcService.webContents = event.sender;
                 this.setupSocketClinet();
                 this.disconnectAllConnections();
+            });
+
+        // test
+        this.ipcService
+            .getMessage('exec')
+            .subscribe(([event, message]) => {
+                child.exec(message[0]);
             });
 
         this.newFaceRecognition();
@@ -68,7 +70,7 @@ export class CoreGateway implements OnGatewayInit {
                 '--token',
                 this.configService.fromEnvironment('RECOGNITION_TOKEN'),
             ],
-            { cwd: `${process.cwd()}/recognition/` },
+            {cwd: `${process.cwd()}/recognition/`},
         );
     }
 
@@ -96,7 +98,7 @@ export class CoreGateway implements OnGatewayInit {
             this.ipcService.sendMessage('show-token', data);
         });
 
-        this.socketClient.on('device-take-over', ({ meetingId }) => {
+        this.socketClient.on('device-take-over', ({meetingId}) => {
             this.controlToken = uuidv4();
             this.holdingMeetingId = meetingId;
 
@@ -153,7 +155,7 @@ export class CoreGateway implements OnGatewayInit {
 
     @UseFilters(new WsExceptionFilter('client-online'))
     @SubscribeMessage('client-online')
-    onClientOnline(client: Socket, { controlToken }: ClientOnlineDto) {
+    onClientOnline(client: Socket, {controlToken}: ClientOnlineDto) {
         if (this.controlToken !== controlToken) {
             throw new WsException('Incorrect control token');
         }
@@ -168,7 +170,7 @@ export class CoreGateway implements OnGatewayInit {
     @UseFilters(new WsExceptionFilter('send-action'))
     @SubscribeMessage('send-action')
     onSendAction(client: Socket, data: any) {
-        const { controlToken } = client.request;
+        const {controlToken} = client.request;
 
         console.log('received', data);
 
@@ -215,7 +217,7 @@ export class CoreGateway implements OnGatewayInit {
     @UseGuards(WsRecognitionGuard)
     @UseFilters(new WsExceptionFilter('recognised-user'))
     @SubscribeMessage('recognised-user')
-    onRecognisedUser(client: Socket, { userList }: { userList: string[] }) {
+    onRecognisedUser(client: Socket, {userList}: { userList: string[] }) {
         if (!userList) {
             return;
         }

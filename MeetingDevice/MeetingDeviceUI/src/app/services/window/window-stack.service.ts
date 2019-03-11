@@ -25,7 +25,6 @@ export class WindowStackService {
     }
 
     showWindow<T>(data: WindowData<T>): WindowRef<T> {
-        console.log('show' + data.type.name);
         this.windowComponentStack.forEach(ref => ref.close());
         const factory = this.resolver.resolveComponentFactory(WindowComponent);
 
