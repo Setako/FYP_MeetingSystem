@@ -5,6 +5,7 @@ import {
     OnGatewayInit,
     SubscribeMessage,
     WsException,
+    OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import * as ip from 'ip';
@@ -24,7 +25,7 @@ import { WsRecognitionGuard } from '../shared/ws-recognition.guard';
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
 @WebSocketGateway()
-export class CoreGateway implements OnGatewayInit {
+export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     @WebSocketServer() server: Server;
 
     socketClient: SocketIOClient.Socket;
@@ -55,6 +56,22 @@ export class CoreGateway implements OnGatewayInit {
             });
 
         this.newFaceRecognition();
+    }
+
+    handleDisconnect(client: Socket) {
+        if (
+            this.holdingMeeting &&
+            client.request.controlToken == this.controlToken
+        ) {
+            this.socketClient.disconnect();
+            this.socketClient.connect();
+
+            this.holdingMeeting = null;
+            this.holdingMeetingId = null;
+            this.controlToken = uuidv4();
+
+            this.ipcService.sendMessage('server-disconnected');
+        }
     }
 
     newFaceRecognition() {
