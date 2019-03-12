@@ -47,14 +47,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         ipcService.addCdr(cdr);
     }
 
-    test() {
-        this.windowStackService.showWindow({
-            type: SlideShowPlayerComponent,
-            data:
-                'https://docs.google.com/presentation/d/1j77Ah9lFS_KlmWejBTJRimDPgy87W2s7xuApJ4lv9lg/present',
-        });
-    }
-
     ngOnInit() {
         this.controlIPCListener.init();
         this.windowStackService.registerWindowsContainer(this);

@@ -30,6 +30,7 @@ import {DocumentPlayerComponent} from './shared/components/resource-player/docum
 import {VideoPlayerComponent} from './shared/components/resource-player/video-player/video-player.component';
 import {ImagePlayerComponent} from './shared/components/resource-player/image-player/image-player.component';
 import {AudioPlayerComponent} from './shared/components/resource-player/audio-player/audio-player.component';
+import { UnsupportedTypeComponent } from './shared/components/resource-player/unsupported-type/unsupported-type.component';
 
 @NgModule({
     declarations: [
@@ -41,13 +42,14 @@ import {AudioPlayerComponent} from './shared/components/resource-player/audio-pl
         TokenQrcodeWindowComponent,
         QueryingContentHiderComponent,
         WebviewDirective,
-        SlideShowPlayerComponent,
         ControllableComponent,
         WindowComponent,
+        SlideShowPlayerComponent,
         DocumentPlayerComponent,
         VideoPlayerComponent,
         ImagePlayerComponent,
         AudioPlayerComponent,
+        UnsupportedTypeComponent,
     ],
     imports: [
         NgxElectronModule,
@@ -62,10 +64,14 @@ import {AudioPlayerComponent} from './shared/components/resource-player/audio-pl
     ],
     entryComponents: [
         IconNotificationBlockComponent,
-        SlideShowPlayerComponent,
         TokenQrcodeWindowComponent,
         WindowComponent,
+        SlideShowPlayerComponent,
         DocumentPlayerComponent,
+        VideoPlayerComponent,
+        ImagePlayerComponent,
+        AudioPlayerComponent,
+        UnsupportedTypeComponent,
     ],
     providers: [IPCService, ControlModeService, ControlIpcListenerService],
     bootstrap: [AppComponent],

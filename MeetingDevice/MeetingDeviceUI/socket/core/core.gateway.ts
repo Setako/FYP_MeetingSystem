@@ -1,19 +1,17 @@
-import { UseFilters, UsePipes, UseGuards } from '@nestjs/common';
+import { UseFilters, UseGuards, UsePipes } from '@nestjs/common';
 import {
-    WebSocketGateway,
-    WebSocketServer,
     OnGatewayInit,
     SubscribeMessage,
+    WebSocketGateway,
+    WebSocketServer,
     WsException,
     OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
+import * as child from 'child_process';
 import { spawn } from 'child_process';
-
-const uuidv4 = require('uuid/v4');
-
 import { IpcService } from './ipc.service';
 import { ConfigService } from './config.service';
 import { WsExceptionFilter } from '../shared/ws-exception.filter';
@@ -21,6 +19,8 @@ import { WsValidationPipe } from '../shared/ws-validation.pipe';
 import { ClientOnlineDto } from '../shared/client-online.dto';
 import { RecognitionOnlineDto } from '../shared/recognition-online.dto';
 import { WsRecognitionGuard } from '../shared/ws-recognition.guard';
+
+const uuidv4 = require('uuid/v4');
 
 @UseFilters(new WsExceptionFilter())
 @UsePipes(WsValidationPipe)
@@ -54,6 +54,11 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                 this.setupSocketClinet();
                 this.disconnectAllConnections();
             });
+
+        // test
+        this.ipcService.getMessage('exec').subscribe(([event, message]) => {
+            child.exec(message[0]);
+        });
 
         this.newFaceRecognition();
     }
