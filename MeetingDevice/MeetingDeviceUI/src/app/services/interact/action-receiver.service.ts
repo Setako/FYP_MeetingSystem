@@ -14,7 +14,6 @@ export class ActionReceiverService {
                 private resourceOpener: ResourceOpenerService,
                 private snackBar: MatSnackBar) {
         ipc.on('send-action', (event, data: any) => {
-            console.log(data);
             switch (data.type) {
                 case 'gesture':
                     this.handleGesture(data.data);

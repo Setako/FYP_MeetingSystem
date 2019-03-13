@@ -1,7 +1,10 @@
-import { Injectable } from '@angular/core';
-import { ElectronService } from 'ngx-electron';
+import {Injectable} from '@angular/core';
+import {ElectronService} from 'ngx-electron';
 
 import * as robot from 'robotjs';
+
+export type MouseKey = 'left' | 'right' | 'middle';
+export type ToggleType = 'up' | 'down';
 
 export enum NormalKeys {
     BACKSPACE = 'backspace',
@@ -16,6 +19,9 @@ export enum NormalKeys {
     RIGHT = 'right',
     LEFT = 'left',
 
+}
+
+export enum ModifierKeys {
     ALT = 'alt',
     SHIFT = 'shift',
 }
@@ -26,6 +32,7 @@ export enum NormalKeys {
 export class RobotService {
     robot: typeof robot;
 
+
     constructor(private readonly electronService: ElectronService) {
         this.robot = this.electronService.remote.require('robotjs');
     }
@@ -34,33 +41,41 @@ export class RobotService {
         return this.robot.getScreenSize();
     }
 
-    keyDown(key: string | NormalKeys, modified: string | string[] = []) {
+    keyDown(key: string | NormalKeys | ModifierKeys, modified: string | ModifierKeys | Array<string | ModifierKeys> = []) {
         this.robot.keyTap(key, modified);
     }
 
-    moveMouse(isByPercent: boolean, x: number, y: number) {
-        if (isByPercent) {
-            x = this.screen.width * (x / 100);
-            y = this.screen.height * (y / 100);
-        }
-
-        this.robot.moveMouse(x, y);
+    moveMouse(x: number, y: number, isByPercent: boolean = true) {
+        this.robot.moveMouse(
+            isByPercent ? (window.innerWidth / 100) * x : x,
+            isByPercent ? (window.innerHeight / 100) * y : y);
     }
 
-    moveMouseSmooth(isByPercent: boolean, x: number, y: number) {
-        if (isByPercent) {
-            x = this.screen.width * (x / 100);
-            y = this.screen.height * (y / 100);
-        }
-
-        this.robot.moveMouseSmooth(x, y);
+    moveMouseSmooth(x: number, y: number, isByPercent: boolean = true) {
+        this.robot.moveMouseSmooth(
+            isByPercent ? (window.innerWidth / 100) * x : x,
+            isByPercent ? (window.innerHeight / 100) * y : y);
     }
 
-    mouseClick(button: 'left' | 'right' | 'middle' = 'left', double = false) {
+    mouseClick(button: MouseKey = 'left', double = false) {
         this.robot.mouseClick(button, double);
+    }
+
+    mouseToggle(down: string = 'down', button: MouseKey = 'left') {
+        this.robot.mouseToggle(down, button);
+    }
+
+    dragMouse(x: number, y: number, isByPercent: boolean = true) {
+        this.robot.dragMouse(
+            isByPercent ? (window.innerWidth / 100) * x : x,
+            isByPercent ? (window.innerHeight / 100) * y : y);
     }
 
     scrollMouse(x: number, y: number) {
         this.robot.scrollMouse(x, y);
+    }
+
+    setMouseDelay(delay: number) {
+        this.robot.setMouseDelay(delay);
     }
 }

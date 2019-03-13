@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core';
 import {ControllableComponent} from '../../controllable/controllable.component';
 import {WindowData} from '../../../../services/window/window-data';
-import {RobotService} from '../../../../services/robot.service';
+import {ModifierKeys, RobotService} from '../../../../services/robot.service';
 import {WINDOW_DATA} from '../../../../services/window/window-ref';
 import {interval} from 'rxjs';
 import {IPCService} from '../../../../services/common/ipc.service';
@@ -13,9 +13,6 @@ import {IPCService} from '../../../../services/common/ipc.service';
 })
 export class ImagePlayerComponent extends ControllableComponent
     implements OnInit, AfterViewInit {
-    @ViewChild('webContent')
-    webContent: ElementRef;
-    url: string;
 
     constructor(
         @Inject(WINDOW_DATA) data: WindowData<ImagePlayerComponent>,
@@ -23,35 +20,62 @@ export class ImagePlayerComponent extends ControllableComponent
         private ipc: IPCService
     ) {
         super();
-        // this.url = data.data;
-        this.url = 'http://taiko.bui.pm';
+        this.url = data.data;
     }
 
+    @ViewChild('webContent')
+    webContent: ElementRef;
+    url: string;
+
+    private currentScaleFactor = 1;
+    private targetScaleFactor = 1.0;
+
     remoteControl(data: any) {
-        console.log(data.type);
         switch (data.type) {
-            case 'down':
-                this.tap(data.position);
+            case 'scroll':
+                this.move(data.distance[0], data.distance[1]);
+                break;
+            case 'scale':
+                this.scale(data.scaleFactor);
                 break;
         }
     }
 
-    tap(position: number[]) {
-        if (position[0] < 450) {
-            this.ipc.send('exec', 'xdotool keydown d sleep 0.05 keyup d');
-        } else if (position[0] >= 450 && position[0] < 900) {
-            this.ipc.send('exec', 'xdotool keydown f sleep 0.05 keyup f');
-        } else if (position[0] >= 900 && position[0] < 1350) {
-            this.ipc.send('exec', 'xdotool keydown j sleep 0.05 keyup j');
-        } else if (position[0] >= 1350 && position[0] < 1800) {
-            this.ipc.send('exec', 'xdotool keydown k sleep 0.05 keyup k');
+    private scale(scaleFactor: number) {
+        // over 2 because it is too hard to control
+        this.targetScaleFactor = (this.targetScaleFactor * (scaleFactor)) / 2 + this.targetScaleFactor / 2;
+        this.targetScaleFactor = Math.max(1, Math.min(this.targetScaleFactor, 4));
+
+        const scaling = Math.floor(this.targetScaleFactor - this.currentScaleFactor);
+
+        this.currentScaleFactor += scaling;
+
+        for (let i = 0; i < Math.abs(scaling); i++) {
+            if (scaling > 0) {
+                this.robot.keyDown('=');
+            } else {
+                this.robot.keyDown('-');
+            }
         }
     }
+
+    private move(x: number, y: number) {
+        // todo: move
+        this.robot.setMouseDelay(1);
+        this.robot.moveMouse(50, 50);
+        this.robot.mouseToggle('down');
+        this.robot.dragMouse(this.range(0, 50 + x * 5, 100), this.range(0, 50 + y * 5, 100));
+        this.robot.mouseToggle('up');
+    }
+
+    private range(min: number, value: number, max: number): number {
+        return Math.min(max, Math.max(min, value));
+    }
+
 
     ngOnInit() {
     }
 
     ngAfterViewInit(): void {
-        interval(500).subscribe(() => this.webContent.nativeElement.focus());
     }
 }

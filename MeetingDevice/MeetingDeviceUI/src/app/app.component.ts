@@ -9,15 +9,18 @@ import {
     ViewChild,
     ViewContainerRef,
 } from '@angular/core';
-import { MatSnackBar } from '@angular/material';
-import { ControlIpcListenerService } from './services/control/control-ipc-listener.service';
-import { WindowStackService } from './services/window/window-stack.service';
-import { ElectronService } from 'ngx-electron';
-import { RobotService } from './services/robot.service';
-import { IPCService } from './services/common/ipc.service';
-import { MeetingStateHolderService } from './services/interact/meeting-state-holder.service';
-import { SlideShowPlayerComponent } from './shared/components/resource-player/slide-show-player/slide-show-player.component';
+import {MatSnackBar} from '@angular/material';
+import {ControlIpcListenerService} from './services/control/control-ipc-listener.service';
+import {WindowStackService} from './services/window/window-stack.service';
+import {ElectronService} from 'ngx-electron';
+import {RobotService} from './services/robot.service';
+import {IPCService} from './services/common/ipc.service';
+import {MeetingStateHolderService} from './services/interact/meeting-state-holder.service';
+import {SlideShowPlayerComponent} from './shared/components/resource-player/slide-show-player/slide-show-player.component';
 import {ActionReceiverService} from './services/interact/action-receiver.service';
+import {ResourceOpenerService} from './services/interact/resource-opener.service';
+import {ImagePlayerComponent} from './shared/components/resource-player/image-player/image-player.component';
+import {timer} from 'rxjs';
 
 declare let electron: any;
 
@@ -30,7 +33,7 @@ declare let electron: any;
 export class AppComponent implements OnInit, AfterViewInit {
     title = 'MeetingDeviceUI';
 
-    @ViewChild('windowContainer', { read: ViewContainerRef })
+    @ViewChild('windowContainer', {read: ViewContainerRef})
     viewContainerRef: ViewContainerRef;
 
     constructor(
@@ -43,6 +46,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         private ipcService: IPCService,
         private actionReceiver: ActionReceiverService,
         private meetingStateHolderService: MeetingStateHolderService,
+        private readonly resourceOpener: ResourceOpenerService
     ) {
         ipcService.addCdr(cdr);
     }
@@ -110,13 +114,6 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.electronService.ipcRenderer.on('server-disconnected', () => {
             console.log('server-disconnected');
         });
-
-        this.electronService.ipcRenderer.on(
-            'send-action',
-            (event: any, data: any) => {
-                console.log('send-action', data);
-            },
-        );
     }
 
     createComponent<C>(

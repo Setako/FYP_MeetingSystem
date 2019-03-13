@@ -12,10 +12,6 @@ export class GestureActionHandlerService {
 
     onGesture(data: any) {
         const currentWindow = this.windowStack.getCurrentWindow();
-        console.log({
-            currentWindow: currentWindow,
-            data: data
-        });
         if (currentWindow != null) {
             if (currentWindow.componentRef != null && currentWindow.componentRef.instance != null) {
                 if (currentWindow.componentRef.instance.compRef.instance instanceof ControllableComponent) {
