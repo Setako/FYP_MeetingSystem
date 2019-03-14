@@ -3,7 +3,6 @@ import {ControllableComponent} from '../../controllable/controllable.component';
 import {WINDOW_DATA} from '../../../../services/window/window-ref';
 import {WindowData} from '../../../../services/window/window-data';
 import {NormalKeys, RobotService} from '../../../../services/robot.service';
-import {GestureActionType} from '../../../enum/control/gesture-action-type';
 import {interval} from 'rxjs';
 
 @Component({
@@ -30,8 +29,8 @@ export class VideoPlayerComponent extends ControllableComponent
     remoteControl(data: any) {
         console.log(data.type);
         switch (data.type) {
-            case 'down':
-                this.tap(data.position);
+            case 'singleTapUp':
+                this.playPause();
                 break;
         }
     }
@@ -40,13 +39,12 @@ export class VideoPlayerComponent extends ControllableComponent
     }
 
 
-    tap(position: number[]) {
-        console.log(position);
+    playPause() {
+        this.robot.keyDown(NormalKeys.SPACE);
     }
 
     ngAfterViewInit(): void {
         interval(500).subscribe(() => {
-            console.log('focus');
             this.webContent.nativeElement.focus();
         });
     }

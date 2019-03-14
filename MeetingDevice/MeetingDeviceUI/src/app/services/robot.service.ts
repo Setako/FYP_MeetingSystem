@@ -12,7 +12,7 @@ export enum NormalKeys {
     ENTER = 'enter',
     TAB = 'tab',
     ESCAPE = 'escape',
-    SPACE = 'escape',
+    SPACE = 'space',
 
     UP = 'up',
     DOWN = 'down',
