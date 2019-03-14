@@ -1,10 +1,10 @@
-import {AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ControllableComponent} from '../../controllable/controllable.component';
 import {WindowData} from '../../../../services/window/window-data';
-import {ModifierKeys, RobotService} from '../../../../services/robot.service';
+import {RobotService} from '../../../../services/robot.service';
 import {WINDOW_DATA} from '../../../../services/window/window-ref';
-import {interval} from 'rxjs';
 import {IPCService} from '../../../../services/common/ipc.service';
+import {interval} from 'rxjs';
 
 @Component({
     selector: 'app-image-player',
@@ -12,7 +12,7 @@ import {IPCService} from '../../../../services/common/ipc.service';
     styleUrls: ['./image-player.component.css']
 })
 export class ImagePlayerComponent extends ControllableComponent
-    implements OnInit, AfterViewInit {
+    implements OnInit, AfterViewInit, OnDestroy {
 
     constructor(
         @Inject(WINDOW_DATA) data: WindowData<ImagePlayerComponent>,
@@ -27,23 +27,29 @@ export class ImagePlayerComponent extends ControllableComponent
     webContent: ElementRef;
     url: string;
 
+    moving = false;
+    lastMoveTime = 0; // prevent quick move cause double click zoom
+
     private currentScaleFactor = 1;
     private targetScaleFactor = 1.0;
 
     remoteControl(data: any) {
         switch (data.type) {
             case 'scroll':
-                this.move(data.distance[0], data.distance[1]);
+                this.move((data.fromPosition[0] - data.toPosition[0]) / 3, (data.fromPosition[1] - data.toPosition[1]) / 3);
                 break;
             case 'scale':
                 this.scale(data.scaleFactor);
+                break;
+            case 'up':
+                this.resetMouse();
                 break;
         }
     }
 
     private scale(scaleFactor: number) {
         // over 2 because it is too hard to control
-        this.targetScaleFactor = (this.targetScaleFactor * (scaleFactor)) / 2 + this.targetScaleFactor / 2;
+        this.targetScaleFactor = (this.targetScaleFactor * (scaleFactor)) / 4 + this.targetScaleFactor * 3 / 4;
         this.targetScaleFactor = Math.max(1, Math.min(this.targetScaleFactor, 4));
 
         const scaling = Math.floor(this.targetScaleFactor - this.currentScaleFactor);
@@ -60,12 +66,32 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     private move(x: number, y: number) {
-        // todo: move
+        if (this.currentScaleFactor <= 1) {
+            this.resetMouse();
+            return;
+        }
         this.robot.setMouseDelay(1);
-        this.robot.moveMouse(50, 50);
-        this.robot.mouseToggle('down');
-        this.robot.dragMouse(this.range(0, 50 + x * 5, 100), this.range(0, 50 + y * 5, 100));
+        console.log('1');
+        if (!this.moving) {
+            console.log(`2 ${this.lastMoveTime} ${new Date().getTime()}`);
+            if (this.lastMoveTime + 500 < new Date().getTime()) {
+                console.log('3');
+                this.lastMoveTime = new Date().getTime();
+                this.robot.moveMouse(50, 50);
+                this.robot.mouseToggle('down');
+                this.moving = true;
+                this.robot.dragMouse(this.range(10, 50 - x * 5, 90), this.range(10, 50 - y * 5, 90));
+            }
+        } else {
+            console.log('4');
+            this.robot.dragMouse(this.range(10, 50 - x * 5, 90), this.range(10, 50 - y * 5, 90));
+        }
+    }
+
+    private resetMouse() {
+        this.moving = false;
         this.robot.mouseToggle('up');
+        this.robot.moveMouse(100, 100);
     }
 
     private range(min: number, value: number, max: number): number {
@@ -77,5 +103,16 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     ngAfterViewInit(): void {
+        interval(500).subscribe(() => {
+            console.log('focus');
+            if (this.webContent != null && this.webContent.nativeElement != null) {
+                this.webContent.nativeElement.focus();
+            }
+        });
     }
+
+    ngOnDestroy(): void {
+    }
+
+
 }
