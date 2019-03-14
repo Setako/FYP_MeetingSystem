@@ -1,12 +1,12 @@
-import { config } from 'dotenv';
-config();
-
-import { app, BrowserWindow, protocol } from 'electron';
+import {config} from 'dotenv';
+import {app, BrowserWindow, protocol} from 'electron';
 import * as commander from 'commander';
 import * as url from 'url';
 import * as path from 'path';
 
-const { startNest } = require('./socket/main');
+config();
+
+const {startNest} = require('./socket/main');
 
 const commandInput = commander
     .version('0.0.1')
@@ -18,10 +18,10 @@ const commandInput = commander
 const loadURL = commandInput.url
     ? commandInput.url
     : url.format({
-          pathname: path.join(__dirname, 'dist/MeetingDeviceUI/index.html'),
-          protocol: 'file:',
-          slashes: true,
-      });
+        pathname: path.join(__dirname, 'dist/MeetingDeviceUI/index.html'),
+        protocol: 'file:',
+        slashes: true,
+    });
 
 const socketServerPort = commandInput.port
     ? parseInt(commandInput.port, 10)
@@ -48,31 +48,34 @@ app.disableHardwareAcceleration();
 app.on('ready', () => {
     console.log(loadURL);
     console.log('OK');
-    protocol.unregisterProtocol('', () => {
-        rendererWindow = new BrowserWindow({
-            width: 99999,
-            height: 99999,
-            frame: false,
-            webPreferences: {
-                nodeIntegration: true,
-            },
-        });
 
-        rendererWindow.loadURL(loadURL);
+    rendererWindow = new BrowserWindow({
+        width: 99999,
+        height: 99999,
+        frame: false,
+        webPreferences: {
+            nodeIntegration: true,
+        },
+    });
+    rendererWindow.setMaximizable(true);
+    rendererWindow.setFullScreenable(true);
+    rendererWindow.setResizable(true)
 
-        if (commandInput.dev) {
-            rendererWindow.webContents.toggleDevTools();
-        } else {
-            rendererWindow.setVisibleOnAllWorkspaces(true);
-            rendererWindow.setAlwaysOnTop(true);
-            rendererWindow.setIgnoreMouseEvents(true, { forward: true });
-            rendererWindow.setSkipTaskbar(true);
-        }
+    rendererWindow.loadURL(loadURL);
 
-        // Prevent automatic maximize and resize
+    if (commandInput.dev) {
+        rendererWindow.webContents.toggleDevTools();
+    } else {
+        rendererWindow.setVisibleOnAllWorkspaces(true);
+        rendererWindow.setAlwaysOnTop(true);
+        rendererWindow.setIgnoreMouseEvents(false);
+        rendererWindow.setSkipTaskbar(true);
+        rendererWindow.setFullScreen(true);
         rendererWindow.setResizable(false);
-        rendererWindow.setMaximizable(false);
+    }
 
-        startNest(socketServerPort);
+
+    startNest(socketServerPort);
+    protocol.unregisterProtocol('', () => {
     });
 });
