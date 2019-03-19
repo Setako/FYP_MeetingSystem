@@ -16,10 +16,10 @@ import {ElectronService} from 'ngx-electron';
 import {RobotService} from './services/robot.service';
 import {IPCService} from './services/common/ipc.service';
 import {MeetingStateHolderService} from './services/interact/meeting-state-holder.service';
-import {SlideShowPlayerComponent} from './shared/components/resource-player/slide-show-player/slide-show-player.component';
+import {SlideShowPlayerComponent} from './shared/components/window/resource-player/slide-show-player/slide-show-player.component';
 import {ActionReceiverService} from './services/interact/action-receiver.service';
 import {ResourceOpenerService} from './services/interact/resource-opener.service';
-import {ImagePlayerComponent} from './shared/components/resource-player/image-player/image-player.component';
+import {ImagePlayerComponent} from './shared/components/window/resource-player/image-player/image-player.component';
 import {timer} from 'rxjs';
 
 declare let electron: any;

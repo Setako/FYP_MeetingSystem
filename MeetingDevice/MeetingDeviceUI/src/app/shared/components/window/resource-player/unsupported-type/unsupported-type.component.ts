@@ -1,5 +1,5 @@
 import {Component, OnInit} from '@angular/core';
-import {ControllableComponent} from '../../controllable/controllable.component';
+import {ControllableComponent} from '../../../controllable/controllable.component';
 
 @Component({
     selector: 'app-unsupported-type',

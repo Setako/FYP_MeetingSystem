@@ -1,12 +1,12 @@
 import {Injectable, Type} from '@angular/core';
 import {WindowStackService} from '../window/window-stack.service';
-import {SlideShowPlayerComponent} from '../../shared/components/resource-player/slide-show-player/slide-show-player.component';
-import {DocumentPlayerComponent} from '../../shared/components/resource-player/document-player/document-player.component';
+import {SlideShowPlayerComponent} from '../../shared/components/window/resource-player/slide-show-player/slide-show-player.component';
+import {DocumentPlayerComponent} from '../../shared/components/window/resource-player/document-player/document-player.component';
 import {ControllableComponent} from '../../shared/components/controllable/controllable.component';
-import {AudioPlayerComponent} from '../../shared/components/resource-player/audio-player/audio-player.component';
-import {ImagePlayerComponent} from '../../shared/components/resource-player/image-player/image-player.component';
-import {VideoPlayerComponent} from '../../shared/components/resource-player/video-player/video-player.component';
-import {UnsupportedTypeComponent} from '../../shared/components/resource-player/unsupported-type/unsupported-type.component';
+import {AudioPlayerComponent} from '../../shared/components/window/resource-player/audio-player/audio-player.component';
+import {ImagePlayerComponent} from '../../shared/components/window/resource-player/image-player/image-player.component';
+import {VideoPlayerComponent} from '../../shared/components/window/resource-player/video-player/video-player.component';
+import {UnsupportedTypeComponent} from '../../shared/components/window/resource-player/unsupported-type/unsupported-type.component';
 
 @Injectable({
     providedIn: 'root'
