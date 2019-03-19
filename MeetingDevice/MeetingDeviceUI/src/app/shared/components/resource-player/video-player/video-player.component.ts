@@ -4,6 +4,7 @@ import {WINDOW_DATA} from '../../../../services/window/window-ref';
 import {WindowData} from '../../../../services/window/window-data';
 import {NormalKeys, RobotService} from '../../../../services/robot.service';
 import {interval} from 'rxjs';
+import webviewTag = Electron.webviewTag;
 
 @Component({
     selector: 'app-video-player',
@@ -36,6 +37,12 @@ export class VideoPlayerComponent extends ControllableComponent
     }
 
     ngOnInit() {
+        webviewTag.addEventListener('did-finish-load', () => {
+            interval(100).subscribe(() => {
+                this.robot.keyDown('f');
+                this.webContent.nativeElement.focus();
+            });
+        });
     }
 
 
@@ -44,8 +51,8 @@ export class VideoPlayerComponent extends ControllableComponent
     }
 
     ngAfterViewInit(): void {
-        interval(500).subscribe(() => {
-            this.webContent.nativeElement.focus();
-        });
+        // interval(500).subscribe(() => {
+        //     this.webContent.nativeElement.focus();
+        // });
     }
 }
