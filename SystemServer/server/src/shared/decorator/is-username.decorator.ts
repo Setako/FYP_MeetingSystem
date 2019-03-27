@@ -8,7 +8,7 @@ import {
 export function IsUsername(
     validationOptions: ValidationOptions = {
         message:
-            '$property can only contain hyphens, underscores, letters, and numbers',
+            '$property can only contain hyphens, underscores, letters, and numbers, and length between 2 and 20',
     },
 ) {
     return (object: object, propertyName: string) => {

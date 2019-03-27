@@ -4,7 +4,7 @@ import { FriendRequest, FriendRequestStatus } from './friend-request.model';
 import { ModelType } from 'typegoose';
 import { UserService } from '../user/user.service';
 import { AcceptDto } from '../../shared/dto/accept.dto';
-import { toArray, flatMap } from 'rxjs/operators';
+import { flatMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 @Injectable()
@@ -124,15 +124,17 @@ export class FriendRequestService {
             .exec();
     }
 
-    async create(userStr: string, target: string) {
-        const [user, targetUser] = await this.userService
-            .getByUsernames([userStr, target])
-            .pipe(toArray())
+    async create(senderUsername: string, targetName: string) {
+        const sender = await this.userService
+            .getByUsername(senderUsername)
+            .toPromise();
+        const target = await this.userService
+            .getByUsername(targetName)
             .toPromise();
 
         const created = new this.friendRequestModel({
-            user,
-            targetUser,
+            user: sender,
+            targetUser: target,
             requestTime: new Date(),
             status: FriendRequestStatus.Requested,
         });

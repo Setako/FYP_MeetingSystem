@@ -12,15 +12,7 @@ import {
     OnGatewayInit,
 } from '@nestjs/websockets';
 import { defer, from, of, concat } from 'rxjs';
-import {
-    catchError,
-    concatAll,
-    map,
-    takeLast,
-    tap,
-    flatMap,
-    filter,
-} from 'rxjs/operators';
+import { concatAll, map, takeLast, tap, flatMap, filter } from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
 import { DeviceService } from '../device/device.service';
 import { MeetingService } from '../meeting/meeting.service';
@@ -32,18 +24,24 @@ import { InstanceType } from 'typegoose';
 import { Meeting, MeetingStatus } from '../meeting/meeting.model';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { UserService } from '../user/user.service';
-import { populate } from '@commander/shared/operator/document';
+import { populate, documentToPlain } from '@commander/shared/operator/document';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GetMeetingDto } from '../meeting/dto/get-meeting.dto';
 import { User } from '../user/user.model';
 import { Types } from 'mongoose';
 import { WsDeviceHoldMeetingGuard } from '@commander/shared/guard/ws-device-hold-meeting.guard';
 
+import uuidv4 = require('uuid/v4');
+import { WsDisconnectMeetingGuard } from '@commander/shared/guard/ws-disconnet-meeting.guard';
+
 @UseFilters(WsExceptionFilter)
 @UsePipes(WsValidationPipe)
 @WebSocketGateway()
 export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     @WebSocketServer() server: Server;
+
+    // <accessToken, deviceId>
+    accessTokenDeviceIdMap: Map<string, string> = new Map();
 
     constructor(
         private readonly deviceService: DeviceService,
@@ -59,9 +57,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         const {
             user,
             meeting,
+            accessToken,
         }: {
             user: InstanceType<User>;
             meeting: InstanceType<Meeting>;
+            accessToken: string;
         } = client.request;
 
         if (user && meeting) {
@@ -84,6 +84,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                     }),
                 )
                 .subscribe();
+        }
+
+        if (accessToken) {
+            this.accessTokenDeviceIdMap.delete(accessToken);
         }
     }
 
@@ -112,9 +116,13 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             .pipe(tap(device => (client.request.device = device)));
 
         const token$ = of(deviceId).pipe(
-            map(deviceid => ({
-                accessToken: this.deviceService.signToken(deviceid),
+            map(() => ({
+                accessToken: uuidv4(),
             })),
+            tap(({ accessToken }) => {
+                this.accessTokenDeviceIdMap.set(accessToken, deviceId);
+                client.request.accessToken = accessToken;
+            }),
         );
 
         return of(checkSecret$, bindDevice$, joinRoom$, token$).pipe(
@@ -137,20 +145,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     ) {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
-        // checkAccessTokenValid
-        await of(accessToken)
-            .pipe(
-                map(token => this.deviceService.verifyToken(token)),
-                catchError(e => {
-                    const message = e.message
-                        .replace('token', 'state')
-                        .replace('jwt', 'accessoken');
-                    throw new WsException(message);
-                }),
-            )
-            .toPromise();
+        if (!this.accessTokenDeviceIdMap.has(accessToken)) {
+            throw new WsException('access token does not match any device');
+        }
 
-        const deviceId = this.deviceService.decodeToken(accessToken);
+        const deviceId = this.accessTokenDeviceIdMap.get(accessToken);
 
         const updateDevice$ = defer(() =>
             this.meetingService.updateDevice(meeting.id, deviceId),
@@ -191,11 +190,16 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
             ),
         );
 
+        const deleteAccessToken$ = of(accessToken).pipe(
+            tap(token => this.accessTokenDeviceIdMap.delete(token)),
+        );
+
         await from([
             updateDevice$,
             deviceTakeOver$,
             joinRoom$,
             bindMeetingToDevice,
+            deleteAccessToken$,
         ])
             .pipe(concatAll())
             .toPromise();
@@ -213,8 +217,37 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         });
     }
 
+    @UseGuards(WsDeviceHoldMeetingGuard)
+    @UseFilters(new WsExceptionFilter('device-get-meeting'))
+    @SubscribeMessage('device-get-meeting')
+    onDeviceGetMeeting(client: Socket) {
+        const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
+
+        return this.meetingService.getById(meeting.id).pipe(
+            documentToPlain(GetMeetingDto),
+            map(updatedMeeting => ({
+                event: 'device-get-meeting-reply',
+                data: updatedMeeting,
+            })),
+        );
+    }
+
     @UseGuards(WsMeetingOwnerGuard)
     @UseGuards(WsAuthGuard)
+    @UseFilters(new WsExceptionFilter('client-get-meeting'))
+    @SubscribeMessage('client-get-meeting')
+    onClientGetMeeting(client: Socket) {
+        return this.onDeviceGetMeeting(client).pipe(
+            map(item => ({
+                ...item,
+                event: 'client-get-meeting-reply',
+            })),
+        );
+    }
+
+    @UseGuards(WsMeetingOwnerGuard)
+    @UseGuards(WsAuthGuard)
+    @UseGuards(WsDisconnectMeetingGuard)
     @UseFilters(new WsExceptionFilter('client-start-meeting'))
     @SubscribeMessage('client-start-meeting')
     onClientStartMeeting(client: Socket, _data: OwnerAuthDto) {

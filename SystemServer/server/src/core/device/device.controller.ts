@@ -6,14 +6,12 @@ import {
     Param,
     Post,
     UseGuards,
-    Put,
-    BadRequestException,
 } from '@nestjs/common';
 import { DeviceService } from './device.service';
 import { DeviceGuard } from '@commander/shared/guard/device.guard';
 import { DeviceSecretDto } from './dto/device-secret.dto';
-import { of, from } from 'rxjs';
-import { tap, map, concatAll, toArray, pluck } from 'rxjs/operators';
+import { from } from 'rxjs';
+import { map, toArray, pluck } from 'rxjs/operators';
 
 @Controller('device')
 export class DeviceController {
@@ -44,32 +42,5 @@ export class DeviceController {
     @UseGuards(DeviceGuard)
     async delete(@Param('id') id: string) {
         await this.deviceService.delete(id);
-    }
-
-    @Put(':id/start-token')
-    @UseGuards(DeviceGuard)
-    async getStartToken(
-        @Param('id') id: string,
-        @Body() deviceSecretDto: DeviceSecretDto,
-    ) {
-        const checkSecret$ = this.deviceService
-            .isDeviceSecretAvailable(id, deviceSecretDto.secret)
-            .pipe(
-                tap(available => {
-                    if (!available) {
-                        throw new BadRequestException(
-                            'device secret is not available',
-                        );
-                    }
-                }),
-            );
-
-        const token$ = of(id).pipe(
-            map(deviceid => ({
-                token: this.deviceService.signToken(deviceid),
-            })),
-        );
-
-        return of(checkSecret$, token$).pipe(concatAll());
     }
 }

@@ -100,38 +100,38 @@ export class FriendRequestController {
     @Post(':username')
     @UseGuards(UserGuard)
     async sendRequest(
-        @Auth() user: InstanceType<User>,
-        @Param('username') username: string,
+        @Auth() sender: InstanceType<User>,
+        @Param('username') receiverUsername: string,
     ) {
-        if (username === user.username) {
+        if (receiverUsername === sender.username) {
             throw new BadRequestException('You cannot add youself as friend');
         }
 
         const target = await this.userService
-            .getByUsername(username)
+            .getByUsername(receiverUsername)
             .toPromise();
         if (!target) {
             throw new NotFoundException('Target user not found');
         }
 
         if (
-            await this.friendService.isFriends(user.id, target.id).toPromise()
+            await this.friendService.isFriends(sender.id, target.id).toPromise()
         ) {
             throw new BadRequestException('Target user already is friend');
         }
 
         if (
             await this.friendRequestService.hasReqeustedRequest(
-                user.username,
-                username,
+                sender.username,
+                receiverUsername,
             )
         ) {
             throw new BadRequestException('Request already sent');
         }
 
         const created = await this.friendRequestService.create(
-            user.username,
-            username,
+            sender.username,
+            receiverUsername,
         );
 
         this.notificationService.create({
@@ -219,7 +219,7 @@ export class FriendRequestController {
         if (!isRequestExist) {
             throw new NotFoundException('No requests sent');
         }
-
+        // Todo: [bug] check the user received reqeust sent by itself
         const result = (await this.friendRequestService.acceptOrRejectRequest(
             source,
             user.username,

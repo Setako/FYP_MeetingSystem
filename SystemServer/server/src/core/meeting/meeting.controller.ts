@@ -48,7 +48,6 @@ import {
     mapTo,
     tap,
     groupBy,
-    catchError,
     mergeAll,
     shareReplay,
     takeWhile,
@@ -82,7 +81,6 @@ import { GoogleAuthService } from '../google/google-auth.service';
 import { GoogleEventService } from '../google/google-event.service';
 import { GoogleCalendarService } from '../google/google-calendar.service';
 import { BusyTimeDto } from './dto/busy-time.dto';
-import { DeviceService } from '../device/device.service';
 import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
 import { MeetingSuggestTimeQuery } from './dto/meeting-suggest-time-query';
 import { SuggestTimeDto } from './dto/suggest-time.dto';
@@ -101,7 +99,6 @@ export class MeetingController {
         private readonly googleAuthService: GoogleAuthService,
         private readonly googleEventService: GoogleEventService,
         private readonly googleCalendarService: GoogleCalendarService,
-        private readonly deviceService: DeviceService,
         @Inject(forwardRef(() => NotificationService))
         private readonly notificationService: NotificationService,
     ) {}
@@ -346,7 +343,7 @@ export class MeetingController {
     async editStatus(
         @Auth() owner: InstanceType<User>,
         @Param('id') id: string,
-        @Body() { status, ...editStatusDto }: EditMeetingStatusDto,
+        @Body() { status }: EditMeetingStatusDto,
     ) {
         const meeting = await this.meetingService.getById(id).toPromise();
 
@@ -393,7 +390,6 @@ export class MeetingController {
         const checkIsMeetingValidate = async (
             meetingInstance: InstanceType<Meeting>,
             editedStatus: MeetingStatus,
-            editStatusPartial: Partial<EditMeetingStatusDto>,
         ) => {
             switch (editedStatus) {
                 case MeetingStatus.Planned:
@@ -402,26 +398,10 @@ export class MeetingController {
                         ReadyToPlannedMeetingDto,
                     );
                     break;
-                case MeetingStatus.Started:
-                    await defer(() =>
-                        editStatusPartial.deviceToken
-                            ? of(editStatusPartial.deviceToken).pipe(
-                                  map(token =>
-                                      this.deviceService.verifyToken(token),
-                                  ),
-                                  catchError(e => {
-                                      const message = e.message
-                                          .replace('token', 'state')
-                                          .replace('jwt', 'token');
-                                      throw new BadRequestException(message);
-                                  }),
-                              )
-                            : empty(),
-                    ).toPromise();
             }
         };
 
-        await checkIsMeetingValidate(meeting, status, editStatusDto);
+        await checkIsMeetingValidate(meeting, status);
 
         const preUpdateAction = (
             oldStatus: MeetingStatus,
@@ -498,17 +478,6 @@ export class MeetingController {
                             mergeAll(),
                         );
                     });
-                case MeetingStatus.Started:
-                    return defer(() =>
-                        editStatusDto.deviceToken
-                            ? this.meetingService.updateDevice(
-                                  updatedMeeting.id,
-                                  this.deviceService.decodeToken(
-                                      editStatusDto.deviceToken,
-                                  ),
-                              )
-                            : empty(),
-                    );
                 case MeetingStatus.Ended:
                     return defer(() =>
                         this.meetingService.edit(updatedMeeting.id, {
@@ -814,8 +783,65 @@ export class MeetingController {
 
     @Put(':id/calendar')
     @UseGuards(MeetingGuard)
-    async markOrUnMarkCalendar() {
-        // Todo: mark the calendar
+    async markOrUnMarkCalendar(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+    ) {
+        // Todo: [test] mark the vent on calendar
+
+        if (!user.googleRefreshToken) {
+            throw new BadRequestException(
+                'user should first connect to Google',
+            );
+        }
+
+        if (!user.setting.markEventOnCalendarId) {
+            throw new BadRequestException(
+                'user should first set up a calendar to mark events',
+            );
+        }
+
+        const meeting = await this.meetingService.getById(id).toPromise();
+
+        const attendee = meeting.attendance.find(item =>
+            Types.ObjectId(user.id).equals(item.user as any),
+        );
+
+        if (!attendee) {
+            throw new BadRequestException(
+                'user should first accept the meeting invitation',
+            );
+        }
+
+        if (attendee.googleCalendarEventId) {
+            await this.googleCalendarService
+                .unmarkEventOnCalendar(
+                    user.googleRefreshToken,
+                    attendee.googleCalendarEventId,
+                    user.setting.markEventOnCalendarId,
+                )
+                .toPromise();
+
+            attendee.googleCalendarEventId = undefined;
+
+            await meeting.save();
+            return;
+        }
+
+        const event = this.googleCalendarService.generateEventFromMeeting(
+            meeting,
+        );
+
+        const markedEvent = await this.googleCalendarService
+            .markEventOnCalendar(
+                user.googleRefreshToken,
+                user.setting.markEventOnCalendarId,
+                event,
+            )
+            .toPromise();
+
+        attendee.googleCalendarEventId = markedEvent.data.id;
+        await meeting.save();
     }
 
     @Put(':id/attendance/:attendee')
