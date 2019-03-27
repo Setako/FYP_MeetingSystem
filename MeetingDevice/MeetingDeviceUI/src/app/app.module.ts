@@ -16,7 +16,6 @@ import {IconNotificationBlockComponent} from './shared/components/notification-b
 import {NotificationContentComponent} from './shared/components/notification-block/notification-content-component';
 import {IPCService} from './services/common/ipc.service';
 import {ControlIpcListenerService} from './services/control/control-ipc-listener.service';
-import {ControlModeService} from './services/control/control-mode.service';
 import {TokenQrcodeWindowComponent} from './shared/components/window/token-qrcode-window/token-qrcode-window.component';
 import {QueryingContentHiderComponent} from './shared/components/querying-content-hider/querying-content-hider.component';
 import {HttpClientModule} from '@angular/common/http';
@@ -75,7 +74,7 @@ import { WellcomeWindowComponent } from './shared/components/window/wellcome-win
         AudioPlayerComponent,
         UnsupportedTypeComponent,
     ],
-    providers: [IPCService, ControlModeService, ControlIpcListenerService],
+    providers: [IPCService, ControlIpcListenerService],
     bootstrap: [AppComponent],
 })
 export class AppModule {

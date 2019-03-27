@@ -34,8 +34,7 @@ export class VideoPlayerComponent extends ControllableComponent
 
     private static getDistanceRate(moveDistance: number): number {
         const x = moveDistance / 100 * 4;
-        console.log(`${moveDistance} x ${((0.3 * Math.pow(x - 2, 2) + (x - 2) + 1) / 4 * 100)} = ${moveDistance * ((0.25 * Math.pow(x - 2, 2) + (x - 2) + 1) / 4 * 100)}`);
-        return moveDistance * Math.max(0.2, ((0.3 * Math.pow(x - 2, 2) + (x - 2) + 1) / 4 * 100));
+        return (-moveDistance) * Math.max(0.2, ((0.3 * Math.pow(x - 2, 2) + (x - 2) + 1) / 4 * 100));
     }
 
     remoteControl(data: any) {
@@ -59,7 +58,8 @@ export class VideoPlayerComponent extends ControllableComponent
             this.loaded = true;
             this.cdr.detectChanges();
             this.webContent.nativeElement.focus();
-            this.robot.setMouseDelay(1);
+            this.robot.setMouseDelay(5);
+            this.robot.setKeyboardDelay(5);
             this.robot.keyDown(NormalKeys.SPACE);
             this.robot.keyDown('f');
             this.robot.moveMouse(50, 50);
@@ -70,6 +70,7 @@ export class VideoPlayerComponent extends ControllableComponent
 
 
     playPause() {
+        this.robot.setKeyboardDelay(1);
         this.robot.keyDown(NormalKeys.SPACE);
     }
 
@@ -88,7 +89,7 @@ export class VideoPlayerComponent extends ControllableComponent
         for (let i = 0; i < Math.abs(timeMove); i++) {
             this.robot.keyDown(timeMove > 0 ? NormalKeys.RIGHT : NormalKeys.LEFT);
         }
-        this.robot.setKeyboardDelay(10);
+        this.robot.setKeyboardDelay(1);
         this.moveAccumulation -= timeMove * step;
     }
 }

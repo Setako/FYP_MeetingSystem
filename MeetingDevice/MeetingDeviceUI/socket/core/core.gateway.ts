@@ -192,8 +192,6 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     onSendAction(client: Socket, data: any) {
         const { controlToken } = client.request;
 
-        console.log('received', data);
-
         if (this.controlToken !== controlToken) {
             throw new WsException('Control token is fake or expired');
         }

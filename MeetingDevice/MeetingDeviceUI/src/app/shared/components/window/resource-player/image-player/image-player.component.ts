@@ -48,16 +48,16 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     private scale(scaleFactor: number) {
-        console.log(`${this.currentScaleFactor} -> ${this.targetScaleFactor}`)
         // over 2 because it is too hard to control
         this.targetScaleFactor = (this.targetScaleFactor * (scaleFactor)) / 4 + this.targetScaleFactor * 3 / 4;
-        this.targetScaleFactor = Math.max(1, Math.min(this.targetScaleFactor, 4));
+        this.targetScaleFactor = Math.max(1, Math.min(this.targetScaleFactor, 5));
 
         const scaling = Math.floor(this.targetScaleFactor - this.currentScaleFactor);
 
         this.currentScaleFactor += scaling;
 
         for (let i = 0; i < Math.abs(scaling); i++) {
+            this.robot.setKeyboardDelay(3);
             if (scaling > 0) {
                 this.robot.keyDown('=');
             } else {
@@ -100,12 +100,6 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     ngAfterViewInit(): void {
-        interval(500).subscribe(() => {
-            console.log('focus');
-            if (this.webContent != null && this.webContent.nativeElement != null) {
-                this.webContent.nativeElement.focus();
-            }
-        });
     }
 
     ngOnDestroy(): void {

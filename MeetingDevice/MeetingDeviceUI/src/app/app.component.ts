@@ -21,6 +21,7 @@ import {ActionReceiverService} from './services/interact/action-receiver.service
 import {ResourceOpenerService} from './services/interact/resource-opener.service';
 import {ImagePlayerComponent} from './shared/components/window/resource-player/image-player/image-player.component';
 import {timer} from 'rxjs';
+import {LaserHandlerService} from './services/control/laser-handler.service';
 
 declare let electron: any;
 
@@ -46,12 +47,14 @@ export class AppComponent implements OnInit, AfterViewInit {
         private ipcService: IPCService,
         private actionReceiver: ActionReceiverService,
         private meetingStateHolderService: MeetingStateHolderService,
+        private laserHandler: LaserHandlerService,
         private readonly resourceOpener: ResourceOpenerService
     ) {
         ipcService.addCdr(cdr);
     }
 
     ngOnInit() {
+        this.laserHandler.setListener(() => this.cdr.detectChanges());
         this.controlIPCListener.init();
         this.windowStackService.registerWindowsContainer(this);
 

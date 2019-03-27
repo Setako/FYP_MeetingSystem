@@ -52,9 +52,8 @@ export class DocumentPlayerComponent extends ControllableComponent implements On
     }
 
     ngAfterViewInit(): void {
-        interval(500).subscribe(() => {
-            console.log('focus');
-            this.webContent.nativeElement.focus();
-        });
+        // interval(500).subscribe(() => {
+        //     this.webContent.nativeElement.focus();
+        // });
     }
 }
