@@ -32,13 +32,13 @@
           </div>
         </div>
         <div class="d-flex py-1">
-          <div class="d-flex align-items-center pr-2">
+          <div *ngIf="meeting.plannedStartTime != null" class="d-flex align-items-center pr-2">
             <mat-icon>date_range</mat-icon>
-            <span>Date: 05/12/2018 08:30</span>
+            <span>Planned Date: {{meeting.plannedStartTime|toDate|date: 'medium'}}</span>
           </div>
           <div class="d-flex align-items-center pr-2">
             <mat-icon>av_timer</mat-icon>
-            <span>Length: 1.5 hours</span>
+            <span>Length: {{meeting.length / 1000 / 60 / 60}} hours</span>
           </div>
         </div>
 

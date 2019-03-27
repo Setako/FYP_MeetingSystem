@@ -5,6 +5,9 @@ handlers:
     static_files: dist/WebAppClient/\1
     upload: dist/WebAppClient/(.*)
 
+  - url: /assets
+    static_dir: dist/WebAppClient/assets
+
   - url: .*
     static_files: dist/WebAppClient/index.html
     upload: dist/WebAppClient/index.html

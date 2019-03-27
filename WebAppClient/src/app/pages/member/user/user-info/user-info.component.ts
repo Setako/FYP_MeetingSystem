@@ -77,7 +77,7 @@ export class UserInfoComponent implements OnInit {
     if (this.userInformationForm.value.changePassword) {
       newUserInfo.password = this.userInformationForm.value.newPassword;
     }
-    this.userService.editUserProfile(newUserInfo, this.userInformationForm.value.currentPassword)
+    this.userService.editUser(newUserInfo, this.userInformationForm.value.currentPassword)
       .subscribe(() => this.snackBar.open('User profile updated!', 'Dismiss', {duration: 4000}));
   }
 
