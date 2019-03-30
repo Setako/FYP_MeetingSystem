@@ -1,10 +1,11 @@
 import { GoogleAuthService } from './google-auth.service';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { GoogleController } from './google.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from '../user/user.module';
 import { GoogleEventService } from './google-event.service';
 import { GoogleCalendarService } from './google-calendar.service';
+import { GoogleCloudStorageService } from './google-cloud-storage.service';
 
 @Module({
     imports: [
@@ -14,10 +15,20 @@ import { GoogleCalendarService } from './google-calendar.service';
                 expiresIn: '15m',
             },
         }),
-        UserModule,
+        forwardRef(() => UserModule),
     ],
     controllers: [GoogleController],
-    providers: [GoogleAuthService, GoogleEventService, GoogleCalendarService],
-    exports: [GoogleAuthService, GoogleEventService, GoogleCalendarService],
+    providers: [
+        GoogleAuthService,
+        GoogleEventService,
+        GoogleCalendarService,
+        GoogleCloudStorageService,
+    ],
+    exports: [
+        GoogleAuthService,
+        GoogleEventService,
+        GoogleCalendarService,
+        GoogleCloudStorageService,
+    ],
 })
 export class GoogleModule {}

@@ -19,7 +19,7 @@ import { MeetingService } from '../meeting/meeting.service';
 import { ClientTakeOverDeviceDto } from './dto/client-take-over-device.dto';
 import { DeviceLanIpDto } from './dto/device-lan-ip.dto';
 import { DeviceOnlineDto } from './dto/device-online.dto';
-import { OwnerAuthDto } from './dto/owner-auth.dto';
+import { MeetingAuthDto } from './dto/owner-auth.dto';
 import { InstanceType } from 'typegoose';
 import { Meeting, MeetingStatus } from '../meeting/meeting.model';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
@@ -33,6 +33,8 @@ import { WsDeviceHoldMeetingGuard } from '@commander/shared/guard/ws-device-hold
 
 import uuidv4 = require('uuid/v4');
 import { WsDisconnectMeetingGuard } from '@commander/shared/guard/ws-disconnet-meeting.guard';
+import { WsMeetingParticipantGuard } from '@commander/shared/guard/ws-meeting-participant.guard';
+import { SimpleUserDto } from '../user/dto/simple-user.dto';
 
 @UseFilters(WsExceptionFilter)
 @UsePipes(WsValidationPipe)
@@ -250,7 +252,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
     @UseGuards(WsDisconnectMeetingGuard)
     @UseFilters(new WsExceptionFilter('client-start-meeting'))
     @SubscribeMessage('client-start-meeting')
-    onClientStartMeeting(client: Socket, _data: OwnerAuthDto) {
+    onClientStartMeeting(client: Socket, _data: MeetingAuthDto) {
         const {
             meeting,
         }: {
@@ -453,5 +455,37 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                     .emit('client-attendance-updated', data),
             ),
         );
+    }
+
+    // meeting participant:
+
+    @UseGuards(WsMeetingParticipantGuard)
+    @UseGuards(WsAuthGuard)
+    @UseFilters(new WsExceptionFilter('clientp-join-meeting-device'))
+    @SubscribeMessage('clientp-join-meeting-device')
+    onClientParticipantJoinMeetingDevice(
+        client: Socket,
+        _data: MeetingAuthDto,
+    ) {
+        const {
+            meeting,
+            user,
+        }: {
+            meeting: InstanceType<Meeting>;
+            user: InstanceType<User>;
+        } = client.request;
+
+        client.join(`meeting:${meeting.id}_partipant`);
+
+        this.userService
+            .getById(user.id)
+            .pipe(documentToPlain(SimpleUserDto))
+            .subscribe(item => {
+                client
+                    .to(`meeting:${meeting.id}_device`)
+                    .emit('device-participant-join', {
+                        user: item,
+                    });
+            });
     }
 }

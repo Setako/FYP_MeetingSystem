@@ -17,6 +17,9 @@ import {
     Query,
     Res,
     UseGuards,
+    UseInterceptors,
+    FilesInterceptor,
+    UploadedFiles,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import parseDataURL from 'data-urls';
@@ -27,7 +30,7 @@ import { UploadAratarDto } from './dto/upload-aratar.dto';
 import { UserService } from './user.service';
 import { SelfGuard } from '@commander/shared/guard/self.guard';
 import { combineLatest, from, of } from 'rxjs';
-import { map, toArray, flatMap } from 'rxjs/operators';
+import { map, toArray, flatMap, tap, filter } from 'rxjs/operators';
 import { SimpleUserDto } from './dto/simple-user.dto';
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { User } from './user.model';
@@ -35,12 +38,24 @@ import { InstanceType } from 'typegoose';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { documentToPlain } from '@commander/shared/operator/document';
 import { skipFalsy } from '@commander/shared/operator/function';
+import { FileInfo } from '@commander/shared/type/file-info.type';
+import { GoogleCloudStorageService } from '../google/google-cloud-storage.service';
+import uuidv4 from 'uuid/v4';
+import { FaceService } from './face.service';
+import { FaceStatus } from './face.model';
+import { Types } from 'mongoose';
+import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
+import { FilterNotObjectIdStringPipe } from '@commander/shared/pipe/filter-not-object-id-string.pipe';
 
 @Controller('user')
 export class UsersController {
     private DEFAULT_USER_AVATAR: string;
 
-    constructor(private readonly userService: UserService) {
+    constructor(
+        private readonly userService: UserService,
+        private readonly faceService: FaceService,
+        private readonly googleCloudStorageService: GoogleCloudStorageService,
+    ) {
         this.DEFAULT_USER_AVATAR = process.env.DEFAULT_USER_AVATAR;
     }
 
@@ -204,5 +219,95 @@ export class UsersController {
         await FileUtils.writeFile(filename, img.body);
 
         await this.userService.uploadUserAratar(username, aratarDto.dataUrl);
+    }
+
+    @Post(':username/faces')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(UserGuard)
+    @UseGuards(SelfGuard)
+    @UseGuards(AuthGuard('jwt'))
+    @UseInterceptors(FilesInterceptor('faces'))
+    uploadUserFace(
+        @Auth() user: InstanceType<User>,
+        @UploadedFiles() faces: FileInfo[],
+    ) {
+        const images = faces.filter(item => item.mimetype.startsWith('image/'));
+
+        return from(images).pipe(
+            tap(image =>
+                FileUtils.writeFile(
+                    FileUtils.getRoot(`cache/img/faces-${image.originalname}`),
+                    image.buffer,
+                ),
+            ),
+            flatMap(image =>
+                this.googleCloudStorageService.upload(
+                    `cache/img/faces-${image.originalname}`,
+                    {
+                        destination: `faces/${
+                            user.id
+                        }/${uuidv4()}.${image.mimetype.split('/').pop()}`,
+                        validation: 'crc32c',
+                    },
+                ),
+            ),
+            flatMap(([file]) => {
+                return this.faceService.create({
+                    imageName: file.name,
+                    owner: user,
+                    status: FaceStatus.Waiting,
+                });
+            }),
+        );
+    }
+
+    @Get(':username/faces')
+    @UseGuards(UserGuard)
+    @UseGuards(SelfGuard)
+    @UseGuards(AuthGuard('jwt'))
+    getUserFace(@Auth() user: InstanceType<User>) {
+        return this.faceService.getAllByUserId(user.id).pipe(
+            flatMap(({ id, imageName, status }) => {
+                const timeout = new Date(Date.now() + 15 * 60000);
+                return this.googleCloudStorageService
+                    .getFileSignedLink({
+                        name: imageName,
+                        signCfg: {
+                            action: 'read',
+                            expires: timeout,
+                        },
+                    })
+                    .pipe(map(([link]) => ({ id, status, link, timeout })));
+            }),
+            toArray(),
+            map(items => ({ items, length: items.length })),
+        );
+    }
+
+    @Delete(':username/faces/:ids')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    @UseGuards(UserGuard)
+    @UseGuards(SelfGuard)
+    @UseGuards(AuthGuard('jwt'))
+    deleteUserFace(
+        @Auth() user: InstanceType<User>,
+        @Param(
+            'ids',
+            new SplitSemicolonPipe(),
+            new UniqueArrayPipe(),
+            new FilterNotObjectIdStringPipe(),
+        )
+        ids: string,
+    ) {
+        return from(ids).pipe(
+            flatMap(id => this.faceService.getByid(id)),
+            filter(({ owner }) => Types.ObjectId(user.id).equals(owner as any)),
+            tap(item =>
+                this.googleCloudStorageService
+                    .delete(item.imageName)
+                    .subscribe(),
+            ),
+            flatMap(({ id }) => this.faceService.delete(id)),
+        );
     }
 }

@@ -7,7 +7,7 @@
     "scripts": {
         "build": "rimraf dist && tsc -p tsconfig.build.json",
         "format": "prettier --write \"src/**/*.ts\"",
-        "start": "pm2-runtime start ecosystem.config.js",
+        "start": "pm2 start ecosystem.config.js",
         "start:ts": "ts-node --files -r tsconfig-paths/register src/main.ts",
         "start:dev": "nodemon",
         "start:debug": "nodemon --config nodemon-debug.json",
@@ -24,6 +24,7 @@
         "webpack": "rimraf dist/hot && webpack --config webpack.config.js"
     },
     "dependencies": {
+        "@google-cloud/storage": "^2.4.3",
         "@nest-modules/mailer": "^1.0.4",
         "@nestjs/common": "^5.7.3",
         "@nestjs/core": "^5.7.3",
@@ -35,6 +36,7 @@
         "class-validator": "^0.9.1",
         "data-urls": "^1.1.0",
         "dotenv": "^6.2.0",
+        "fast-crc32c": "^1.0.4",
         "googleapis": "^37.2.0",
         "mongoose": "^5.4.17",
         "morgan": "^1.9.1",

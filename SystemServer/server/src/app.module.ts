@@ -21,9 +21,6 @@ import { SearchModule } from './core/search/search.module';
         }),
         MailerModule.forRoot({
             transport: JSON.parse(process.env.MAIL_TRANSPORT),
-            defaults: {
-                from: process.env.MAIL_FROM,
-            },
         }),
         MailerModule,
         AuthModule,
@@ -41,4 +38,3 @@ import { SearchModule } from './core/search/search.module';
     providers: [],
 })
 export class AppModule {}
-console.log(process.env.MAIL_FROM);

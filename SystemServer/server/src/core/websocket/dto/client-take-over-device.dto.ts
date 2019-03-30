@@ -1,7 +1,7 @@
 import { IsString, IsMongoId, IsOptional } from 'class-validator';
-import { OwnerAuthDto } from './owner-auth.dto';
+import { MeetingAuthDto } from './owner-auth.dto';
 
-export class ClientTakeOverDeviceDto extends OwnerAuthDto {
+export class ClientTakeOverDeviceDto extends MeetingAuthDto {
     @IsString()
     readonly accessToken: string;
 
