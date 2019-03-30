@@ -8,7 +8,7 @@ module.exports = {
     entry: ['webpack/hot/poll?100', './src/main.ts'],
     watch: true,
     watchOptions: {
-        aggregateTimeout: 1000
+        aggregateTimeout: 1000,
     },
     target: 'node',
     externals: [
@@ -49,6 +49,6 @@ module.exports = {
         filename: 'main.js',
         publicPath: '/',
         hotUpdateChunkFilename: 'hot/[hash]hot-update.js',
-        hotUpdateMainFilename: 'hot/[hash]hot-update.json'
+        hotUpdateMainFilename: 'hot/[hash]hot-update.json',
     },
 };

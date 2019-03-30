@@ -12,7 +12,7 @@ module.exports = {
             instances: process.env.WEB_CONCURRENCY || 1,
             output: 'log/out.log',
             error: 'log/err.log',
-            merge_logs: true
+            merge_logs: true,
         },
     ],
 };

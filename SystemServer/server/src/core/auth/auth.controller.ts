@@ -1,12 +1,12 @@
 import { Auth } from '@commander/shared/decorator/auth.decorator';
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { from } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { User } from '../user/user.model';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { from } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Controller('auth')
 export class AuthController {

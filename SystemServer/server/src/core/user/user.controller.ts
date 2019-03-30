@@ -1,5 +1,13 @@
+import { Auth } from '@commander/shared/decorator/auth.decorator';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { SelfGuard } from '@commander/shared/guard/self.guard';
 import { UserGuard } from '@commander/shared/guard/user.guard';
+import { documentToPlain } from '@commander/shared/operator/document';
+import { skipFalsy } from '@commander/shared/operator/function';
+import { FilterNotObjectIdStringPipe } from '@commander/shared/pipe/filter-not-object-id-string.pipe';
 import { SplitSemicolonPipe } from '@commander/shared/pipe/split-semicolon.pipe';
+import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
+import { FileInfo } from '@commander/shared/type/file-info.type';
 import { FileUtils } from '@commander/shared/utils/file.utils';
 import { NumberUtils } from '@commander/shared/utils/number.utils';
 import {
@@ -16,36 +24,28 @@ import {
     Put,
     Query,
     Res,
+    UploadedFiles,
     UseGuards,
     UseInterceptors,
-    FilesInterceptor,
-    UploadedFiles,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import parseDataURL from 'data-urls';
 import { Response } from 'express';
-import { EditUserDto } from './dto/edit-user.dto';
-import { UserDto } from './dto/user.dto';
-import { UploadAratarDto } from './dto/upload-aratar.dto';
-import { UserService } from './user.service';
-import { SelfGuard } from '@commander/shared/guard/self.guard';
-import { combineLatest, from, of } from 'rxjs';
-import { map, toArray, flatMap, tap, filter } from 'rxjs/operators';
-import { SimpleUserDto } from './dto/simple-user.dto';
-import { Auth } from '@commander/shared/decorator/auth.decorator';
-import { User } from './user.model';
-import { InstanceType } from 'typegoose';
-import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
-import { documentToPlain } from '@commander/shared/operator/document';
-import { skipFalsy } from '@commander/shared/operator/function';
-import { FileInfo } from '@commander/shared/type/file-info.type';
-import { GoogleCloudStorageService } from '../google/google-cloud-storage.service';
-import uuidv4 from 'uuid/v4';
-import { FaceService } from './face.service';
-import { FaceStatus } from './face.model';
 import { Types } from 'mongoose';
-import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
-import { FilterNotObjectIdStringPipe } from '@commander/shared/pipe/filter-not-object-id-string.pipe';
+import { combineLatest, from, of } from 'rxjs';
+import { filter, flatMap, map, tap, toArray } from 'rxjs/operators';
+import { InstanceType } from 'typegoose';
+import uuidv4 from 'uuid/v4';
+import { GoogleCloudStorageService } from '../google/google-cloud-storage.service';
+import { EditUserDto } from './dto/edit-user.dto';
+import { SimpleUserDto } from './dto/simple-user.dto';
+import { UploadAratarDto } from './dto/upload-aratar.dto';
+import { UserDto } from './dto/user.dto';
+import { FaceStatus } from './face.model';
+import { FaceService } from './face.service';
+import { User } from './user.model';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UsersController {
@@ -241,23 +241,30 @@ export class UsersController {
                 ),
             ),
             flatMap(image =>
-                this.googleCloudStorageService.upload(
-                    `cache/img/faces-${image.originalname}`,
-                    {
+                this.googleCloudStorageService
+                    .upload(`cache/img/faces-${image.originalname}`, {
                         destination: `faces/${
                             user.id
                         }/${uuidv4()}.${image.mimetype.split('/').pop()}`,
                         validation: 'crc32c',
-                    },
-                ),
+                    })
+                    .pipe(
+                        tap(() =>
+                            FileUtils.deleteFile(
+                                FileUtils.getRoot(
+                                    `cache/img/faces-${image.originalname}`,
+                                ),
+                            ),
+                        ),
+                    ),
             ),
-            flatMap(([file]) => {
-                return this.faceService.create({
+            flatMap(([file]) =>
+                this.faceService.create({
                     imageName: file.name,
                     owner: user,
                     status: FaceStatus.Waiting,
-                });
-            }),
+                }),
+            ),
         );
     }
 
