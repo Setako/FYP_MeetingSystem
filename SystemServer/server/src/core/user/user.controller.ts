@@ -18,7 +18,6 @@ import {
     Get,
     HttpCode,
     HttpStatus,
-    NotFoundException,
     Param,
     Post,
     Put,
@@ -156,34 +155,8 @@ export class UsersController {
         @Res() res: Response,
         @Param('username') username: string,
     ) {
-        const root = FileUtils.getRoot('cache/img/');
-        const filename = await FileUtils.findFileInPathStartWith(
-            `${username}.`,
-            root,
-        );
-
-        if (filename) {
-            return res.sendFile(FileUtils.normalize(root + '/' + filename));
-        }
-
         const user = await this.userService.getByUsername(username).toPromise();
-        if (!user.avatar) {
-            if (this.DEFAULT_USER_AVATAR) {
-                const defaultAvatar = parseDataURL(this.DEFAULT_USER_AVATAR);
-                res.contentType(defaultAvatar.mimeType.toString());
-                return res.end(defaultAvatar.body, 'binary');
-            }
-            throw new NotFoundException('User avatar not found');
-        }
-
-        const img = parseDataURL(user.avatar);
-        const createdFile = FileUtils.normalize(
-            root + `${username}.${img.mimeType._subtype}`,
-        );
-        await FileUtils.mkdir(createdFile);
-        await FileUtils.writeFile(createdFile, img.body);
-
-        return res.sendFile(createdFile);
+        return res.redirect(user.avatar || this.DEFAULT_USER_AVATAR);
     }
 
     @Post(':username/avatar')
@@ -192,6 +165,7 @@ export class UsersController {
     @UseGuards(SelfGuard)
     @UseGuards(AuthGuard('jwt'))
     async uploadUserAvatar(
+        @Auth() user: InstanceType<User>,
         @Body() aratarDto: UploadAratarDto,
         @Param('username') username: string,
     ) {
@@ -203,22 +177,31 @@ export class UsersController {
             throw new BadRequestException('Only accept image data url');
         }
 
+        // save image
         const root = FileUtils.getRoot('cache/img/');
-        const deleted = await FileUtils.findFileInPathStartWith(
-            `${username}.`,
-            root,
-        );
-        if (deleted) {
-            FileUtils.deleteFile(FileUtils.normalize(root + '/' + deleted));
-        }
-
         const filename = FileUtils.normalize(
-            root + `${username}.${img.mimeType._subtype}`,
+            root + `avatar-${username}.${img.mimeType._subtype}`,
         );
         await FileUtils.mkdir(filename);
         await FileUtils.writeFile(filename, img.body);
 
-        await this.userService.uploadUserAratar(username, aratarDto.dataUrl);
+        // upload image
+        const [file] = await this.googleCloudStorageService
+            .upload(filename, {
+                destination: `avatar/${user.id}`,
+                validation: 'crc32c',
+            })
+            .toPromise();
+
+        const link = await this.googleCloudStorageService
+            .getFilePublicLink(file)
+            .toPromise();
+
+        // delete local
+        await FileUtils.deleteFile(filename);
+
+        // update data
+        await this.userService.uploadUserAratar(username, link);
     }
 
     @Post(':username/faces')

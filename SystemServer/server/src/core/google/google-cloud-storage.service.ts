@@ -5,8 +5,10 @@ import {
     UploadOptions,
     FileOptions,
     GetSignedUrlConfig,
+    File,
 } from '@google-cloud/storage';
 import { defer } from 'rxjs';
+import { mapTo, map } from 'rxjs/operators';
 
 @Injectable()
 export class GoogleCloudStorageService {
@@ -55,6 +57,13 @@ export class GoogleCloudStorageService {
     }) {
         return defer(() =>
             this.bucket.file(name, options).getSignedUrl(signCfg),
+        );
+    }
+
+    public getFilePublicLink(file: File) {
+        return defer(() => file.makePublic()).pipe(
+            mapTo(`${file.bucket.name}/${file.name}`),
+            map(path => `https://storage.googleapis.com/${path}`),
         );
     }
 }
