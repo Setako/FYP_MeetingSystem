@@ -38,6 +38,10 @@ export class GoogleCloudStorageService {
         });
     }
 
+    public exist(name: string, options?: UploadOptions) {
+        return defer(() => this.bucket.file(name, options).exists());
+    }
+
     public upload(pathString: string, options?: UploadOptions) {
         return defer(() => this.bucket.upload(pathString, options));
     }

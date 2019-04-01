@@ -91,6 +91,9 @@ export class Attendance {
 
     @prop()
     public googleCalendarEventId?: string;
+
+    @prop()
+    public isFitTrainedModel?: boolean;
 }
 
 export enum MeetingPriority {
@@ -285,4 +288,7 @@ export class Meeting extends Typegoose {
         default: () => new MeetingResources(),
     })
     public resources: MeetingResources;
+
+    @prop()
+    public trainedModelPath?: string;
 }

@@ -188,7 +188,7 @@ export class UsersController {
         // upload image
         const [file] = await this.googleCloudStorageService
             .upload(filename, {
-                destination: `avatar/${user.id}`,
+                destination: `avatars/${user.id}`,
                 validation: 'crc32c',
             })
             .toPromise();
@@ -223,12 +223,13 @@ export class UsersController {
                     image.buffer,
                 ),
             ),
-            flatMap(image =>
-                this.googleCloudStorageService
+            flatMap(image => {
+                const name = uuidv4();
+                return this.googleCloudStorageService
                     .upload(`cache/img/faces-${image.originalname}`, {
                         destination: `faces/${
                             user.id
-                        }/${uuidv4()}.${image.mimetype.split('/').pop()}`,
+                        }/${name}.${image.mimetype.split('/').pop()}`,
                         validation: 'crc32c',
                     })
                     .pipe(
@@ -239,11 +240,16 @@ export class UsersController {
                                 ),
                             ),
                         ),
-                    ),
-            ),
-            flatMap(([file]) =>
+                        map(item => ({
+                            name,
+                            result: item,
+                        })),
+                    );
+            }),
+            flatMap(({ name, result }) =>
                 this.faceService.create({
-                    imageName: file.name,
+                    name,
+                    imagePath: result[0].name,
                     owner: user,
                     status: FaceStatus.Waiting,
                 }),
@@ -257,7 +263,7 @@ export class UsersController {
     @UseGuards(AuthGuard('jwt'))
     getUserFace(@Auth() user: InstanceType<User>) {
         return this.faceService.getAllByUserId(user.id).pipe(
-            flatMap(({ id, imageName, status }) => {
+            flatMap(({ id, imagePath: imageName, status }) => {
                 const timeout = new Date(Date.now() + 15 * 60000);
                 return this.googleCloudStorageService
                     .getFileSignedLink({
@@ -292,10 +298,12 @@ export class UsersController {
         return from(ids).pipe(
             flatMap(id => this.faceService.getByid(id)),
             filter(({ owner }) => Types.ObjectId(user.id).equals(owner as any)),
-            tap(item =>
-                this.googleCloudStorageService
-                    .delete(item.imageName)
-                    .subscribe(),
+            tap(({ imagePath, resultPath }) =>
+                [imagePath, resultPath]
+                    .filter(Boolean)
+                    .map(path =>
+                        this.googleCloudStorageService.delete(path).subscribe(),
+                    ),
             ),
             flatMap(({ id }) => this.faceService.delete(id)),
         );

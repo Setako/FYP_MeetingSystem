@@ -11,7 +11,15 @@ export class Face extends Typegoose {
     @prop({
         required: true,
     })
-    public imageName: string;
+    public name: string;
+
+    @prop({
+        required: true,
+    })
+    public imagePath: string;
+
+    @prop()
+    public resultPath?: string;
 
     @prop({
         ref: User,

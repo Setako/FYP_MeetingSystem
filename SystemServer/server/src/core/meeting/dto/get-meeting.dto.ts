@@ -78,6 +78,9 @@ export class GetMeetingDto {
     @Exclude()
     __v!: number;
 
+    @Exclude()
+    trainedModelPath: string;
+
     constructor(partial: Partial<GetMeetingDto>) {
         Object.assign(this, partial);
     }

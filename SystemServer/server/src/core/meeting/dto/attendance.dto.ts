@@ -24,4 +24,6 @@ export class AttendanceDto {
     permission?: PermissionDto;
 
     googleCalendarEventId?: string;
+
+    isFitTrainedModel?: boolean;
 }

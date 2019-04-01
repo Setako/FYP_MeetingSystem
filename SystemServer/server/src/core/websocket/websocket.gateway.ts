@@ -11,8 +11,16 @@ import {
     OnGatewayDisconnect,
     OnGatewayInit,
 } from '@nestjs/websockets';
-import { defer, from, of, concat } from 'rxjs';
-import { concatAll, map, takeLast, tap, flatMap, filter } from 'rxjs/operators';
+import { defer, from, of, concat, timer } from 'rxjs';
+import {
+    concatAll,
+    map,
+    takeLast,
+    tap,
+    flatMap,
+    filter,
+    toArray,
+} from 'rxjs/operators';
 import { Server, Socket } from 'socket.io';
 import { DeviceService } from '../device/device.service';
 import { MeetingService } from '../meeting/meeting.service';
@@ -21,7 +29,7 @@ import { DeviceLanIpDto } from './dto/device-lan-ip.dto';
 import { DeviceOnlineDto } from './dto/device-online.dto';
 import { MeetingAuthDto } from './dto/owner-auth.dto';
 import { InstanceType } from 'typegoose';
-import { Meeting, MeetingStatus } from '../meeting/meeting.model';
+import { Meeting, MeetingStatus, Attendance } from '../meeting/meeting.model';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { UserService } from '../user/user.service';
 import { populate, documentToPlain } from '@commander/shared/operator/document';
@@ -35,6 +43,13 @@ import uuidv4 = require('uuid/v4');
 import { WsDisconnectMeetingGuard } from '@commander/shared/guard/ws-disconnet-meeting.guard';
 import { WsMeetingParticipantGuard } from '@commander/shared/guard/ws-meeting-participant.guard';
 import { SimpleUserDto } from '../user/dto/simple-user.dto';
+import { TrainningServerSocket } from './trainning-server.socket';
+import { GoogleCloudStorageService } from '../google/google-cloud-storage.service';
+import { combine } from '@commander/shared/operator/function';
+import { FaceService } from '../user/face.service';
+import { FaceStatus } from '../user/face.model';
+import { FaceDto } from './dto/face.dto';
+import { MergeResultDto } from './dto/merge-result.dto';
 
 @UseFilters(WsExceptionFilter)
 @UsePipes(WsValidationPipe)
@@ -49,6 +64,9 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         private readonly deviceService: DeviceService,
         private readonly meetingService: MeetingService,
         private readonly userService: UserService,
+        private readonly faceService: FaceService,
+        private readonly googleCloudStorageService: GoogleCloudStorageService,
+        private readonly trainningServerSocket: TrainningServerSocket,
     ) {}
 
     afterInit(_server: Socket) {
@@ -234,6 +252,155 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         );
     }
 
+    @UseGuards(WsDeviceHoldMeetingGuard)
+    @UseFilters(new WsExceptionFilter('device-get-trained-model'))
+    @SubscribeMessage('device-get-trained-model')
+    onDeviceGetTrainedModel(client: Socket) {
+        const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
+
+        const mergeModel = () => {
+            console.log('merge-model');
+            const setFitTrainedModel = (
+                attendance: Attendance[],
+                validUser: string[],
+            ) => {
+                return attendance.map(item => {
+                    item.isFitTrainedModel = validUser.includes(
+                        (item.user as Types.ObjectId).toHexString(),
+                    );
+                    return item;
+                });
+            };
+
+            const result$ = this.trainningServerSocket
+                .on<MergeResultDto>('merge_result')
+                .pipe(filter(item => item.id === meeting.id));
+
+            const meeting$ = result$.pipe(
+                combine(result => this.meetingService.getById(result.id)),
+                flatMap(([result, _meeting]) => {
+                    _meeting.attendance = setFitTrainedModel(
+                        _meeting.attendance,
+                        Object.entries(result.validOwner)
+                            .filter(([, val]) => val)
+                            .map(([key]) => key),
+                    );
+                    _meeting.trainedModelPath = result.modelPath;
+                    return _meeting.save();
+                }),
+            );
+
+            const notify$ = meeting$.pipe(
+                flatMap(({ trainedModelPath, attendance }) => {
+                    const timeout = new Date(Date.now() + 15 * 60000);
+                    return this.googleCloudStorageService
+                        .getFileSignedLink({
+                            name: trainedModelPath,
+                            signCfg: {
+                                action: 'read',
+                                expires: timeout,
+                            },
+                        })
+                        .pipe(
+                            map(([link]) => ({
+                                link,
+                                timeout,
+                                fitModelUser: attendance
+                                    .filter(item => item.isFitTrainedModel)
+                                    .map(item =>
+                                        (item.user as Types.ObjectId).toHexString(),
+                                    ),
+                            })),
+                        );
+                }),
+                tap(item =>
+                    this.server
+                        .to(`meeting:${meeting.id}_device`)
+                        .emit('device-get-trained-model-reply', item),
+                ),
+            );
+
+            const subscriber = notify$.subscribe(() =>
+                subscriber.unsubscribe(),
+            );
+
+            this.faceService
+                .find({
+                    status: FaceStatus.Trained,
+                    owner: {
+                        $in: meeting.attendance.map(item => item.user),
+                    },
+                } as any)
+                .pipe(
+                    documentToPlain(FaceDto),
+                    toArray(),
+                    map(items => ({
+                        id: meeting.id,
+                        items,
+                    })),
+                    flatMap(request =>
+                        this.trainningServerSocket.emit('merge', request),
+                    ),
+                )
+                .subscribe();
+
+            timer(3 * 60000).subscribe(() => subscriber.unsubscribe());
+        };
+
+        if (!meeting.trainedModelPath) {
+            mergeModel();
+            return;
+        }
+
+        const ifExist$ = this.meetingService.getById(meeting.id).pipe(
+            flatMap(({ trainedModelPath, attendance }) => {
+                const timeout = new Date(Date.now() + 15 * 60000);
+                return this.googleCloudStorageService
+                    .getFileSignedLink({
+                        name: trainedModelPath,
+                        signCfg: {
+                            action: 'read',
+                            expires: timeout,
+                        },
+                    })
+                    .pipe(
+                        map(([link]) => ({
+                            link,
+                            timeout,
+                            fitModelUser: attendance
+                                .filter(item => item.isFitTrainedModel)
+                                .map(item =>
+                                    (item.user as Types.ObjectId).toHexString(),
+                                ),
+                        })),
+                    );
+            }),
+            tap(item =>
+                this.server
+                    .to(`meeting:${meeting.id}_device`)
+                    .emit('device-get-trained-model-reply', item),
+            ),
+        );
+
+        const ifNotExist$ = this.meetingService.getById(meeting.id).pipe(
+            flatMap(item => {
+                item.trainedModelPath = undefined;
+                item.attendance = item.attendance.map(a => {
+                    a.isFitTrainedModel = undefined;
+                    return a;
+                });
+
+                return item.save();
+            }),
+            map(() => mergeModel()),
+        );
+
+        this.googleCloudStorageService
+            .exist(meeting.trainedModelPath)
+            .pipe(flatMap(([exist]) => (exist ? ifExist$ : ifNotExist$)))
+            .subscribe();
+    }
+
     @UseGuards(WsMeetingOwnerGuard)
     @UseGuards(WsAuthGuard)
     @UseFilters(new WsExceptionFilter('client-get-meeting'))
@@ -341,10 +508,6 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                 'Meeting status are not allowed to be updated as ended',
             );
         }
-
-        client
-            .to(`meeting:${meeting.id}_device`)
-            .emit('server-attendance-updated', '');
 
         return from(
             this.meetingService.edit(meeting.id, {

@@ -2,8 +2,8 @@ import { Face, FaceStatus } from './face.model';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType, InstanceType } from 'typegoose';
-import { of, defer, identity } from 'rxjs';
-import { flatMap } from 'rxjs/operators';
+import { of, defer, identity, Observable, fromEvent } from 'rxjs';
+import { flatMap, map } from 'rxjs/operators';
 import { Types } from 'mongoose';
 import { User } from './user.model';
 
@@ -12,6 +12,12 @@ export class FaceService {
     constructor(
         @InjectModel(Face) private readonly faceModel: ModelType<Face>,
     ) {}
+
+    watchModelSave(): Observable<InstanceType<Face>> {
+        return fromEvent(this.faceModel, 'save').pipe(
+            map(item => (Array.isArray(item) ? item[0] : item)),
+        );
+    }
 
     getByid(id: string) {
         return of(id).pipe(
@@ -25,8 +31,16 @@ export class FaceService {
         ).pipe(flatMap(identity));
     }
 
+    find(conditions: Partial<Face>) {
+        return defer(() => this.faceModel.find(conditions)).pipe(
+            flatMap(identity),
+        );
+    }
+
     create(face: {
-        imageName: string;
+        name: string;
+        imagePath: string;
+        resultPath?: string;
         owner: string | Types.ObjectId | InstanceType<User>;
         status?: FaceStatus;
     }) {
