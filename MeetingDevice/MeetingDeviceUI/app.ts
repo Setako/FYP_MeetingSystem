@@ -1,12 +1,12 @@
-import {config} from 'dotenv';
-import {app, BrowserWindow, protocol} from 'electron';
+import { config } from 'dotenv';
+import { app, BrowserWindow, protocol } from 'electron';
 import * as commander from 'commander';
 import * as url from 'url';
 import * as path from 'path';
 
 config();
 
-const {startNest} = require('./socket/main');
+const { startNest } = require('./socket/main');
 
 const commandInput = commander
     .version('0.0.1')
@@ -18,14 +18,14 @@ const commandInput = commander
 const loadURL = commandInput.url
     ? commandInput.url
     : url.format({
-        pathname: path.join(__dirname, 'dist/MeetingDeviceUI/index.html'),
-        protocol: 'file:',
-        slashes: true,
-    });
+          pathname: path.join(__dirname, 'dist/MeetingDeviceUI/index.html'),
+          protocol: 'file:',
+          slashes: true,
+      });
 
 const socketServerPort = commandInput.port
     ? parseInt(commandInput.port, 10)
-    : 3000;
+    : parseInt(process.env.SOCKET_PORT, 10);
 
 // @ts-ignore
 global.device = {
@@ -59,7 +59,7 @@ app.on('ready', () => {
     });
     rendererWindow.setMaximizable(true);
     rendererWindow.setFullScreenable(true);
-    rendererWindow.setResizable(true)
+    rendererWindow.setResizable(true);
 
     rendererWindow.loadURL(loadURL);
 
@@ -74,8 +74,6 @@ app.on('ready', () => {
         rendererWindow.setResizable(false);
     }
 
-
     startNest(socketServerPort);
-    protocol.unregisterProtocol('', () => {
-    });
+    protocol.unregisterProtocol('', () => {});
 });

@@ -1,4 +1,4 @@
-import { UseFilters, UseGuards, UsePipes } from '@nestjs/common';
+import { UseFilters, UseGuards, UsePipes, HttpService } from '@nestjs/common';
 import {
     OnGatewayInit,
     SubscribeMessage,
@@ -41,6 +41,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     constructor(
         private readonly ipcService: IpcService,
         private readonly configService: ConfigService,
+        private readonly httpService: HttpService,
     ) {}
 
     afterInit(_server: Socket) {
@@ -80,7 +81,6 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     newFaceRecognition() {
-        return; // prevent bugs now, install all python dependencies first
         spawn(
             'pipenv',
             [
@@ -89,6 +89,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                 `main.py`,
                 '--token',
                 this.configService.fromEnvironment('RECOGNITION_TOKEN'),
+                '--port',
+                this.configService.fromGlobal('socket', 'port'),
             ],
             { cwd: `${process.cwd()}/recognition/` },
         );
@@ -101,7 +103,9 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     setupSocketClinet() {
-        this.socketClient = io('https://conference-commander.herokuapp.com');
+        this.socketClient = io(
+            this.configService.fromEnvironment('SERVER_URL'),
+        );
 
         this.socketClient.on('connect', () =>
             this.socketClient.emit('device-online', {
@@ -125,6 +129,24 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             this.socketClient.emit('device-get-meeting');
             this.socketClient.emit('device-get-trained-model');
         });
+
+        this.socketClient.on(
+            'device-get-trained-model-reply',
+            ({ link, timeout, fitModelUser }) => {
+                if ((fitModelUser as string[]).length === 0) return;
+                if (new Date(timeout) < new Date()) {
+                    this.socketClient.emit('device-get-trained-model');
+                    return;
+                }
+
+                this.httpService.get(link).subscribe(res =>
+                    this.server.to('recognition').emit('start-recognition', {
+                        trainedModel: res.data,
+                        showImage: false,
+                    }),
+                );
+            },
+        );
 
         this.socketClient.on('device-get-meeting-reply', (meeting: any) => {
             this.holdingMeeting = meeting;
@@ -155,11 +177,9 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             this.holdingMeetingId = null;
             this.controlToken = uuidv4();
 
-            this.ipcService.sendMessage('server-disconnected');
-        });
+            this.server.to('recognition').emit('end-recognition');
 
-        this.socketClient.on('device-get-trained-model', (data: any) => {
-            this.server.to('recognition').emit('start-recognition', data);
+            this.ipcService.sendMessage('server-disconnected');
         });
 
         this.socketClient.on('disconnect', () => {
@@ -168,6 +188,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             this.holdingMeeting = null;
             this.holdingMeetingId = null;
             this.controlToken = uuidv4();
+
+            this.server.to('recognition').emit('end-recognition');
 
             this.ipcService.sendMessage('server-disconnected');
         });
@@ -214,14 +236,6 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         client.join('recognition');
         this.recognitionClient = client;
 
-        // test to start recognition
-        // from(promises.readFile(`${process.cwd()}/knn.clf`)).subscribe(data =>
-        //     client.emit('start-recognition', {
-        //         trainedModel: data,
-        //         showImage: true,
-        //     }),
-        // );
-
         return {
             event: 'recognition-online-success',
         };
@@ -241,8 +255,6 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         if (!userList) {
             return;
         }
-
-        console.log('recognised-user', userList);
 
         if (!this.socketClient) {
             client.emit('end-recognition');
