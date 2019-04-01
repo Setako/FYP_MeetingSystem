@@ -7,9 +7,8 @@ export class FaceDto {
     _id!: Types.ObjectId;
 
     @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     @Expose()
     name!: string;

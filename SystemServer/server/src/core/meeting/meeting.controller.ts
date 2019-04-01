@@ -309,7 +309,6 @@ export class MeetingController {
             filter(({ sharer }) => {
                 return (sharer as Types.ObjectId).equals(targetUser._id);
             }),
-            tap(console.log),
             pluck('resources'),
             defaultIfEmpty(new Resources()),
         );

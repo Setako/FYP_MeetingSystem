@@ -216,9 +216,9 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
 
         await from([
             updateDevice$,
-            deviceTakeOver$,
             joinRoom$,
             bindMeetingToDevice,
+            deviceTakeOver$,
             deleteAccessToken$,
         ])
             .pipe(concatAll())
@@ -244,6 +244,12 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
         return this.meetingService.getById(meeting.id).pipe(
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
+            ),
             documentToPlain(GetMeetingDto),
             map(updatedMeeting => ({
                 event: 'device-get-meeting-reply',
@@ -259,7 +265,6 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
         const mergeModel = () => {
-            console.log('merge-model');
             const setFitTrainedModel = (
                 attendance: Attendance[],
                 validUser: string[],
@@ -539,14 +544,18 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
         const updatedAttendance$ = from(attendance).pipe(
-            flatMap(({ username, time }) =>
-                this.userService.getByUsername(username).pipe(
+            flatMap(({ userId, username, time }) => {
+                const obs = userId
+                    ? this.userService.getById(userId)
+                    : this.userService.getByUsername(username);
+
+                return obs.pipe(
                     map(user => ({
                         user,
                         arrivalTime: time,
                     })),
-                ),
-            ),
+                );
+            }),
             filter(item => Boolean(item.user)),
             flatMap(item =>
                 this.meetingService.updateAttendeeArrivalTime(
@@ -569,7 +578,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                 },
             })),
             tap(({ data }) =>
-                client
+                this.server
                     .to(`meeting:${meeting.id}_device`)
                     .emit('server-attendance-updated', data),
             ),
@@ -583,14 +592,18 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
         const { meeting }: { meeting: InstanceType<Meeting> } = client.request;
 
         const updatedAttendance$ = from(attendance).pipe(
-            flatMap(({ username, time }) =>
-                this.userService.getByUsername(username).pipe(
+            flatMap(({ userId, username, time }) => {
+                const obs = userId
+                    ? this.userService.getById(userId)
+                    : this.userService.getByUsername(username);
+
+                return obs.pipe(
                     map(user => ({
                         user,
                         arrivalTime: time,
                     })),
-                ),
-            ),
+                );
+            }),
             filter(item => Boolean(item.user)),
             flatMap(item =>
                 this.meetingService.updateAttendeeArrivalTime(
@@ -613,7 +626,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
                 },
             })),
             tap(({ data }) =>
-                client
+                this.server
                     .to(`meeting:${meeting.id}_client`)
                     .emit('client-attendance-updated', data),
             ),

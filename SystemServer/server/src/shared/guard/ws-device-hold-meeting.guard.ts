@@ -30,7 +30,7 @@ export class WsDeviceHoldMeetingGuard implements CanActivate {
         }
 
         if (!meeting) {
-            throw new WsException('device should first connect to client');
+            throw new WsException('device should first take over to client');
         }
 
         return this.meetingService.getById(meeting.id).pipe(

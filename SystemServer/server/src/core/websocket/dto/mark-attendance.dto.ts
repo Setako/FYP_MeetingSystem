@@ -1,5 +1,11 @@
 import { IsUsername } from '@commander/shared/decorator/is-username.decorator';
-import { IsDate, IsArray, ValidateNested, ValidateIf } from 'class-validator';
+import {
+    IsDate,
+    IsArray,
+    ValidateNested,
+    ValidateIf,
+    IsMongoId,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class MarkAttendanceDto {
@@ -12,11 +18,16 @@ export class MarkAttendanceDto {
 }
 
 class Attendance {
+    @ValidateIf(obj => !obj.userId)
     @IsUsername()
-    username: string;
+    username?: string;
+
+    @ValidateIf(obj => !obj.username)
+    @IsMongoId()
+    userId?: string;
 
     @ValidateIf((_obj, val) => val !== null)
     @IsDate()
     @Type(() => Date)
-    time: Date;
+    time?: Date;
 }

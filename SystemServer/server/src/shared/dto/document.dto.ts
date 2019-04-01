@@ -1,12 +1,11 @@
-import { Expose, Exclude } from 'class-transformer';
+import { Expose, Exclude, Transform } from 'class-transformer';
 
 import { Types } from 'mongoose';
 
 export class DocumentDto {
     @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     @Exclude()
     _id!: Types.ObjectId;

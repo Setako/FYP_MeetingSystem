@@ -8,9 +8,8 @@ import { ObjectUtils } from '@commander/shared/utils/object.utils';
 @Exclude()
 export class NotificationDto {
     @Expose()
-    get id() {
-        return this._id.toHexString();
-    }
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     @Expose()
     type!: string;
