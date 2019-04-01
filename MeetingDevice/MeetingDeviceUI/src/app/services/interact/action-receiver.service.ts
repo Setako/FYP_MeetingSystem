@@ -3,6 +3,7 @@ import {IPCService} from '../common/ipc.service';
 import {GestureActionHandlerService} from './gesture-action-handler.service';
 import {ResourceOpenerService} from './resource-opener.service';
 import {MatSnackBar} from '@angular/material';
+import {LaserHandlerService} from '../control/laser-handler.service';
 
 @Injectable({
     providedIn: 'root'
@@ -12,11 +13,15 @@ export class ActionReceiverService {
     constructor(private ipc: IPCService,
                 private gestureActionHandler: GestureActionHandlerService,
                 private resourceOpener: ResourceOpenerService,
+                private laserHandler: LaserHandlerService,
                 private snackBar: MatSnackBar) {
         ipc.on('send-action', (event, data: any) => {
             switch (data.type) {
                 case 'gesture':
                     this.handleGesture(data.data);
+                    break;
+                case 'laser':
+                    this.laserHandler.handle(data.data);
                     break;
                 case 'open-resource':
                     this.handleOpenResource(data.data);

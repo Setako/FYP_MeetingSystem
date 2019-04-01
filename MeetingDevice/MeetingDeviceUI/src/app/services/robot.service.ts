@@ -78,4 +78,8 @@ export class RobotService {
     setMouseDelay(delay: number) {
         this.robot.setMouseDelay(delay);
     }
+
+    setKeyboardDelay(delay: number) {
+        this.robot.setKeyboardDelay(delay);
+    }
 }

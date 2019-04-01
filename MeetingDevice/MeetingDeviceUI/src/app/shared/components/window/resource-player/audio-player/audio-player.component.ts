@@ -1,8 +1,8 @@
 import {AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core';
-import {ControllableComponent} from '../../controllable/controllable.component';
-import {WINDOW_DATA} from '../../../../services/window/window-ref';
-import {WindowData} from '../../../../services/window/window-data';
-import {RobotService} from '../../../../services/robot.service';
+import {ControllableComponent} from '../../../controllable/controllable.component';
+import {WINDOW_DATA} from '../../../../../services/window/window-ref';
+import {WindowData} from '../../../../../services/window/window-data';
+import {RobotService} from '../../../../../services/robot.service';
 import {interval} from 'rxjs';
 
 @Component({
