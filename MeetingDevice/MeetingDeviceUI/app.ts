@@ -25,7 +25,7 @@ const loadURL = commandInput.url
 
 const socketServerPort = commandInput.port
     ? parseInt(commandInput.port, 10)
-    : parseInt(process.env.SOCKET_PORT, 10);
+    : parseInt(process.env.SOCKET_PORT, 10) || 3000;
 
 // @ts-ignore
 global.device = {
