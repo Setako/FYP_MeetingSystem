@@ -12,7 +12,6 @@ numpy = "*"
 opencv-python = "*"
 dlib = "*"
 face-recognition = "*"
-pyinstaller = "*"
 
 [dev-packages]
 black = "*"

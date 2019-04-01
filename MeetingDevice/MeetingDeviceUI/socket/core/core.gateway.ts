@@ -10,8 +10,8 @@ import {
 import { Server, Socket } from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
-import * as child from 'child_process';
-import { spawn } from 'child_process';
+import { join } from 'path';
+import { spawn, spawnSync, exec } from 'child_process';
 import { IpcService } from './ipc.service';
 import { ConfigService } from './config.service';
 import { WsExceptionFilter } from '../shared/ws-exception.filter';
@@ -58,7 +58,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
         // test
         this.ipcService.getMessage('exec').subscribe(([event, message]) => {
-            child.exec(message[0]);
+            exec(message[0]);
         });
 
         this.newFaceRecognition();
@@ -81,18 +81,39 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     newFaceRecognition() {
-        spawn(
-            'pipenv',
+        // return;
+        const cwd = `${process.cwd()}/recognition/`;
+
+        const pipenv = spawnSync('pipenv', ['--venv'], { cwd });
+        const isWin = process.platform === 'win32';
+        const interpreterDir = pipenv.stdout.toString().trim();
+        const interpreter = isWin
+            ? join(interpreterDir, 'Scripts', 'python')
+            : join(interpreterDir, 'bin', 'python');
+
+        const recognition = spawn(
+            interpreter,
             [
-                'run',
-                'python',
-                `main.py`,
+                'main.py',
                 '--token',
                 this.configService.fromEnvironment('RECOGNITION_TOKEN'),
                 '--port',
                 this.configService.fromGlobal('socket', 'port'),
             ],
-            { cwd: `${process.cwd()}/recognition/` },
+            { cwd },
+        );
+
+        recognition.stdout.on('data', data =>
+            console.log(
+                `[Recognition] stdout - ${new Date()}`,
+                data.toString(),
+            ),
+        );
+        recognition.stderr.on('data', data =>
+            console.log(
+                `[Recognition] stderr - ${new Date()}`,
+                data.toString(),
+            ),
         );
     }
 
@@ -103,8 +124,17 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     setupSocketClinet() {
+        if (this.socketClient) {
+            this.socketClient.removeAllListeners();
+            this.socketClient.disconnect();
+        }
+
         this.socketClient = io(
             this.configService.fromEnvironment('SERVER_URL'),
+            {
+                transports: ['websocket', 'polling'],
+                forceNew: true,
+            },
         );
 
         this.socketClient.on('connect', () =>
@@ -133,18 +163,32 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         this.socketClient.on(
             'device-get-trained-model-reply',
             ({ link, timeout, fitModelUser }) => {
-                if ((fitModelUser as string[]).length === 0) return;
+                if ((fitModelUser as string[]).length === 0) {
+                    this.ipcService.sendMessage('failed-recognition', {
+                        reason: 'no one has enough facial data',
+                        fitModelUser,
+                    });
+                    return;
+                }
                 if (new Date(timeout) < new Date()) {
                     this.socketClient.emit('device-get-trained-model');
                     return;
                 }
 
-                this.httpService.get(link).subscribe(res =>
-                    this.server.to('recognition').emit('start-recognition', {
-                        trainedModel: res.data,
-                        showImage: false,
-                    }),
-                );
+                this.httpService
+                    .get(link, { responseType: 'arraybuffer' })
+                    .subscribe(res => {
+                        this.server
+                            .to('recognition')
+                            .emit('start-recognition', {
+                                trainedModel: res.data,
+                                showImage: true,
+                            });
+
+                        this.ipcService.sendMessage('start-recognition', {
+                            fitModelUser,
+                        });
+                    });
             },
         );
 
@@ -166,6 +210,9 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         });
 
         this.socketClient.on('server-attendance-updated', (data: any) => {
+            if (this.holdingMeeting) {
+                this.holdingMeeting.attendance = data;
+            }
             this.ipcService.sendMessage('attendance-updated', data);
         });
 
@@ -183,8 +230,6 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         });
 
         this.socketClient.on('disconnect', () => {
-            this.socketClient.connect();
-
             this.holdingMeeting = null;
             this.holdingMeetingId = null;
             this.controlToken = uuidv4();
@@ -249,8 +294,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     @UseGuards(WsRecognitionGuard)
     @UseFilters(new WsExceptionFilter('recognised-user'))
     @SubscribeMessage('recognised-user')
-    onRecognisedUser(client: Socket, { userList }: { userList: string[] }) {
-        if (!userList) {
+    onRecognisedUser(client: Socket, { userIdList }: { userIdList: string[] }) {
+        if (!userIdList || !userIdList.length) {
             return;
         }
 
@@ -259,11 +304,34 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             return;
         }
 
-        this.socketClient.emit('device-mark-attendance', {
-            attendance: userList.map(username => ({
-                username,
-                time: Date(),
-            })),
-        });
+        if (this.holdingMeeting) {
+            const notArrivalUserIds = Array.from<any>(
+                this.holdingMeeting.attendance,
+            )
+                .filter(item => !item.arrivalTime)
+                .map(item => item.user.id);
+
+            const data = userIdList
+                .filter(id => {
+                    console.log(
+                        id,
+                        notArrivalUserIds,
+                        notArrivalUserIds.includes(id),
+                    );
+                    return notArrivalUserIds.includes(id);
+                })
+                .map(userId => ({
+                    userId,
+                    time: Date(),
+                }));
+
+            if (data.length === 0) return;
+
+            console.log('recognised-user', data);
+
+            this.socketClient.emit('device-mark-attendance', {
+                attendance: data,
+            });
+        }
     }
 }

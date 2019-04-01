@@ -9,6 +9,7 @@ import multiprocessing
 import pickle
 from multiprocessing import JoinableQueue, Queue
 from rx.concurrency.mainloopscheduler import AsyncIOScheduler
+import sys
 
 env = {}
 
@@ -97,8 +98,8 @@ def setup_event(io: socketio.AsyncClient):
                 observer.on_next(result_queue.get())
 
         def emit_attendance(userList):
-            print(userList)
-            io.emit("recognised-user", {"userList": list(userList)})
+            print('userList: {}'.format(userList), file=sys.stdout)
+            io.emit("recognised-user", {"userIdList": list(userList)})
 
         global from_frame_stream_subscriber, from_predict_stream_subscriber
         from_frame_stream_subscriber = (
@@ -136,6 +137,6 @@ def start(token: str, port: int):
     io = socketio.Client()
     setup_event(io)
 
-    io.connect(env["io_url"])
+    io.connect(env["io_url"], transports=["websocket", "polling"])
     io.wait()
 

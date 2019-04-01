@@ -1,7 +1,7 @@
 {
     "name": "meeting-device-ui",
     "version": "0.0.0",
-    "scripts": {
+    "scripts": {    
         "ng": "ng",
         "dev": "concurrently --kill-others \"npm run serve\" \"npm run devstart\"",
         "start": "tsc --module commonjs --target es2017 && electron .",
