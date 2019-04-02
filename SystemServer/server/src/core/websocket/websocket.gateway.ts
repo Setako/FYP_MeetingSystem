@@ -33,7 +33,6 @@ import { Meeting, MeetingStatus, Attendance } from '../meeting/meeting.model';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { UserService } from '../user/user.service';
 import { populate, documentToPlain } from '@commander/shared/operator/document';
-import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { GetMeetingDto } from '../meeting/dto/get-meeting.dto';
 import { User } from '../user/user.model';
 import { Types } from 'mongoose';
@@ -568,14 +567,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
 
         return updatedAttendance$.pipe(
             populate('attendance.user'),
-            map(updatedMeeting => ({
+            documentToPlain(GetMeetingDto),
+            map(({ attendance: attendanceList }) => ({
                 event: 'client-attendance-updated',
-                data: {
-                    attendance: ObjectUtils.DocumentToPlain(
-                        updatedMeeting,
-                        GetMeetingDto,
-                    ).attendance,
-                },
+                data: { attendance: attendanceList },
             })),
             tap(({ data }) =>
                 this.server
@@ -616,14 +611,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayDisconnect {
 
         return updatedAttendance$.pipe(
             populate('attendance.user'),
-            map(updatedMeeting => ({
+            documentToPlain(GetMeetingDto),
+            map(({ attendance: attendanceList }) => ({
                 event: 'server-attendance-updated',
-                data: {
-                    attendance: ObjectUtils.DocumentToPlain(
-                        updatedMeeting,
-                        GetMeetingDto,
-                    ).attendance,
-                },
+                data: { attendance: attendanceList },
             })),
             tap(({ data }) =>
                 this.server
