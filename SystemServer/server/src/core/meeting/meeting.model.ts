@@ -291,4 +291,7 @@ export class Meeting extends Typegoose {
 
     @prop()
     public trainedModelPath?: string;
+
+    @prop()
+    public agendaGoogleResourceId?: string;
 }

@@ -42,11 +42,12 @@ export class GoogleCalendarService {
 
     getAllCalendars(refreshToken: string) {
         const calendar = this.getCalendar(refreshToken);
-        const list = calendar.calendarList.list;
-        return defer(() => list()).pipe(
+        return defer(() => calendar.calendarList.list()).pipe(
             expand(result =>
                 result.data.nextPageToken
-                    ? list({ pageToken: result.data.nextPageToken })
+                    ? calendar.calendarList.list({
+                          pageToken: result.data.nextPageToken,
+                      })
                     : empty(),
             ),
             flatMap(item => item.data.items),
