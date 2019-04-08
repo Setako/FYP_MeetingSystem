@@ -29,26 +29,5 @@ export interface UserSettings {
     carlendarId: string,
     importance: number
   }[];
-  notification?: {
-    friendRequest: {
-      email: boolean,
-      notification: boolean
-    },
-    meetingInfoUpdate: {
-      email: boolean,
-      notification: boolean
-    },
-    meetingInvitation: {
-      email: boolean,
-      notification: boolean
-    },
-    meetingCancelled: {
-      email: boolean,
-      notification: boolean
-    },
-    meetingReminder: {
-      email: boolean,
-      notification: boolean
-    }
-  };
+  notification?: { [id: string]: { email: boolean, notification: boolean } };
 }

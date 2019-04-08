@@ -6,5 +6,7 @@ import {Component, OnInit} from '@angular/core';
   styleUrls: ['./calendar-setting.component.scss']
 })
 export class CalendarSettingComponent implements OnInit {
+  ngOnInit(): void {
+  }
 
 }

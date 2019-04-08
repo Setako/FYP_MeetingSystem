@@ -7,7 +7,7 @@ import {UserNotification, UserNotificationType} from '../shared/models/userNotif
 import {FriendRequest} from '../shared/models/user';
 import {Meeting} from '../shared/models/meeting';
 import {Router} from '@angular/router';
-import {filter, map, mergeMap, retry, tap} from 'rxjs/operators';
+import {filter, map, mergeMap, repeatWhen, retry, tap} from 'rxjs/operators';
 import {AppConfig} from '../app-config';
 import {DatePipe} from '@angular/common';
 
@@ -80,8 +80,7 @@ export class NotificationService {
     timer(0, 10000)
       .pipe(
         filter((_) => this.auth.isLoggedIn),
-        mergeMap((_) => this.getNotifications()),
-        retry()
+        mergeMap((_) => this.getNotifications())
       )
       .subscribe((res) => this.notifications = res);
   }
@@ -89,7 +88,10 @@ export class NotificationService {
   public getNotifications(): Observable<UserNotification[]> {
     return this.http.get<ListResponse<UserNotificationDTO>>(`${AppConfig.API_PATH}/notification`)
       .pipe(
-        map(res => res.items.map((dto) => this.notificationDTOEntityMapper[dto.type](dto))
+        map(res => res.items.map((dto) => {
+            console.log(dto.type);
+            return this.notificationDTOEntityMapper[dto.type](dto);
+          })
         )
       );
   }

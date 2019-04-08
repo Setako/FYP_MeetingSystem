@@ -3,6 +3,8 @@ import {FormControl, FormGroup} from '@angular/forms';
 import {AuthService} from '../../../../services/auth.service';
 import {MatSnackBar} from '@angular/material';
 import {UserService} from '../../../../services/user.service';
+import {flatMap, tap} from 'rxjs/operators';
+import {User} from '../../../../shared/models/user';
 
 @Component({
   selector: 'app-notifications-setting',
@@ -15,30 +17,31 @@ export class NotificationsSettingComponent implements OnInit {
     {
       display: 'Friend',
       types: [
-        {display: 'Friend request received', name: 'friendRequestReceived'},
-        {display: 'Friend request accepted by other', name: 'friendRequestAccepted'},
-        {display: 'Friend request rejected by other', name: 'friendRequestRejected'},
+        {display: 'Friend request', name: 'friendRequest'},
       ]
     },
     {
       display: 'Meeting',
       types: [
-        {display: 'Meeting invited by other', name: 'meetingInvited'},
-        {display: 'Meeting updated', name: 'meetingUpdated'},
+        {display: 'Meeting invited by other', name: 'meetingInvitation'},
+        {display: 'Meeting updated', name: 'meetingInfoUpdate'},
         {display: 'Meeting cancelled', name: 'meetingCancelled'},
         {display: 'Meeting reminder', name: 'meetingReminder'},
       ]
     }
   ];
 
-  public notificationSettingForm: FormGroup;
-
   public notificationSettingForm = new FormGroup({
-    friendRequest: new FormControl(false),
-    meetingInfoUpdate: new FormControl(false),
-    meetingInvitation: new FormControl(false),
-    meetingCancelled: new FormControl(false),
-    meetingReminder: new FormControl(false),
+    friendRequestEmail: new FormControl(false),
+    friendRequestNotification: new FormControl(false),
+    meetingInfoUpdateEmail: new FormControl(false),
+    meetingInfoUpdateNotification: new FormControl(false),
+    meetingInvitationEmail: new FormControl(false),
+    meetingInvitationNotification: new FormControl(false),
+    meetingCancelledEmail: new FormControl(false),
+    meetingCancelledNotification: new FormControl(false),
+    meetingReminderEmail: new FormControl(false),
+    meetingReminderNotification: new FormControl(false),
   });
 
   public updating = true;
@@ -47,6 +50,10 @@ export class NotificationsSettingComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.notificationTypes.map(type => type.types).forEach(types => types.forEach(type => {
+      this.notificationSettingForm.addControl(type.name + 'Email', new FormControl(false));
+      this.notificationSettingForm.addControl(type.name + 'Notification', new FormControl(false));
+    }));
     this.updateUserSetting().subscribe();
   }
 
@@ -55,13 +62,15 @@ export class NotificationsSettingComponent implements OnInit {
     return this.authService.updateUserInfo().pipe(tap(() => {
       const user = this.authService.loggedInUser;
 
-      this.notificationSettingForm.patchValue({
-        friendRequest: user.setting.notification.friendRequest,
-        meetingInfoUpdate: user.setting.notification.meetingInfoUpdate,
-        meetingInvitation: user.setting.notification.meetingInvitation,
-        meetingCancelled: user.setting.notification.meetingCancelled,
-        meetingReminder: user.setting.notification.meetingReminder,
-      });
+
+      const patchingValues = {};
+      this.notificationTypes.map(type => type.types).forEach(types => types.forEach(type => {
+        patchingValues[type + 'Email'] = user.setting.notification[type.name].email;
+        patchingValues[type + 'Notification'] = user.setting.notification[type.name].notification;
+      }));
+      console.log(patchingValues);
+
+      this.notificationSettingForm.patchValue(patchingValues);
       this.updating = false;
     }, () => {
       this.updating = false;
@@ -70,20 +79,23 @@ export class NotificationsSettingComponent implements OnInit {
 
   saveSetting() {
     this.updating = true;
+
+    const notificationSetting: { [id: string]: { email: boolean, notification: boolean } } = {};
+    this.notificationTypes.map(type => type.types).forEach(types => types.forEach(type => {
+      notificationSetting[type.name] = {
+        email: this.notificationSettingForm.value[type.name + 'Email'],
+        notification: this.notificationSettingForm.value[type.name + 'Notification'],
+      };
+    }));
+
     const user: User = {
       username: this.authService.loggedInUser.username,
       setting: {
-        notification: {
-          friendRequest: this.notificationSettingForm.value.friendRequest,
-          meetingInfoUpdate: this.notificationSettingForm.value.meetingInfoUpdate,
-          meetingInvitation: this.notificationSettingForm.value.meetingInvitation,
-          meetingCancelled: this.notificationSettingForm.value.meetingCancelled,
-          meetingReminder: this.notificationSettingForm.value.meetingReminder,
-        }
+        notification: notificationSetting
       }
     };
 
-    this.userService.editUser(user).pipe(this.updateUserSetting).subscribe(() => {
+    this.userService.editUser(user).pipe(flatMap(() => this.updateUserSetting())).subscribe(() => {
       this.snackBar.open('Update success', 'DISMISS', {duration: 4000});
     });
 
