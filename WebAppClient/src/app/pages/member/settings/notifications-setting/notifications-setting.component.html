@@ -1,39 +1,42 @@
 <div style="background: white" class="p-sm-2 p-md-4">
-  <form (submit)="$event.preventDefault();  save();" [formGroup]="notificationSettingForm">
-    <table border="0" class="col-sm-12 col-lg-6 no-gutters setting-table" cellspacing="0" cellpadding="0" style="padding: 0">
-      <tr>
-        <td>
-        </td>
-        <td align="center" style="margin-right: 20px">
-          E-mail
-        </td>
-        <td align="center" >
-          Notification
-        </td>
-      </tr>
-
-
-      <ng-container *ngFor="let typesGroup of notificationTypes">
+  <app-querying-content-hider [querying]="updating" queryingAction="Updating user setting">
+    <form (submit)="$event.preventDefault();  saveSetting();" [formGroup]="notificationSettingForm">
+      <table border="0" class="col-sm-12 col-lg-6 no-gutters setting-table" cellspacing="0" cellpadding="0"
+             style="padding: 0">
         <tr>
-          <th colspan="3" align="left">{{typesGroup.display}}</th>
-        </tr>
-        <tr class="type-row" *ngFor="let type of typesGroup.types" >
           <td>
-            {{type.display}}
+          </td>
+          <td align="center" style="margin-right: 20px">
+            E-mail
           </td>
           <td align="center">
-            <mat-checkbox></mat-checkbox>
-          </td>
-          <td align="center">
-            <mat-checkbox></mat-checkbox>
+            Notification
           </td>
         </tr>
-      </ng-container>
 
-    </table>
-    <button mat-raised-button color="primary" class="mt-2">
-      SAVE
-    </button>
-  </form>
+
+        <ng-container *ngFor="let typesGroup of notificationTypes">
+          <tr>
+            <th colspan="3" align="left">{{typesGroup.display}}</th>
+          </tr>
+          <tr class="type-row" *ngFor="let type of typesGroup.types">
+            <td>
+              {{type.display}}
+            </td>
+            <td align="center">
+              <mat-checkbox [formControlName]="type.name+'Email'"></mat-checkbox>
+            </td>
+            <td align="center">
+              <mat-checkbox [formControlName]="type.name+'Notification'"></mat-checkbox>
+            </td>
+          </tr>
+        </ng-container>
+
+      </table>
+      <button mat-raised-button color="primary" class="mt-2">
+        SAVE
+      </button>
+    </form>
+  </app-querying-content-hider>
 
 </div>
