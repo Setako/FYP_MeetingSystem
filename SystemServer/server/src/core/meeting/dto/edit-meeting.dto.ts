@@ -101,4 +101,8 @@ export class EditMeetingDto {
     @ValidateNested()
     @Type(() => MeetingResources)
     readonly resources?: MeetingResources;
+
+    @IsOptional()
+    @IsString()
+    readonly agendaGoogleResourceId?: string;
 }
