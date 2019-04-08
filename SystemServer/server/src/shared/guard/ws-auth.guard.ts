@@ -20,8 +20,13 @@ export class WsAuthGuard implements CanActivate {
             request: { user },
         } = context.switchToWs().getClient();
 
-        const authenticationToken = context.switchToWs().getData()
-            .authenticationToken;
+        const { authenticationToken } = context.switchToWs().getData() || {
+            authenticationToken: null,
+        };
+
+        if (!(user || authenticationToken)) {
+            return of(false);
+        }
 
         const onUser = defer(() => this.userService.getById(user.id));
 

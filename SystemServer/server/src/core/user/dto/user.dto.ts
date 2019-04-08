@@ -1,4 +1,4 @@
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { Types } from 'mongoose';
 import { UserSetting } from '../user.model';
 
@@ -10,6 +10,10 @@ export class UserDto {
     userMeetingRelation!: any[];
 
     setting!: UserSetting;
+
+    @Expose()
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     @Exclude()
     _id!: Types.ObjectId;

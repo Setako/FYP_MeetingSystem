@@ -1,6 +1,6 @@
 import { IsString, IsMongoId } from 'class-validator';
 
-export class OwnerAuthDto {
+export class MeetingAuthDto {
     @IsString()
     readonly authenticationToken: string;
 

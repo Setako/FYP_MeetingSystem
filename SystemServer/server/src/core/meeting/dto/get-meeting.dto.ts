@@ -68,15 +68,17 @@ export class GetMeetingDto {
     public resources: object;
 
     @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     @Exclude()
-    _id!: Types.ObjectId;
+    _id: Types.ObjectId;
 
     @Exclude()
     __v!: number;
+
+    @Exclude()
+    trainedModelPath: string;
 
     constructor(partial: Partial<GetMeetingDto>) {
         Object.assign(this, partial);

@@ -2,14 +2,14 @@ import { LoginFailedException } from '@commander/shared/exception/auth/login-fai
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignOptions } from 'jsonwebtoken';
+import { empty, of } from 'rxjs';
+import { flatMap } from 'rxjs/operators';
 import uuidv4 from 'uuid/v4';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { JwtPayload } from './dto/jwt-payload.dto';
 import { LoginDto } from './dto/login.dto';
-import { of, empty } from 'rxjs';
-import { flatMap } from 'rxjs/operators';
 
 @Injectable()
 export class AuthService {

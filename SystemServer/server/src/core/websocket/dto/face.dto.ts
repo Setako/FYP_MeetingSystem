@@ -2,24 +2,28 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 import { Types } from 'mongoose';
 
 @Exclude()
-export class SimpleUserDto {
+export class FaceDto {
+    @Exclude()
+    _id!: Types.ObjectId;
+
     @Expose()
     @Transform((_val, obj) => obj._id.toHexString())
     id: string;
 
-    @Exclude()
-    _id: Types.ObjectId;
+    @Expose()
+    name!: string;
 
     @Expose()
-    username!: string;
+    imagePath!: string;
 
     @Expose()
-    email!: string;
+    resultPath: string;
 
     @Expose()
-    displayName!: string;
+    @Transform(val => val.toHexString())
+    owner: string;
 
-    constructor(partial: Partial<SimpleUserDto>) {
+    constructor(partial: Partial<FaceDto>) {
         Object.assign(this, partial);
     }
 }
