@@ -402,6 +402,7 @@ export class MeetingService {
             'language',
             'priority',
             'generalPermission',
+            'agendaGoogleResourceId'
         ].forEach(
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );

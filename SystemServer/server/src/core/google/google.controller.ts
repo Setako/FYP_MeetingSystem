@@ -25,16 +25,19 @@ import {
     flatMap,
     defaultIfEmpty,
     shareReplay,
+    toArray,
 } from 'rxjs/operators';
 import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
 import { Response } from 'express';
 import { GetAuthUrlQueryDto } from './dto/get-auth-url-query.dto';
 import { skipFalsy } from '@commander/shared/operator/function';
+import { GoogleCalendarService } from './google-calendar.service';
 
 @Controller('google')
 export class GoogleController {
     constructor(
+        private readonly googleCalendarService: GoogleCalendarService,
         private readonly authService: GoogleAuthService,
         private readonly userService: UserService,
     ) {}
@@ -152,5 +155,23 @@ export class GoogleController {
     @UseGuards(AuthGuard('jwt'))
     async getRefreshToken(@Auth() user: InstanceType<User>) {
         await this.userService.editGoogleRefreshToken(user.id);
+    }
+
+    @Get('calendar')
+    @UseGuards(AuthGuard('jwt'))
+    getCalendarList(@Auth() user: InstanceType<User>) {
+        if (!user.googleRefreshToken) {
+            throw new BadRequestException(
+                'Please enable Google services first',
+            );
+        }
+
+        return this.googleCalendarService
+            .getAllCalendars(user.googleRefreshToken)
+            .pipe(
+                map(({ id, summary }) => ({ id, summary })),
+                toArray(),
+                map(items => ({ items, length: items.length })),
+            );
     }
 }
