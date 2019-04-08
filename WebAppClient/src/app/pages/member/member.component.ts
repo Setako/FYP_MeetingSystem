@@ -34,8 +34,7 @@ export class MemberComponent implements OnInit {
   ];
   links = [
     {title: 'Meetings', icon: 'assignment', link: '/member/meeting'},
-    {title: 'Meeting Invitations', icon: 'mail_outline', link: '/member/meeting-invitations'},
-    {title: 'Meeting Calendar', icon: 'calendar_today', link: '/member/calendar'}
+    {title: 'Meeting Invitations', icon: 'mail_outline', link: '/member/meeting-invitations'}
   ];
 
   constructor(public auth: AuthService, private snackBar: MatSnackBar,

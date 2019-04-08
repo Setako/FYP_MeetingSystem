@@ -65,8 +65,8 @@ export class NotificationsSettingComponent implements OnInit {
 
       const patchingValues = {};
       this.notificationTypes.map(type => type.types).forEach(types => types.forEach(type => {
-        patchingValues[type + 'Email'] = user.setting.notification[type.name].email;
-        patchingValues[type + 'Notification'] = user.setting.notification[type.name].notification;
+        patchingValues[type.name + 'Email'] = user.setting.notification[type.name].email;
+        patchingValues[type.name + 'Notification'] = user.setting.notification[type.name].notification;
       }));
       console.log(patchingValues);
 
