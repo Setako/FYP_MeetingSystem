@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { google, calendar_v3 } from 'googleapis';
 import { defer, empty, of } from 'rxjs';
-import { expand, flatMap } from 'rxjs/operators';
+import { expand, flatMap, catchError } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { Meeting } from '../meeting/meeting.model';
 
@@ -51,6 +51,7 @@ export class GoogleCalendarService {
                     : empty(),
             ),
             flatMap(item => item.data.items),
+            catchError(() => []),
         );
     }
 

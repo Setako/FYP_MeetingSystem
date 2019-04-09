@@ -37,7 +37,7 @@ export class GetMeetingDto {
 
     location?: string;
 
-    agendaGoogleResourceId?: string
+    agendaGoogleResourceId?: string;
 
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
