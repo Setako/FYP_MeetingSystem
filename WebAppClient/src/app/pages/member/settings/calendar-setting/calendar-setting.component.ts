@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {HttpClient} from '@angular/common/http';
 
 @Component({
   selector: 'app-calendar-setting',
@@ -6,7 +7,24 @@ import {Component, OnInit} from '@angular/core';
   styleUrls: ['./calendar-setting.component.scss']
 })
 export class CalendarSettingComponent implements OnInit {
+  private possibleCalendars: GoogleCalendar[] = [];
+
+  constructor(private http: HttpClient) {
+  }
+
   ngOnInit(): void {
   }
+
+  update() {
+
+  }
+
+  saveSetting(): void {
+
+  }
+
+}
+
+interface GoogleCalendar {
 
 }

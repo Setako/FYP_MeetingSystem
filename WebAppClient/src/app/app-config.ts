@@ -1,3 +1,3 @@
 export class AppConfig {
-  public static readonly API_PATH = 'https://conference-commander.herokuapp.com/api';
+  public static readonly API_PATH = 'https://api.fyp.setako.net/api';
 }
