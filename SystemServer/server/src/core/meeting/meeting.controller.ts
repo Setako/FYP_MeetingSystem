@@ -685,7 +685,7 @@ export class MeetingController {
                     ),
                 ).pipe(
                     filter(identity),
-                    mapTo(friend),
+                    map(() => friend),
                 ),
             ),
             shareReplay(),
