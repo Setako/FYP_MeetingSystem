@@ -10,8 +10,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
-import { join } from 'path';
-import { spawn, spawnSync, exec } from 'child_process';
+import { spawn, exec } from 'child_process';
 import { IpcService } from './ipc.service';
 import { ConfigService } from './config.service';
 import { WsExceptionFilter } from '../shared/ws-exception.filter';
@@ -57,7 +56,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             });
 
         // test
-        this.ipcService.getMessage('exec').subscribe(([event, message]) => {
+        this.ipcService.getMessage('exec').subscribe(([, message]) => {
             exec(message[0]);
         });
 
@@ -81,18 +80,11 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     newFaceRecognition() {
-        // return;
         const cwd = `${process.cwd()}/recognition/`;
-
-        const pipenv = spawnSync('pipenv', ['--venv'], { cwd });
-        const isWin = process.platform === 'win32';
-        const interpreterDir = pipenv.stdout.toString().trim();
-        const interpreter = isWin
-            ? join(interpreterDir, 'Scripts', 'python')
-            : join(interpreterDir, 'bin', 'python');
-
+        const pythonPath =
+            this.configService.fromEnvironment('PYTHON_PATH') || 'python3';
         const recognition = spawn(
-            interpreter,
+            pythonPath,
             [
                 'main.py',
                 '--token',
