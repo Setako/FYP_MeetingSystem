@@ -190,6 +190,10 @@ export class UsersController {
             .upload(filename, {
                 destination: `avatars/${user.id}`,
                 validation: 'crc32c',
+                metadata: {
+                    cacheControl: 'public,no-cache',
+                },
+                gzip: true,
             })
             .toPromise();
 
