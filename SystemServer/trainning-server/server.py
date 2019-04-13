@@ -32,7 +32,7 @@ storage = Storage(
         project_id=os.getenv("GOOGLE_CLOUD_PROJECT_ID"),
         client_email=os.getenv("GOOGLE_CLOUD_CLIENT_EMAIL"),
         private_key=os.getenv("GOOGLE_CLOUD_PRIVATE_KEY"),
-        token_uri=os.getenv("GOOGLE_CLOUD_TOKEN_URI"),
+        token_uri=os.getenv("GOOGLE_CLOUD_TOKEN_URI")
     ),
     bucket=os.getenv("GOOGLE_CLOUD_DEFAULT_BUCKET"),
 )
