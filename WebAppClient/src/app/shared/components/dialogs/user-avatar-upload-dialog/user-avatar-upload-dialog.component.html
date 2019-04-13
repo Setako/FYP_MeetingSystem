@@ -8,8 +8,8 @@
       <div style="position: relative; display: inline-block">
         <label for="avatar">
           <img [src]="imageDataUrl == null?authService.loggedInUserAvatarPath:imageDataUrl"
-               class="d-inline-block p-1"
-               style="object-fit:contain;height: 200px; width: 200px; border-radius: 50%; cursor: pointer" alt="">
+               class="d-inline-block p-1 cc-avatar"
+               style="height: 200px; width: 200px; cursor: pointer" alt="">
         </label>
         <input style="display: none" type="file" (change)="selectImage($event)" id="avatar">
       </div>
