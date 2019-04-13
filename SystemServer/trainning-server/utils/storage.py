@@ -1,4 +1,3 @@
-import gcloud.aio.auth
 import asyncio
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
@@ -14,10 +13,10 @@ class Storage:
         cls, client_email: str, private_key: str, project_id: str, token_uri: str
     ) -> storage.Client:
         info = dict(
-            client_email=client_email,
+            client_email=client_email.replace(r"\n", ""),
             private_key=private_key.replace(r"\n", "\n"),
-            project_id=project_id,
-            token_uri=token_uri,
+            project_id=project_id.replace(r"\n", ""),
+            token_uri=token_uri.replace(r"\n", ""),
         )
 
         credentials = Credentials.from_service_account_info(info)
