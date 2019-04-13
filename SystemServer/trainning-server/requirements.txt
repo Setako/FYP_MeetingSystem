@@ -7,7 +7,6 @@ cachetools==3.1.0
 certifi==2019.3.9
 chardet==3.0.4
 click==7.0
-dlib==19.17.0
 face-recognition-models==0.3.0
 face-recognition==1.2.3
 google-api-core==1.8.2
