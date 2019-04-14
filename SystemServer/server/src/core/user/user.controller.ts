@@ -221,12 +221,13 @@ export class UsersController {
         const images = faces.filter(item => item.mimetype.startsWith('image/'));
 
         return from(images).pipe(
-            tap(image =>
-                FileUtils.writeFile(
+            flatMap(async image => {
+                await FileUtils.writeFile(
                     FileUtils.getRoot(`cache/img/faces-${image.originalname}`),
                     image.buffer,
-                ),
-            ),
+                );
+                return image;
+            }),
             flatMap(image => {
                 const name = uuidv4();
                 return this.googleCloudStorageService
@@ -255,7 +256,11 @@ export class UsersController {
                     name,
                     imagePath: result[0].name,
                     owner: user,
-                    status: FaceStatus.Waiting,
+                    status:
+                        // waiting if size is small than 2MB otherwise invalid
+                        Number((result[1] as any).size) * 0.000001 < 2
+                            ? FaceStatus.Waiting
+                            : FaceStatus.Invalid,
                 }),
             ),
         );
@@ -303,11 +308,9 @@ export class UsersController {
             flatMap(id => this.faceService.getByid(id)),
             filter(({ owner }) => Types.ObjectId(user.id).equals(owner as any)),
             tap(({ imagePath, resultPath }) =>
-                [imagePath, resultPath]
-                    .filter(Boolean)
-                    .map(path =>
-                        this.googleCloudStorageService.delete(path).subscribe(),
-                    ),
+                [imagePath, resultPath].filter(Boolean).map(path => {
+                    this.googleCloudStorageService.delete(path).subscribe();
+                }),
             ),
             flatMap(({ id }) => this.faceService.delete(id)),
         );

@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import io from 'socket.io-client';
 import { FaceService } from '../user/face.service';
-import { delayWhen, filter, flatMap, map } from 'rxjs/operators';
+import { delayWhen, filter, flatMap, map, tap } from 'rxjs/operators';
 import { of, interval, merge, Observable, fromEvent } from 'rxjs';
 import { FaceStatus } from '../user/face.model';
 import { documentToPlain } from '@commander/shared/operator/document';
@@ -26,7 +26,7 @@ export class TrainningServerSocket implements OnModuleInit {
 
     onModuleInit() {
         this.socket = io(this.trainningServerUri, {
-            transports: ['websocket'],
+            transports: ['websocket', 'polling'],
             forceNew: false,
         });
 
@@ -49,6 +49,7 @@ export class TrainningServerSocket implements OnModuleInit {
                     status: FaceStatus.Waiting,
                 })
                 .pipe(
+                    filter(item => item.status === FaceStatus.Waiting),
                     documentToPlain(FaceDto),
                     delayWhen(() =>
                         this.isConnected
@@ -62,11 +63,16 @@ export class TrainningServerSocket implements OnModuleInit {
         });
 
         this.socket.on('exception', (data: any) => {
-            console.error(`Trainning Server Socket Error:`, data);
+            console.info(`[Trainning Server] - ${new Date()} exception`, data);
         });
 
         this.socket.on('auth_result', (data: any) => {
             this.isConnected = data && data.success;
+            console.info(
+                `[Trainning Server] - ${new Date()} auth_result(${
+                    this.isConnected
+                })`,
+            );
         });
 
         this.socket.on('train_result', ({ id, valid, resultPath }) => {
@@ -83,6 +89,13 @@ export class TrainningServerSocket implements OnModuleInit {
 
                         return item.save();
                     }),
+                    tap(item =>
+                        console.info(
+                            `[Trainning Server] - ${new Date()} train_result(user:${
+                                item.owner
+                            }, name:${item.name})`,
+                        ),
+                    ),
                 )
                 .subscribe();
         });
