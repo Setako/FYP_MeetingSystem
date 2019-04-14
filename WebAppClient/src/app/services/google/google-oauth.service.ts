@@ -39,10 +39,8 @@ export class GoogleOauthService {
 
   get accessToken(): Observable<GoogleAccessToken> {
     if (this._googleAccessToken == null) {
-      console.log('s1');
       return this.getUserGoogleAccessToken();
     } else {
-      console.log('s2');
       return of(this._googleAccessToken);
     }
   }
@@ -58,6 +56,7 @@ export class GoogleOauthService {
       .get<any>(`${AppConfig.API_PATH}/google/auth/url?successRedirect=${
         encodeURIComponent(window.location.origin + '/assets/auth-success.html')}`)
       .pipe(
+        tap(res => console.log(res.url)),
         map(res => res.url),
         mergeMap(url => this.showGoogleOauth(authWindow, url)),
       );
@@ -82,33 +81,16 @@ export class GoogleOauthService {
       );
   }
 
-  test(token: GoogleAccessToken) {
+  showFilePicker(token: GoogleAccessToken, docsViewId, enableSelectFolder = false, multiSelect = false) {
     return Observable.create(
       (observer) => {
-        // gapi.client.drive.files.list({
-        //   'pageSize': 10,
-        //   'fields': 'nextPageToken, files(id, name)'
-        // }).then(function (response) {
-        //   console.log('Files:');
-        //   const files = response.result.files;
-        //   if (files && files.length > 0) {
-        //     for (let i = 0; i < files.length; i++) {
-        //       const file = files[i];
-        //       console.log(file.name + ' (' + file.id + ')');
-        //     }
-        //   } else {
-        //     console.log('No files found.');
-        //   }
-        //   observer.next(response);
-        //   observer.complete();
-        // });
-        const folderView = new google.picker.​DocsView(google.picker.ViewId.FOLDERS);
-        folderView.setParent('root');
-        folderView.setSelectFolderEnabled(true);
-        const picker = new google.picker.PickerBuilder()
-          .addView(folderView)
+        const docsView = new google.picker.​DocsView(google.picker.ViewId[docsViewId]);
+        docsView.setParent('root');
+        docsView.setSelectFolderEnabled(enableSelectFolder);
+        docsView.setIncludeFolders(true);
+        const pickerBuilder = new google.picker.PickerBuilder()
+          .addView(docsView)
           .setOAuthToken(token.token)
-
           .setDeveloperKey('AIzaSyDTfef8MKO3gUXKvbCJsiArpUNtmdajYCY')
           .setCallback((cb) => {
             console.log(cb);
@@ -118,8 +100,12 @@ export class GoogleOauthService {
               observer.next(cb);
               observer.complete();
             }
-          })
-          .build();
+          });
+        if (multiSelect) {
+          pickerBuilder.enableFeature(google.picker.Feature.MULTISELECT_ENABLED);
+        }
+
+        const picker = pickerBuilder.build();
         picker.setVisible(true);
       }
     );
@@ -193,9 +179,7 @@ export class GoogleOauthService {
 
   private gapiClientLoad(m: string, v: string): Observable<any> {
     return Observable.create((observer) => {
-      console.log('l ' + m);
       gapi.client.load(m, v, function () {
-        console.log('s ' + m);
         observer.complete();
       });
     });

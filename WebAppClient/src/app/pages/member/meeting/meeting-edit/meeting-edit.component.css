@@ -1,0 +1,13 @@
+.meeting-agenda-content-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.meeting-agenda-content-icon {
+  font-size: 52px;
+  height: 52px;
+  width: 52px;
+  margin-bottom: 10px;
+}

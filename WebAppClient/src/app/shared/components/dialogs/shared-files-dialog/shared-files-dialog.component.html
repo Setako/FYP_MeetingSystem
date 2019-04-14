@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>Shared files</h2>
+<div mat-dialog-content class="mb-2" style="max-height: 300px; overflow-y: auto; overflow-x: hidden">
+  <app-querying-content-hider [querying]="querying" queryingAction="Getting file name">
+    <div *ngFor="let folder of sharedFiles" mat-ripple class="shared-file" (click)="openSharedFiles(folder.resId)">
+      <mat-icon mat-list-icon>folder</mat-icon>
+      {{folder.name}}
+    </div>
+  </app-querying-content-hider>
+</div>
+<div mat-dialog-actions class="float-right">
+  <button mat-button (click)="$event.preventDefault();dialogRef.close(false)">Back</button>
+  <!--<button mat-button color="primary" (click)="$event.preventDefault();dialogRef.close(true)">CONFIRM</button>-->
+</div>
+
