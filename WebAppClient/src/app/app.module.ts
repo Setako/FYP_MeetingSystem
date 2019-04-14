@@ -47,6 +47,9 @@ import {FaceRecognitionSettingComponent} from './pages/member/settings/face-reco
 import {AddDriveFolderDialogComponent} from './shared/components/dialogs/add-drive-folder-dialog/add-drive-folder-dialog.component';
 import {MeetingEditTimeComponent} from './pages/member/meeting/meeting-edit/meeting-edit-time/meeting-edit-time.component';
 import {InvitationChipComponent} from './pages/member/meeting/meeting-detail/invitation-chip/invitation-chip.component';
+import {SharedFilesDialogComponent} from './shared/components/dialogs/shared-files-dialog/shared-files-dialog.component';
+import {SharedFilesButtonComponent} from './shared/components/shared-files-button/shared-files-button.component';
+import {MeetingStatusComponent} from './shared/components/meeting-status/meeting-status.component';
 
 @NgModule({
   declarations: [
@@ -85,7 +88,10 @@ import {InvitationChipComponent} from './pages/member/meeting/meeting-detail/inv
     FaceRecognitionSettingComponent,
     AddDriveFolderDialogComponent,
     MeetingEditTimeComponent,
-    InvitationChipComponent
+    InvitationChipComponent,
+    SharedFilesDialogComponent,
+    SharedFilesButtonComponent,
+    MeetingStatusComponent
   ],
   imports: [
     BrowserModule,
@@ -120,7 +126,8 @@ import {InvitationChipComponent} from './pages/member/meeting/meeting-detail/inv
     AddFriendDialogComponent,
     UserAvatarUploadDialogComponent,
     SelectFriendsDialogComponent,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    SharedFilesDialogComponent
   ],
   bootstrap: [AppComponent]
 })

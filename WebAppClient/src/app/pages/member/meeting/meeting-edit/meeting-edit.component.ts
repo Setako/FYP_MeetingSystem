@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit, ViewChild} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -10,7 +10,7 @@ import {SelectFriendsDialogComponent} from '../../../../shared/components/dialog
 import {User} from '../../../../shared/models/user';
 import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
-import {flatMap, map, mapTo, tap} from 'rxjs/operators';
+import {flatMap, map, mapTo} from 'rxjs/operators';
 import {from, Observable} from 'rxjs';
 
 declare var gapi: any;
@@ -38,14 +38,14 @@ export class MeetingEditComponent implements OnInit {
   public meeting: Meeting;
   public meetingParticipantFriends: User[] = [];
   public meetingParticipantEmails = '';
-
+  public noGoogleOauthWarningDisplay = false;
 
   public pickedFolders: { resId: string, name: string }[] = [];
+  public pickedAgenda: { resId: string, name: string };
 
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
     length: new FormControl('', [Validators.required]),
-    type: new FormControl('', [Validators.required]),
     priority: new FormControl('', [Validators.required]),
     location: new FormControl('', [Validators.required]),
     description: new FormControl('')
@@ -53,7 +53,8 @@ export class MeetingEditComponent implements OnInit {
 
   constructor(private activatedRoute: ActivatedRoute, private  meetingService: MeetingService,
               private snackBar: MatSnackBar, private router: Router,
-              private dialog: MatDialog, private googleOauthService: GoogleOauthService) {
+              private dialog: MatDialog, private googleOauthService: GoogleOauthService,
+              private cdr: ChangeDetectorRef) {
   }
 
   ngOnInit() {
@@ -227,9 +228,7 @@ export class MeetingEditComponent implements OnInit {
           return from(this.meeting.resources.main.googleDriveResources)
             .pipe(
               map(resource => resource.resId),
-              tap((s) => console.log(s)),
               flatMap(id => this.getFileById(id)),
-              tap((s) => console.log(s))
             );
         }
       ).subscribe(
@@ -238,7 +237,7 @@ export class MeetingEditComponent implements OnInit {
             resId: res.id,
             name: res.title
           });
-        }
+        }, err => console.log(err)
       );
     });
   }
@@ -252,26 +251,73 @@ export class MeetingEditComponent implements OnInit {
     });
   }
 
-  addFolder() {
+
+  pickAgenda() {
+    this.noGoogleOauthWarningDisplay = true;
+    const self = this;
     this.googleOauthService.gapiInit().subscribe(() => {
     }, err => {
       console.log('e ' + err);
     }, () => {
       this.googleOauthService.doRequest<any>(
-        (token) => this.googleOauthService.test(token),
+        (token) => this.googleOauthService.showFilePicker(token, 'DOCS'),
       ).subscribe(
         (res) => {
           res.docs.forEach((doc) => {
-            if (this.pickedFolders.map(folder => folder.resId).indexOf(doc.id) == -1) {
+            this.pickedAgenda = {
+              resId: doc.id,
+              name: doc.name
+            };
+            self.cdr.detectChanges();
+          }, err => console.log(err));
+        }, err => {
+          if (this.noGoogleOauthWarningDisplay) {
+            this.noGoogleOauthWarningDisplay = false;
+            this.snackBar.open('You are not connected to google yet', 'DISMISS', {duration: 4000});
+          }
+        }
+      );
+
+    });
+  }
+
+
+  addFolder() {
+    this.noGoogleOauthWarningDisplay = true;
+    const self = this;
+    this.googleOauthService.gapiInit().subscribe(() => {
+    }, err => {
+      console.log('e ' + err);
+    }, () => {
+      this.googleOauthService.doRequest<any>(
+        (token) => this.googleOauthService.showFilePicker(token, 'FOLDERS', true, true),
+      ).subscribe(
+        (res) => {
+          res.docs.forEach((doc) => {
+            if (this.pickedFolders.map(folder => folder.resId).indexOf(doc.id) === -1) {
               this.pickedFolders.push({
                 resId: doc.id,
                 name: doc.name
               });
             }
-          });
-        }, err => console.log(err)
+            self.cdr.detectChanges();
+          }, err => console.log(err));
+        }, err => {
+          if (this.noGoogleOauthWarningDisplay) {
+            this.noGoogleOauthWarningDisplay = false;
+            this.snackBar.open('You are not connected to google yet', 'DISMISS', {duration: 4000});
+          }
+        }
       );
 
+    });
+  }
+
+  deleteAgenda() {
+    this.dialog.open(ConfirmationDialogComponent, {
+      data: {title: 'Confirmation', content: 'Delete agenda?'}
+    }).afterClosed().subscribe(res => {
+      this.pickedAgenda = res ? null : this.pickedAgenda;
     });
   }
 }

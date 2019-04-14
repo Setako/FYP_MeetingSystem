@@ -23,9 +23,7 @@
     <app-querying-content-hider [querying]="meetingListQuerySubscription!=null">
       <mat-card class="my-3" *ngFor="let meeting of meetingList">
         <mat-card-title>{{meeting.title}}
-          <mat-chip-list style="float: right">
-            <mat-chip color="primary" selected>{{meeting.status}}</mat-chip>
-          </mat-chip-list>
+          <app-meeting-status [status]="meeting.status"></app-meeting-status>
         </mat-card-title>
         <mat-card-subtitle>
           <div class="d-flex justify-content-between">
@@ -62,18 +60,7 @@
           <div class="mt-5 mb-4 pl-3">
             <pre>{{meeting.description}}</pre>
           </div>
-          <mat-chip-list>
-            <mat-chip-list class="d-flex">
-              <mat-chip class="d-flex align-items-center mr-2">
-                <mat-icon color="primary">attach_file</mat-icon>
-                File shared
-              </mat-chip>
-              <mat-chip class="d-flex align-items-center mr-2">
-                <mat-icon color="primary">list_alt</mat-icon>
-                Agenda shared
-              </mat-chip>
-            </mat-chip-list>
-          </mat-chip-list>
+          <app-shared-files-button [meeting]="meeting"></app-shared-files-button>
         </mat-card-content>
 
 
