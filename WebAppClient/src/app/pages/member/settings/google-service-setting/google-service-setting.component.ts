@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {ChangeDetectorRef, Component, OnInit} from '@angular/core';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
 import {MatSnackBar} from '@angular/material';
 
@@ -12,7 +12,7 @@ export class GoogleServiceSettingComponent implements OnInit {
   public queryingAction: string;
   public auth: boolean;
 
-  constructor(private googleOauthService: GoogleOauthService, private  snackBar: MatSnackBar) {
+  constructor(private googleOauthService: GoogleOauthService, private  snackBar: MatSnackBar, private cdr: ChangeDetectorRef) {
   }
 
   ngOnInit() {
@@ -27,9 +27,11 @@ export class GoogleServiceSettingComponent implements OnInit {
         this.snackBar.open('Connected successfully', 'Dismiss', {duration: 3000});
         this.querying = false;
         this.updateAuthStatus();
+        this.cdr.detectChanges();
       }, (err) => {
         this.snackBar.open(err.message, 'Dismiss', {duration: 3000});
         this.querying = false;
+        this.cdr.detectChanges();
       }
     );
   }
