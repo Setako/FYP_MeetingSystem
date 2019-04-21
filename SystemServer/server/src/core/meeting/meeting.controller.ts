@@ -301,17 +301,17 @@ export class MeetingController {
             .getByUsername(username)
             .toPromise();
 
-        return from(
-            this.meetingService.getAccessableResources(id, user.id),
-        ).pipe(
-            pluck('user'),
-            flatMap(identity),
-            filter(({ sharer }) => {
-                return (sharer as Types.ObjectId).equals(targetUser._id);
-            }),
-            pluck('resources'),
-            defaultIfEmpty(new Resources()),
-        );
+        return from(this.meetingService.getAccessableResources(id, user.id))
+            .pipe(
+                pluck('user'),
+                flatMap(identity),
+                filter(({ sharer }) => {
+                    return (sharer as Types.ObjectId).equals(targetUser._id);
+                }),
+                pluck('resources'),
+                defaultIfEmpty(new Resources()),
+            )
+            .toPromise();
     }
 
     @Put(':id/resources/:username')

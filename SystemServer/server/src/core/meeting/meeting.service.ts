@@ -35,6 +35,7 @@ import {
 } from 'rxjs';
 import { map, flatMap, filter, toArray } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
+import { GoogleDriveService } from '../google/google-drive.service';
 
 @Injectable()
 export class MeetingService {
@@ -42,6 +43,7 @@ export class MeetingService {
         @InjectModel(Meeting) private readonly meetingModel: ModelType<Meeting>,
         private readonly userService: UserService,
         private readonly friendService: FriendService,
+        private readonly googleDriveService: GoogleDriveService,
     ) {}
 
     watchModelSave(): Observable<InstanceType<Meeting>> {
@@ -379,7 +381,7 @@ export class MeetingService {
     }
 
     async edit(id: string, editMeetingDto: EditMeetingDto) {
-        let edited = await this.meetingModel.findById(id);
+        let edited = await this.meetingModel.findById(id).populate('owner');
 
         if (!edited) {
             return null;
@@ -411,6 +413,17 @@ export class MeetingService {
             editMeetingDto.mainResources ||
             (editMeetingDto.resources && editMeetingDto.resources.main) ||
             edited.resources.main;
+
+        from(edited.resources.main.googleDriveResources)
+            .pipe(
+                flatMap(item =>
+                    this.googleDriveService.setAnyoneWithLinkPermission(
+                        (edited.owner as InstanceType<User>).googleRefreshToken,
+                        item.resId,
+                    ),
+                ),
+            )
+            .subscribe();
 
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
@@ -446,6 +459,18 @@ export class MeetingService {
             userResourcesMap.delete(userId);
         } else {
             userResourcesMap.set(userId, newResources);
+
+            const user = await this.userService.getById(userId).toPromise();
+            from(newResources.googleDriveResources)
+                .pipe(
+                    flatMap(item =>
+                        this.googleDriveService.setAnyoneWithLinkPermission(
+                            user.googleRefreshToken,
+                            item.resId,
+                        ),
+                    ),
+                )
+                .subscribe();
         }
 
         meeting.resources.user = [...userResourcesMap.entries()].map(

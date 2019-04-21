@@ -6,6 +6,7 @@ import { UserModule } from '../user/user.module';
 import { GoogleEventService } from './google-event.service';
 import { GoogleCalendarService } from './google-calendar.service';
 import { GoogleCloudStorageService } from './google-cloud-storage.service';
+import { GoogleDriveService } from './google-drive.service';
 
 @Module({
     imports: [
@@ -21,12 +22,14 @@ import { GoogleCloudStorageService } from './google-cloud-storage.service';
     providers: [
         GoogleAuthService,
         GoogleEventService,
+        GoogleDriveService,
         GoogleCalendarService,
         GoogleCloudStorageService,
     ],
     exports: [
         GoogleAuthService,
         GoogleEventService,
+        GoogleDriveService,
         GoogleCalendarService,
         GoogleCloudStorageService,
     ],
