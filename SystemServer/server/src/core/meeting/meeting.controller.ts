@@ -748,10 +748,9 @@ export class MeetingController {
         );
 
         const groupedBusyTime$ = merge(busyTime$, systemBusyTime$).pipe(
-            groupBy(time => ({
-                a: time.fromDate.getTime(),
-                b: time.fromDate.getTime(),
-            })),
+            groupBy(
+                time => time.fromDate.toISOString() + time.toDate.toISOString(),
+            ),
             flatMap(group => group.pipe(toArray())),
         );
 
