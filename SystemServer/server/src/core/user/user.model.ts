@@ -61,6 +61,10 @@ export class UserSetting {
         meetingReminder: NotificationSetting;
     };
 
+    public privacy: {
+        allowOtherToSendFirendRequest: boolean;
+    };
+
     constructor(partial: Partial<UserSetting> = {}) {
         if (partial.markEventOnCalendarId) {
             this.markEventOnCalendarId = partial.markEventOnCalendarId;
@@ -91,6 +95,11 @@ export class UserSetting {
                       email: true,
                       notification: true,
                   },
+              };
+        this.privacy = partial.privacy
+            ? partial.privacy
+            : {
+                  allowOtherToSendFirendRequest: true,
               };
     }
 }

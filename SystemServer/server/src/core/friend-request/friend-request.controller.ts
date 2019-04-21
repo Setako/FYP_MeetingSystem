@@ -129,6 +129,22 @@ export class FriendRequestController {
             throw new BadRequestException('Request already sent');
         }
 
+        if (!target.setting.privacy) {
+            this.userService.edit(target.username, {
+                setting: {
+                    privacy: {
+                        allowOtherToSendFirendRequest: true,
+                    },
+                },
+            });
+        }
+
+        if (!target.setting.privacy.allowOtherToSendFirendRequest) {
+            throw new BadRequestException(
+                'Target does not allow others to send friend request',
+            );
+        }
+
         const created = await this.friendRequestService.create(
             sender.username,
             receiverUsername,

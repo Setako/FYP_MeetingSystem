@@ -11,6 +11,7 @@ import { UserModule } from './core/user/user.module';
 import { GoogleModule } from './core/google/google.module';
 import { WebsocketModule } from './core/websocket/websocket.module';
 import { SearchModule } from './core/search/search.module';
+import { BreakChangeModule } from './core/break-change/break-change.module';
 
 @Module({
     imports: [
@@ -33,6 +34,7 @@ import { SearchModule } from './core/search/search.module';
         GoogleModule,
         SearchModule,
         WebsocketModule,
+        BreakChangeModule,
     ],
     controllers: [],
     providers: [],

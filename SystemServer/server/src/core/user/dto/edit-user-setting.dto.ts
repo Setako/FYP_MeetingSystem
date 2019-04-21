@@ -7,6 +7,38 @@ import {
     IsString,
     ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class PrivacySetting {
+    @IsBoolean()
+    readonly allowOtherToSendFirendRequest: boolean;
+}
+
+class NotificationSettingDto {
+    @IsBoolean()
+    readonly email!: boolean;
+
+    @IsBoolean()
+    readonly notification!: boolean;
+}
+
+export class NotificationSetting {
+    @ValidateNested()
+    @Type(() => NotificationSettingDto)
+    readonly friendRequest: NotificationSettingDto;
+    @ValidateNested()
+    @Type(() => NotificationSettingDto)
+    readonly meetingInfoUpdate: NotificationSettingDto;
+    @ValidateNested()
+    @Type(() => NotificationSettingDto)
+    readonly meetingInvitation: NotificationSettingDto;
+    @ValidateNested()
+    @Type(() => NotificationSettingDto)
+    readonly meetingCancelled: NotificationSettingDto;
+    @ValidateNested()
+    @Type(() => NotificationSettingDto)
+    readonly meetingReminder: NotificationSettingDto;
+}
 
 export class EditUserSettingDto {
     @IsString()
@@ -16,17 +48,18 @@ export class EditUserSettingDto {
     @ValidateNested()
     @IsArray()
     @IsOptional()
+    @Type(() => CalendarImportanceDto)
     readonly calendarImportance?: CalendarImportanceDto[];
 
-    @ValidateNested()
     @IsOptional()
-    readonly notification?: {
-        friendRequest: NotificationSettingDto;
-        meetingInfoUpdate: NotificationSettingDto;
-        meetingInvitation: NotificationSettingDto;
-        meetingCancelled: NotificationSettingDto;
-        meetingReminder: NotificationSettingDto;
-    };
+    @ValidateNested()
+    @Type(() => NotificationSetting)
+    readonly notification?: NotificationSetting;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => PrivacySetting)
+    readonly privacy?: PrivacySetting;
 }
 
 class CalendarImportanceDto {
@@ -36,12 +69,4 @@ class CalendarImportanceDto {
     @IsIn([1, 2, 3])
     @IsInt()
     readonly importance!: number;
-}
-
-class NotificationSettingDto {
-    @IsBoolean()
-    email!: boolean;
-
-    @IsBoolean()
-    notification!: boolean;
 }

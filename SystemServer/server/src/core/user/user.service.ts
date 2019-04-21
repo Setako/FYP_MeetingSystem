@@ -8,7 +8,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
 import { User } from './user.model';
 import { from, of, empty, pipe, identity } from 'rxjs';
-import { flatMap, map } from 'rxjs/operators';
+import { flatMap } from 'rxjs/operators';
 
 @Injectable()
 export class UserService {
@@ -100,7 +100,8 @@ export class UserService {
 
     findAll(options = {}) {
         return of(options).pipe(
-            map(conditions => this.userModel.find(conditions)),
+            flatMap(conditions => this.userModel.find(conditions).exec()),
+            flatMap(identity),
         );
     }
 
@@ -157,6 +158,7 @@ export class UserService {
                 notification:
                     editUserDto.setting.notification ||
                     edited.setting.notification,
+                privacy: editUserDto.setting.privacy || edited.setting.privacy,
             };
         }
 

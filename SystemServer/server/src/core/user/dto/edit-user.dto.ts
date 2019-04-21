@@ -26,7 +26,7 @@ export class EditUserDto {
     @IsOptional()
     readonly userMeetingRelation?: any[];
 
-    @ValidateNested()
     @IsOptional()
+    @ValidateNested()
     readonly setting?: EditUserSettingDto;
 }
