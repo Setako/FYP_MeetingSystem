@@ -1,9 +1,9 @@
 import {Component, OnInit} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
 import {UserIntegrationService} from '../../../../services/user-integration.service';
-import {forkJoin} from 'rxjs';
 import {tap} from 'rxjs/internal/operators/tap';
 import {AuthService} from '../../../../services/auth.service';
+import {flatMap} from 'rxjs/operators';
+import {MatSnackBar} from '@angular/material';
 
 @Component({
   selector: 'app-calendar-setting',
@@ -13,19 +13,26 @@ import {AuthService} from '../../../../services/auth.service';
 export class CalendarSettingComponent implements OnInit {
   private possibleCalendars: GoogleCalendar[] = [];
   private querying = false;
+  private markEventOnCalendarId: string;
 
-  constructor(private userIntegration: UserIntegrationService, private auth: AuthService) {
+  constructor(private userIntegration: UserIntegrationService, private auth: AuthService, private snackBar: MatSnackBar) {
   }
 
   ngOnInit(): void {
+    this.update();
   }
 
   update() {
     this.querying = true;
-    forkJoin([
-      this.userIntegration.getPossibleCalendars().pipe(tap(calendars => this.possibleCalendars = calendars)),
-      this.auth.updateUserInfo()
-    ]).subscribe(() => this.querying = false);
+    this.userIntegration.getPossibleCalendars().pipe(
+      tap(calendars => this.possibleCalendars = calendars),
+      flatMap(_ => this.auth.updateUserInfo())
+    ).subscribe(() => {
+      this.markEventOnCalendarId = this.auth.loggedInUser.setting.markEventOnCalendarId;
+      this.querying = false;
+    }, () => {
+      this.snackBar.open('Failed to update setting', 'DISMISS', {duration: 4000});
+    });
   }
 
   saveSetting(): void {
