@@ -86,6 +86,9 @@ export class NotificationController {
             filter(item => Boolean(item.object)),
             documentToPlain(NotificationDto),
             toArray(),
+            map(items =>
+                items.sort((a, b) => b.time.getTime() - a.time.getTime()),
+            ),
         );
 
         return combineLatest(items$, length).pipe(
