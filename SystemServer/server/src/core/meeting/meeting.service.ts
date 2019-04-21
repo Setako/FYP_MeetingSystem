@@ -153,8 +153,12 @@ export class MeetingService {
                         MeetingStatus.Started,
                     ],
                 },
-                'invitations.user': { $eq: Types.ObjectId(ownerId) },
-                'invitations.status': InvitationStatus.Waiting,
+                invitations: {
+                    $elemMatch: {
+                        user: { $eq: Types.ObjectId(ownerId) },
+                        status: InvitationStatus.Waiting,
+                    },
+                },
                 ...ownerOptions,
             };
         } else if (hostedByAnyone) {
@@ -168,16 +172,14 @@ export class MeetingService {
                         'attendance.user': { $eq: Types.ObjectId(ownerId) },
                     },
                     {
-                        $and: [
-                            {
-                                'invitations.user': {
+                        invitations: {
+                            $elemMatch: {
+                                user: {
                                     $eq: Types.ObjectId(ownerId),
                                 },
+                                status: InvitationStatus.Accepted,
                             },
-                            {
-                                'invitations.status': InvitationStatus.Accepted,
-                            },
-                        ],
+                        },
                     },
                 ],
             };
@@ -192,8 +194,14 @@ export class MeetingService {
                 $or: [
                     { 'attendance.user': { $eq: Types.ObjectId(ownerId) } },
                     {
-                        'invitations.user': { $eq: Types.ObjectId(ownerId) },
-                        'invitations.status': InvitationStatus.Accepted,
+                        invitations: {
+                            $elemMatch: {
+                                user: {
+                                    $eq: Types.ObjectId(ownerId),
+                                },
+                                status: InvitationStatus.Accepted,
+                            },
+                        },
                     },
                 ],
             };
