@@ -56,7 +56,6 @@ export class GoogleOauthService {
       .get<any>(`${AppConfig.API_PATH}/google/auth/url?successRedirect=${
         encodeURIComponent(window.location.origin + '/assets/auth-success.html')}`)
       .pipe(
-        tap(res => console.log(res.url)),
         map(res => res.url),
         mergeMap(url => this.showGoogleOauth(authWindow, url)),
       );
@@ -93,7 +92,6 @@ export class GoogleOauthService {
           .setOAuthToken(token.token)
           .setDeveloperKey('AIzaSyDTfef8MKO3gUXKvbCJsiArpUNtmdajYCY')
           .setCallback((cb) => {
-            console.log(cb);
             if (cb.action === 'cancel') {
               observer.complete();
             } else if (cb.action === 'picked') {
@@ -135,7 +133,6 @@ export class GoogleOauthService {
   }
 
   private showGoogleOauth(authWindow: Window, url): Observable<string> {
-    console.log(url);
     authWindow.location.href = url;
     return race(
       interval(250).pipe(

@@ -32,6 +32,7 @@ export interface Meeting {
   invitations: MeetingInvitation[];
   resources: MeetingResources;
   mainResources?: Resources;
+  agendaGoogleResourceId?: string;
 }
 
 export interface MeetingInvitation {

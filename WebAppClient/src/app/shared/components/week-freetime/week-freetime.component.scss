@@ -1,5 +1,5 @@
 ::ng-deep .not-free-time .cal-event {
-  background: repeating-linear-gradient(-45deg, rgba(255,193,198,0.5), rgba(255,193,198,0.5) 25px, #ff6161 25px, #ff6161 30px);
+  background: repeating-linear-gradient(-45deg, rgba(255, 193, 198, 0.5), rgba(255, 193, 198, 0.5) 15px, #ff6161 15px, #ff6161 20px);
   background-color: transparent !important;
 }
 
@@ -20,6 +20,10 @@
 }
 
 ::ng-deep .selected-time .cal-event {
-  background: repeating-linear-gradient(-45deg, rgba(255, 236, 179, 0.5), rgba(255, 236, 179, 0.5) 25px, #ffc107 25px, #ffc107 30px);
+  background: repeating-linear-gradient(-45deg, rgba(255, 236, 179, 0.5), rgba(255, 236, 179, 0.5) 15px, #ffc107 15px, #ffc107 20px);
   background-color: transparent !important;
+}
+
+::ng-deep .now-time .cal-event {
+  background: #00675b;
 }

@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
+import {CalendarSettingComponent} from './calendar-setting/calendar-setting.component';
 
 @Component({
   selector: 'app-settings',
@@ -7,9 +8,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SettingsComponent implements OnInit {
 
-  constructor() { }
+  @ViewChild(CalendarSettingComponent)
+  calendarSetting: CalendarSettingComponent;
+
+  constructor() {
+  }
 
   ngOnInit() {
+  }
+
+  googleConnectStatusUpdate() {
+    this.calendarSetting.update();
   }
 
 }

@@ -29,7 +29,6 @@ export class UserIntegrationService {
   }
 
   upload(file: File): Observable<any> {
-    console.log('ok3');
     const formData = new FormData();
     formData.append('faces', file);
     return this.http.post(`${AppConfig.API_PATH}/user/${this.authService.loggedInUser.username}/faces`, formData);
