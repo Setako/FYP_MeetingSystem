@@ -852,7 +852,9 @@ export class MeetingController {
             attendee.googleCalendarEventId = undefined;
 
             await meeting.save();
-            return;
+            return {
+                isMarked: false,
+            };
         }
 
         const event = this.googleCalendarService.generateEventFromMeeting(
@@ -869,6 +871,9 @@ export class MeetingController {
 
         attendee.googleCalendarEventId = markedEvent.data.id;
         await meeting.save();
+        return {
+            isMarked: true,
+        };
     }
 
     @Put(':id/attendance/:attendee')
