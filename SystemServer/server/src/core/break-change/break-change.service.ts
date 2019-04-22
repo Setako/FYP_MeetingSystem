@@ -4,9 +4,7 @@ import { toArray, flatMap, filter } from 'rxjs/operators';
 
 @Injectable()
 export class BreakChangeService implements OnModuleInit {
-    constructor(
-        private readonly userService: UserService,
-    ) {}
+    constructor(private readonly userService: UserService) {}
 
     onModuleInit() {
         // handle user missing privacy setting

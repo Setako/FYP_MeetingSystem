@@ -32,8 +32,8 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import parseDataURL from 'data-urls';
 import { Response } from 'express';
 import { Types } from 'mongoose';
-import { combineLatest, from, of } from 'rxjs';
-import { filter, flatMap, map, tap, toArray } from 'rxjs/operators';
+import { combineLatest, from, of, empty } from 'rxjs';
+import { filter, flatMap, map, tap, toArray, catchError } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import uuidv4 from 'uuid/v4';
 import { GoogleCloudStorageService } from '../google/google-cloud-storage.service';
@@ -45,6 +45,7 @@ import { FaceStatus } from './face.model';
 import { FaceService } from './face.service';
 import { User } from './user.model';
 import { UserService } from './user.service';
+import sharp from 'sharp';
 
 @Controller('user')
 export class UsersController {
@@ -220,7 +221,22 @@ export class UsersController {
     ) {
         const images = faces.filter(item => item.mimetype.startsWith('image/'));
 
-        return from(images).pipe(
+        images.map(item =>
+            sharp(item.buffer)
+                .resize(300)
+                .toBuffer(),
+        );
+
+        const compressed$ = from(images).pipe(
+            flatMap(async item => {
+                item.buffer = await sharp(item.buffer)
+                    .resize(300)
+                    .toBuffer();
+                return item;
+            }),
+        );
+
+        return compressed$.pipe(
             flatMap(async image => {
                 await FileUtils.writeFile(
                     FileUtils.getRoot(`cache/img/faces-${image.originalname}`),
@@ -257,8 +273,8 @@ export class UsersController {
                     imagePath: result[0].name,
                     owner: user,
                     status:
-                        // waiting if size is small than 2MB otherwise invalid
-                        Number((result[1] as any).size) * 0.000001 < 2
+                        // waiting if size is small than 1MB otherwise invalid
+                        Number((result[1] as any).size) * 0.000001 < 1
                             ? FaceStatus.Waiting
                             : FaceStatus.Invalid,
                 }),
@@ -284,6 +300,7 @@ export class UsersController {
                     })
                     .pipe(map(([link]) => ({ id, status, link, timeout })));
             }),
+            catchError(() => empty()),
             toArray(),
             map(items => ({ items, length: items.length })),
         );
