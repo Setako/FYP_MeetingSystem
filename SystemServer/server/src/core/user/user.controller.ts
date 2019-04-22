@@ -221,12 +221,6 @@ export class UsersController {
     ) {
         const images = faces.filter(item => item.mimetype.startsWith('image/'));
 
-        images.map(item =>
-            sharp(item.buffer)
-                .resize(300)
-                .toBuffer(),
-        );
-
         const compressed$ = from(images).pipe(
             flatMap(async item => {
                 item.buffer = await sharp(item.buffer)
