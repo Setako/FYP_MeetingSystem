@@ -55,6 +55,7 @@ import {
     take,
     pluck,
     defaultIfEmpty,
+    concatMap,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -696,24 +697,32 @@ export class MeetingController {
             shareReplay(),
         );
 
-        const userCalendarIdList$ = userRefreshToken$.pipe(
-            flatMap(token => this.googleCalendarService.getAllCalendars(token)),
-            pluck('id'),
-            toArray(),
+        const userCalendarIdList$ = whoHasGoogleService$.pipe(
+            map(item =>
+                item.setting.calendarImportance.map(cal => cal.calendarId),
+            ),
         );
+
+        // const userCalendarIdList$ = userRefreshToken$.pipe(
+        //     concatMap(token =>
+        //         this.googleCalendarService.getAllCalendars(token),
+        //     ),
+        //     pluck('id'),
+        //     toArray(),
+        // );
 
         const userBusyEventCalendar$ = zip(
             userRefreshToken$,
             userCalendarIdList$,
         ).pipe(
-            flatMap(([refreshToken, calendarIds]) => {
-                return this.googleEventService.getAllBusyEvent({
+            concatMap(([refreshToken, calendarIds]) =>
+                this.googleEventService.getAllBusyEvent({
                     refreshToken,
                     calendarIds,
                     timeMax: query.toDate,
                     timeMin: query.fromDate,
-                });
-            }),
+                }),
+            ),
             toArray(),
         );
 
@@ -723,13 +732,29 @@ export class MeetingController {
         ).pipe(
             flatMap(([userInstance, eventCalendar]) =>
                 from(eventCalendar).pipe(
-                    flatMap(item => Object.values(item)),
+                    map(item => {
+                        return Object.entries(item).map(
+                            ([calendar, freebusy]) => {
+                                const find = userInstance.setting.calendarImportance.find(
+                                    val => val.calendarId === calendar,
+                                );
+                                return {
+                                    ...freebusy,
+                                    level: find ? find.importance : 3,
+                                };
+                            },
+                        );
+                    }),
+                    flatMap(identity),
                     filter(item => !item.errors),
-                    flatMap(item => item.busy),
-                    map(({ start, end }) => ({
+                    flatMap(item =>
+                        item.busy.map(busy => ({ ...busy, level: item.level })),
+                    ),
+                    map(({ start, end, level }) => ({
                         fromDate: new Date(start),
                         toDate: new Date(end),
                         user: userInstance,
+                        busyLevel: level,
                     })),
                 ),
             ),
@@ -742,6 +767,7 @@ export class MeetingController {
                         fromDate: item.plannedStartTime,
                         toDate: item.plannedEndTime,
                         user: userInstance,
+                        busyLevel: item.priority,
                     })),
                 ),
             ),
@@ -763,6 +789,11 @@ export class MeetingController {
                         acc.includes(xs.user) ? acc : acc.concat(xs.user),
                     [] as Array<InstanceType<User>>,
                 ),
+                busyLevel: group
+                    .reduce((acc, xs) => {
+                        return acc + ((4 - xs.busyLevel) / 4) * 100;
+                    }, 0)
+                    .toFixed(),
             })),
             filter(item => Boolean(item.fromDate) && Boolean(item.toDate)),
             map(item => ({
@@ -785,8 +816,6 @@ export class MeetingController {
         @Auth() user: InstanceType<User>,
         @Param('id') id: string,
     ) {
-        // Todo: [test] mark the vent on calendar
-
         if (!user.googleRefreshToken) {
             throw new BadRequestException(
                 'user should first connect to Google',

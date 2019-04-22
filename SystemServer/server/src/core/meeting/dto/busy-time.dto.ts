@@ -15,6 +15,9 @@ export class BusyTimeDto {
     @Type(() => SimpleUserDto)
     users: SimpleUserDto[];
 
+    @Expose()
+    busyLevel: number;
+
     constructor(partial: Partial<BusyTimeDto>) {
         Object.assign(this, partial);
     }

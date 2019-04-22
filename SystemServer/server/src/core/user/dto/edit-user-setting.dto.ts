@@ -64,7 +64,7 @@ export class EditUserSettingDto {
 
 class CalendarImportanceDto {
     @IsString()
-    readonly carlendarId!: string;
+    readonly calendarId!: string;
 
     @IsIn([1, 2, 3])
     @IsInt()

@@ -26,6 +26,7 @@ import {
     defaultIfEmpty,
     shareReplay,
     toArray,
+    pluck,
 } from 'rxjs/operators';
 import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
@@ -115,6 +116,39 @@ export class GoogleController {
             flatMap(([id, { tokens: { refresh_token } }]) =>
                 this.userService.editGoogleRefreshToken(id, refresh_token),
             ),
+            flatMap(user =>
+                this.googleCalendarService
+                    .getAllCalendars(user.googleRefreshToken)
+                    .pipe(
+                        pluck('id'),
+                        toArray(),
+                        flatMap(item =>
+                            this.userService.edit(user.username, {
+                                setting: {
+                                    calendarImportance: item.map(
+                                        calendarId => ({
+                                            calendarId,
+                                            importance: 1,
+                                        }),
+                                    ),
+                                },
+                            }),
+                        ),
+                    ),
+            ),
+            flatMap(user =>
+                this.googleCalendarService
+                    .getCalendarById(user.googleRefreshToken, 'primary')
+                    .pipe(
+                        flatMap(cal =>
+                            this.userService.edit(user.username, {
+                                setting: {
+                                    markEventOnCalendarId: cal.id,
+                                },
+                            }),
+                        ),
+                    ),
+            ),
             flatMap(() => successRedirect$),
             tap(url => (url ? res.redirect(url) : res.end())),
         );
@@ -157,6 +191,7 @@ export class GoogleController {
         await this.userService.editGoogleRefreshToken(user.id);
         user.setting.calendarImportance = [];
         user.setting.markEventOnCalendarId = null;
+        await user.save();
     }
 
     @Get('calendar')

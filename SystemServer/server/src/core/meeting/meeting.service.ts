@@ -417,6 +417,15 @@ export class MeetingService {
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
 
+        if (edited.agendaGoogleResourceId) {
+            this.googleDriveService
+                .setAnyoneWithLinkPermission(
+                    (edited.owner as InstanceType<User>).googleRefreshToken,
+                    edited.agendaGoogleResourceId,
+                )
+                .subscribe();
+        }
+
         edited.resources.main =
             editMeetingDto.mainResources ||
             (editMeetingDto.resources && editMeetingDto.resources.main) ||
@@ -443,7 +452,9 @@ export class MeetingService {
             ? new Date(editMeetingDto.realEndTime)
             : edited.realEndTime;
 
-        return edited.save();
+        await edited.save();
+
+        return edited.depopulate('owner');
     }
 
     async updateUserSharedResource(

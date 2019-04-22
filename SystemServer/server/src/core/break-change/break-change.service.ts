@@ -4,11 +4,13 @@ import { toArray, flatMap, filter } from 'rxjs/operators';
 
 @Injectable()
 export class BreakChangeService implements OnModuleInit {
-    constructor(private readonly userServie: UserService) {}
+    constructor(
+        private readonly userService: UserService,
+    ) {}
 
     onModuleInit() {
         // handle user missing privacy setting
-        this.userServie
+        this.userService
             .findAll({
                 'setting.privacy': {
                     $exists: false,
@@ -16,7 +18,7 @@ export class BreakChangeService implements OnModuleInit {
             })
             .pipe(
                 flatMap(item =>
-                    this.userServie.edit(item.username, {
+                    this.userService.edit(item.username, {
                         setting: {
                             privacy: {
                                 allowOtherToSendFirendRequest: true,

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { google, calendar_v3 } from 'googleapis';
-import { defer, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { google } from 'googleapis';
+import { defer } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class GoogleEventService {
@@ -50,20 +50,14 @@ export class GoogleEventService {
         calendarIds: string[];
     }) {
         const calendar = this.getCalendar(refreshToken);
-        const freebusy = calendar.freebusy.query;
         const requestBody = {
             timeMin: timeMin.toISOString(),
             timeMax: timeMax.toISOString(),
             items: calendarIds.map(id => ({ id })),
         };
 
-        return defer(() => freebusy({ requestBody })).pipe(
+        return defer(() => calendar.freebusy.query({ requestBody })).pipe(
             map(item => item.data.calendars),
-            catchError(() =>
-                of([
-                    { busy: [], errors: [] },
-                ] as calendar_v3.Schema$FreeBusyCalendar),
-            ),
         );
     }
 }

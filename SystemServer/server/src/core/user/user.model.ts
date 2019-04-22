@@ -38,7 +38,7 @@ export class Relation {
 }
 
 export class CalendarImportance {
-    public carlendarId!: string;
+    public calendarId!: string;
 
     public importance!: number;
 }

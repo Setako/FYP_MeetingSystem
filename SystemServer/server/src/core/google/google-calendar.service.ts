@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { google, calendar_v3 } from 'googleapis';
 import { defer, empty, of } from 'rxjs';
-import { expand, flatMap, catchError } from 'rxjs/operators';
+import { expand, flatMap, catchError, map } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { Meeting } from '../meeting/meeting.model';
 
@@ -40,6 +40,13 @@ export class GoogleCalendarService {
         });
     }
 
+    getCalendarById(refeshToken: string, calendarId: string) {
+        const calendar = this.getCalendar(refeshToken);
+        return defer(() => calendar.calendars.get({ calendarId })).pipe(
+            map(item => item.data),
+        );
+    }
+
     getAllCalendars(refreshToken: string) {
         const calendar = this.getCalendar(refreshToken);
         return defer(() => calendar.calendarList.list()).pipe(
@@ -51,7 +58,7 @@ export class GoogleCalendarService {
                     : empty(),
             ),
             flatMap(item => item.data.items),
-            catchError(() => []),
+            catchError(() => [] as calendar_v3.Schema$CalendarListEntry[]),
         );
     }
 
