@@ -189,9 +189,12 @@ export class GoogleController {
     @UseGuards(AuthGuard('jwt'))
     async getRefreshToken(@Auth() user: InstanceType<User>) {
         await this.userService.editGoogleRefreshToken(user.id);
-        user.setting.calendarImportance = [];
-        user.setting.markEventOnCalendarId = null;
-        await user.save();
+        await this.userService.edit(user.username, {
+            setting: {
+                calendarImportance: [],
+                markEventOnCalendarId: null,
+            },
+        });
     }
 
     @Get('calendar')
