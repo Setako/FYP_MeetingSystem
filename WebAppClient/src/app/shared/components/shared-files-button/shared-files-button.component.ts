@@ -24,4 +24,7 @@ export class SharedFilesButtonComponent implements OnInit {
     }).afterClosed().subscribe();
   }
 
+  openAgenda() {
+    window.open(`https://drive.google.com/open?id=${this.meeting.agendaGoogleResourceId}`, '_blank');
+  }
 }

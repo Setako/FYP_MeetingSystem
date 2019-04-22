@@ -1,0 +1,22 @@
+<h2 mat-dialog-title>Select calendar</h2>
+
+
+<div mat-dialog-content class="p-2">
+  <app-querying-content-hider [querying]="querying" queryingAction="Getting calendars">
+
+    <mat-form-field style="height: 35px; border: none;">
+      <mat-select [(ngModel)]="selectedCalendarId">
+        <mat-option *ngFor="let calendar of possibleCalendars"
+                    [value]="calendar.id">{{calendar.summary}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </app-querying-content-hider>
+</div>
+<div mat-dialog-actions *ngIf="!querying" class="float-right">
+  <a href="#" mat-button (click)="$event.preventDefault();dialogRef.close()">CANCEL</a>
+  <button mat-button [disabled]="selectedCalendarId==null" type="submit" (click)="$event.preventDefault();confirm()">
+    CONFIRM
+  </button>
+</div>
+

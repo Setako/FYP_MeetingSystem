@@ -7,7 +7,7 @@ import {UserNotification, UserNotificationType} from '../shared/models/userNotif
 import {FriendRequest} from '../shared/models/user';
 import {Meeting} from '../shared/models/meeting';
 import {Router} from '@angular/router';
-import {filter, map, mergeMap, repeatWhen, retry, tap} from 'rxjs/operators';
+import {filter, map, mergeMap} from 'rxjs/operators';
 import {AppConfig} from '../app-config';
 import {DatePipe} from '@angular/common';
 
@@ -89,7 +89,6 @@ export class NotificationService {
     return this.http.get<ListResponse<UserNotificationDTO>>(`${AppConfig.API_PATH}/notification`)
       .pipe(
         map(res => res.items.map((dto) => {
-            console.log(dto.type);
             return this.notificationDTOEntityMapper[dto.type](dto);
           })
         )

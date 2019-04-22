@@ -50,6 +50,7 @@ import {InvitationChipComponent} from './pages/member/meeting/meeting-detail/inv
 import {SharedFilesDialogComponent} from './shared/components/dialogs/shared-files-dialog/shared-files-dialog.component';
 import {SharedFilesButtonComponent} from './shared/components/shared-files-button/shared-files-button.component';
 import {MeetingStatusComponent} from './shared/components/meeting-status/meeting-status.component';
+import {SelectCalendarDialogComponent} from './shared/components/dialogs/select-calendar-dialog/select-calendar-dialog.component';
 
 @NgModule({
   declarations: [
@@ -91,7 +92,8 @@ import {MeetingStatusComponent} from './shared/components/meeting-status/meeting
     InvitationChipComponent,
     SharedFilesDialogComponent,
     SharedFilesButtonComponent,
-    MeetingStatusComponent
+    MeetingStatusComponent,
+    SelectCalendarDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -127,7 +129,8 @@ import {MeetingStatusComponent} from './shared/components/meeting-status/meeting
     UserAvatarUploadDialogComponent,
     SelectFriendsDialogComponent,
     ConfirmationDialogComponent,
-    SharedFilesDialogComponent
+    SharedFilesDialogComponent,
+    SelectCalendarDialogComponent
   ],
   bootstrap: [AppComponent]
 })

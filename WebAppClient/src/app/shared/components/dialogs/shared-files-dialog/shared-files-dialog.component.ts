@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, Inject, OnInit} from '@angular/core';
+import {Component, Inject, NgZone, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef, MatSnackBar} from '@angular/material';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
 import {from, Observable} from 'rxjs';
@@ -18,7 +18,7 @@ export class SharedFilesDialogComponent implements OnInit {
 
   constructor(public dialogRef: MatDialogRef<SharedFilesDialogComponent>,
               @Inject(MAT_DIALOG_DATA) data,
-              private googleOauthService: GoogleOauthService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {
+              private googleOauthService: GoogleOauthService, private ngZone: NgZone, private snackBar: MatSnackBar) {
     this.sharedFileIds = data.sharedFileIds;
   }
 
@@ -36,16 +36,19 @@ export class SharedFilesDialogComponent implements OnInit {
         }
       ).subscribe(
         res => {
-          self.sharedFiles.push({
-            resId: res.id,
-            name: res.title
+          this.ngZone.run(() => {
+            self.sharedFiles.push({
+              resId: res.id,
+              name: res.title
+            });
+            self.querying = false;
           });
-          self.cdr.detectChanges();
-          self.querying = false;
         }, err => {
-          this.snackBar.open('You are not connected to google yet', 'DISMISS', {duration: 4000});
-          self.querying = false;
-          this.dialogRef.close();
+          this.ngZone.run(() => {
+            this.snackBar.open('You are not connected to google yet', 'DISMISS', {duration: 4000});
+            self.querying = false;
+            this.dialogRef.close();
+          });
         }
       );
     });
@@ -53,7 +56,6 @@ export class SharedFilesDialogComponent implements OnInit {
 
   openSharedFiles(resId: string) {
     window.open(`https://drive.google.com/open?id=${resId}`, '_blank');
-    console.log(resId);
   }
 
 

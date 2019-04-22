@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnInit, ViewChild} from '@angular/core';
+import {Component, NgZone, OnInit, ViewChild} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -54,7 +54,7 @@ export class MeetingEditComponent implements OnInit {
   constructor(private activatedRoute: ActivatedRoute, private  meetingService: MeetingService,
               private snackBar: MatSnackBar, private router: Router,
               private dialog: MatDialog, private googleOauthService: GoogleOauthService,
-              private cdr: ChangeDetectorRef) {
+              private ngZone: NgZone) {
   }
 
   ngOnInit() {
@@ -113,7 +113,8 @@ export class MeetingEditComponent implements OnInit {
             googleDriveResources: this.pickedFolders.map(folder => {
               return {resId: folder.resId, sharing: 'pre_meeting'};
             })
-          }
+          },
+          agendaGoogleResourceId: this.pickedAgenda == null ? null : this.pickedAgenda.resId
         } as Meeting).pipe(mapTo(this.updateMeeting(this.meeting.id))).subscribe(
           () => {
             this.queryingAction = null;
@@ -205,7 +206,7 @@ export class MeetingEditComponent implements OnInit {
           .filter(invitation => invitation.email != null)
           .map(invitation => invitation.email).join('\n');
 
-        this.updateFolder();
+        this.updateResources();
 
         this.queryingAction = null;
         this.meeting = meeting;
@@ -218,11 +219,14 @@ export class MeetingEditComponent implements OnInit {
     );
   }
 
-  public updateFolder() {
+  public updateResources() {
     this.pickedFolders = [];
+    this.pickedAgenda = null;
     this.googleOauthService.gapiInit().subscribe(() => {
     }, err => {
     }, () => {
+
+      // Folders
       this.googleOauthService.doRequest<any>(
         (token) => {
           return from(this.meeting.resources.main.googleDriveResources)
@@ -239,6 +243,21 @@ export class MeetingEditComponent implements OnInit {
           });
         }, err => console.log(err)
       );
+
+      // Agenda
+      if (this.meeting.agendaGoogleResourceId != null) {
+        this.googleOauthService.doRequest<any>(
+          (token) => this.getFileById(this.meeting.agendaGoogleResourceId)
+        ).subscribe(
+          res => {
+            this.pickedAgenda = {
+              resId: res.id,
+              name: res.title
+            };
+          }, err => console.log(err)
+        );
+      }
+
     });
   }
 
@@ -263,13 +282,14 @@ export class MeetingEditComponent implements OnInit {
         (token) => this.googleOauthService.showFilePicker(token, 'DOCS'),
       ).subscribe(
         (res) => {
-          res.docs.forEach((doc) => {
-            this.pickedAgenda = {
-              resId: doc.id,
-              name: doc.name
-            };
-            self.cdr.detectChanges();
-          }, err => console.log(err));
+          this.ngZone.run(() => {
+            res.docs.forEach((doc) => {
+              this.pickedAgenda = {
+                resId: doc.id,
+                name: doc.name
+              };
+            });
+          });
         }, err => {
           if (this.noGoogleOauthWarningDisplay) {
             this.noGoogleOauthWarningDisplay = false;
@@ -293,15 +313,16 @@ export class MeetingEditComponent implements OnInit {
         (token) => this.googleOauthService.showFilePicker(token, 'FOLDERS', true, true),
       ).subscribe(
         (res) => {
-          res.docs.forEach((doc) => {
-            if (this.pickedFolders.map(folder => folder.resId).indexOf(doc.id) === -1) {
-              this.pickedFolders.push({
-                resId: doc.id,
-                name: doc.name
-              });
-            }
-            self.cdr.detectChanges();
-          }, err => console.log(err));
+          this.ngZone.run(() => {
+            res.docs.forEach((doc) => {
+              if (this.pickedFolders.map(folder => folder.resId).indexOf(doc.id) === -1) {
+                this.pickedFolders.push({
+                  resId: doc.id,
+                  name: doc.name
+                });
+              }
+            });
+          });
         }, err => {
           if (this.noGoogleOauthWarningDisplay) {
             this.noGoogleOauthWarningDisplay = false;

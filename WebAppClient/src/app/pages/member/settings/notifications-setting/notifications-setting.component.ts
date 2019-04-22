@@ -68,7 +68,6 @@ export class NotificationsSettingComponent implements OnInit {
         patchingValues[type.name + 'Email'] = user.setting.notification[type.name].email;
         patchingValues[type.name + 'Notification'] = user.setting.notification[type.name].notification;
       }));
-      console.log(patchingValues);
 
       this.notificationSettingForm.patchValue(patchingValues);
       this.updating = false;

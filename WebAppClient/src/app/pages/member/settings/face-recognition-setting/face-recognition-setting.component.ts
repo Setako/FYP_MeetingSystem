@@ -34,7 +34,6 @@ export class FaceRecognitionSettingComponent implements OnInit {
     return defer(() => {
       this.querying = true;
       this.queryingAction = 'Updating Images';
-      console.log('update');
       return of(0);
     }).pipe(
       flatMap(() => this.integrationService.getFaceImages()),
@@ -106,11 +105,9 @@ export class FaceRecognitionSettingComponent implements OnInit {
         this.querying = true;
         this.uploading = fileList.length;
         this.queryingAction = `Uploading ${this.uploading} images...`;
-        console.log(files);
         from(files).pipe(
           flatMap(file => this.uploadImage(file))
         ).subscribe(() => {
-          console.log('ok!!');
           this.uploading--;
           this.queryingAction = `Uploading ${this.uploading} images...`;
           if (this.uploading === 0) {

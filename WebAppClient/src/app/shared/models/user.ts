@@ -30,4 +30,7 @@ export interface UserSettings {
     importance: number
   }[];
   notification?: { [id: string]: { email: boolean, notification: boolean } };
+  privacy?: {
+    allowOtherToSendFirendRequest?: boolean
+  };
 }

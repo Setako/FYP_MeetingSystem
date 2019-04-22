@@ -1,6 +1,9 @@
 <app-querying-content-hider [querying]="querying" queryingAction="Updating setting">
-  <div class="p-sm-2 p-md-4" style="background: white">
-    <table border="0" cellpadding="0" cellspacing="0" class="col-sm-12 col-lg-6 no-gutters setting-table"
+  <div *ngIf="!connectedGoogle" class="py-5 d-flex align-items-center justify-content-center">
+    Grant permission on google service setting page to enable calendar settings.
+  </div>
+  <div *ngIf="connectedGoogle" class="p-sm-2 p-md-4" style="background: white">
+    <table border="0" cellpadding="0" cellspacing="0" class="col-md-12 col-lg-8 col-xl-6 no-gutters setting-table"
            style="padding: 0">
 
       <tr>
@@ -12,7 +15,8 @@
         </td>
         <td align="right">
           <mat-form-field style="height: 35px; border: none;">
-            <mat-select>
+            <mat-select [(ngModel)]="markEventOnCalendarId">
+              <mat-option [value]="null">No marking</mat-option>
               <mat-option *ngFor="let calendar of possibleCalendars"
                           [value]="calendar.id">{{calendar.summary}}</mat-option>
             </mat-select>
@@ -29,7 +33,7 @@
         </span>
         </th>
         <th align="right">
-          <button mat-button>
+          <button (click)="addCalendar()" mat-button>
             <mat-icon>
               add
             </mat-icon>
@@ -37,58 +41,25 @@
           </button>
         </th>
       </tr>
-      <tr class="type-row">
-        <td>
-          Working Calendar
-        </td>
-        <td align="right">
-          <mat-form-field style="height: 35px; border: none; width: 125px">
-            <mat-select>
-              <mat-option value="1">Minor</mat-option>
-              <mat-option value="2">Normal</mat-option>
-              <mat-option value="3">Major</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button class="ml-1" mat-icon-button>
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </tr>
-      <tr class="type-row">
-        <td>
-          Travel Calendar
-        </td>
-        <td align="right">
-          <mat-form-field style="height: 35px; border: none; width: 125px">
-            <mat-select>
-              <mat-option value="1">Minor</mat-option>
-              <mat-option value="2">Normal</mat-option>
-              <mat-option value="3">Major</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button class="ml-1" mat-icon-button>
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </tr>
-      <tr class="type-row">
-        <td>
-          Party Calendar
-        </td>
-        <td align="right">
-          <mat-form-field style="height: 35px; border: none; width: 125px">
-            <mat-select>
-              <mat-option value="1">Minor</mat-option>
-              <mat-option value="2">Normal</mat-option>
-              <mat-option value="3">Major</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <button class="ml-1" mat-icon-button>
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </tr>
 
+      <tr *ngFor="let calendarImportance of calendarImportances" class="type-row">
+        <td>
+          {{getCalendarSummary(calendarImportance.carlendarId)}}
+        </td>
+        <td align="right">
+          <mat-form-field style="height: 35px; border: none; width: 125px">
+            <mat-select [(ngModel)]="calendarImportance.importance">
+              <mat-option hidden></mat-option>
+              <mat-option value="1">Major</mat-option>
+              <mat-option value="2">Normal</mat-option>
+              <mat-option value="3">Minor</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button class="ml-1" mat-icon-button>
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </tr>
 
     </table>
     <button (click)="saveSetting()" class="mt-2" color="primary" mat-raised-button>

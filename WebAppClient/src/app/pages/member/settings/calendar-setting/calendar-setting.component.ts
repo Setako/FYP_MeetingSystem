@@ -3,7 +3,10 @@ import {UserIntegrationService} from '../../../../services/user-integration.serv
 import {tap} from 'rxjs/internal/operators/tap';
 import {AuthService} from '../../../../services/auth.service';
 import {flatMap} from 'rxjs/operators';
-import {MatSnackBar} from '@angular/material';
+import {MatDialog, MatSnackBar} from '@angular/material';
+import {SelectCalendarDialogComponent} from '../../../../shared/components/dialogs/select-calendar-dialog/select-calendar-dialog.component';
+import {User} from 'src/app/shared/models/user';
+import {UserService} from '../../../../services/user.service';
 
 @Component({
   selector: 'app-calendar-setting',
@@ -14,8 +17,14 @@ export class CalendarSettingComponent implements OnInit {
   private possibleCalendars: GoogleCalendar[] = [];
   private querying = false;
   private markEventOnCalendarId: string;
+  private connectedGoogle: boolean = false;
+  private calendarImportances: {
+    carlendarId: string,
+    importance: number
+  }[] = [];
 
-  constructor(private userIntegration: UserIntegrationService, private auth: AuthService, private snackBar: MatSnackBar) {
+  constructor(private userIntegration: UserIntegrationService, private auth: AuthService, private snackBar: MatSnackBar,
+              private dialog: MatDialog, private userService: UserService) {
   }
 
   ngOnInit(): void {
@@ -29,14 +38,47 @@ export class CalendarSettingComponent implements OnInit {
       flatMap(_ => this.auth.updateUserInfo())
     ).subscribe(() => {
       this.markEventOnCalendarId = this.auth.loggedInUser.setting.markEventOnCalendarId;
+      this.calendarImportances = this.auth.loggedInUser.setting.calendarImportance;
+      this.connectedGoogle = true;
       this.querying = false;
     }, () => {
-      this.snackBar.open('Failed to update setting', 'DISMISS', {duration: 4000});
+      this.querying = false;
+      this.connectedGoogle = false;
     });
   }
 
-  saveSetting(): void {
+  addCalendar() {
+    this.dialog.open(SelectCalendarDialogComponent, {
+      data: {
+        existCalendarsId: this.calendarImportances.map(entry => entry.carlendarId)
+      }
+    }).afterClosed().subscribe((calendarId: string) => {
+      if (calendarId != null) {
+        this.calendarImportances.push({carlendarId: calendarId, importance: 1});
+      }
+    });
+  }
 
+  getCalendarSummary(calendarId) {
+    const calendar = this.possibleCalendars.filter(filtering => filtering.id === calendarId)[0];
+    return calendar == null ? 'Unknow calendar' : calendar.summary;
+  }
+
+  saveSetting(): void {
+    this.querying = true;
+
+    const user: User = {
+      username: this.auth.loggedInUser.username,
+      setting: {
+        markEventOnCalendarId: this.markEventOnCalendarId,
+        calendarImportance: this.calendarImportances
+      }
+    };
+
+    this.userService.editUser(user).subscribe(() => {
+      this.querying = false;
+      this.snackBar.open('Update success', 'DISMISS', {duration: 4000});
+    });
   }
 
 }

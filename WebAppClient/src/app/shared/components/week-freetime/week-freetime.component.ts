@@ -52,14 +52,24 @@ export class WeekFreetimeComponent implements OnInit {
         title: 'Planning time',
         color: {primary: '#ffecb3', secondary: '#ffc107'},
         cssClass: 'selected-time'
+      }).concat({
+        start: moment().toDate(),
+        end: moment().add('5', 'minute').toDate(),
+        title: 'Now',
+        color: {primary: '#00675b', secondary: ''},
+        cssClass: 'now-time'
       });
   }
 
   ngOnInit() {
+    this.selectedDate = this._meeting.plannedStartTime == null ? null : new Date(this._meeting.plannedStartTime);
     this.update();
   }
 
-  update() {
+  update(date?: Date) {
+    if (date != null) {
+      this.viewDate = date;
+    }
     if (this.meeting != null) {
       const start = moment(this.viewDate).startOf('week').hour(0).minute(0).second(0).toDate();
       const end = moment(this.viewDate).endOf('week').minute(59).second(59).toDate();
@@ -83,6 +93,15 @@ export class WeekFreetimeComponent implements OnInit {
 
         this.queryingSubscription = null;
       });
+    }
+  }
+
+  setPlanningTimeOnEvent($event: { event: CalendarEvent<any> }) {
+    if (moment($event.event.start).isAfter()) {
+      this.selectedDate = $event.event.start;
+      this.meeting.plannedStartTime = $event.event.start.toISOString();
+    } else {
+      this.snackBar.open('You can\'t select a passed time', 'Dismiss', {duration: 3000});
     }
   }
 

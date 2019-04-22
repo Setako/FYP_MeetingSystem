@@ -2,7 +2,6 @@ import {Component, Inject, OnInit, ViewChild} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef, MatSelectionList, MatSnackBar} from '@angular/material';
 import {FriendService} from '../../../../services/friend.service';
 import {Friend} from '../../../models/user';
-import {Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-select-friends-dialog',
@@ -53,7 +52,6 @@ export class SelectFriendsDialogComponent implements OnInit {
   }
 
   confirm() {
-    console.log(this.friendSelect.selectedOptions.selected.map(opt => opt.value))
     this.dialogRef.close(this.friendSelect.selectedOptions.selected.map(opt => opt.value));
   }
 }
