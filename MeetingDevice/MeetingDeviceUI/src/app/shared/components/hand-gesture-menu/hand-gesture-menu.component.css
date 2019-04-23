@@ -1,0 +1,46 @@
+.mode-icon {
+    display: inline;
+    padding-right: 15px;
+    padding-left: 15px;
+    height: 35px;
+    width: 35px;
+    background: radial-gradient(
+        rgba(0, 0, 0, 0.3) 5%,
+        rgba(0, 0, 0, 0) 80%,
+        rgba(0, 0, 0, 0) 10%
+    );
+}
+
+.mode-icon > mat-icon {
+    /*text-shadow: white 0 0 10px;*/
+}
+
+.menu-bar {
+    background: rgba(200, 200, 200, 0.8);
+}
+
+.menu-row {
+    position: absolute;
+    width: 100%;
+    bottom: 10px;
+    text-align: center;
+}
+
+.mode-icon mat-icon {
+    font-size: 35px;
+    height: 35px;
+    width: 35px;
+}
+
+.mode-icon-actived {
+    height: 65px;
+    width: 65px;
+}
+
+.mode-icon-actived mat-icon {
+    stroke: black;
+    color: dodgerblue;
+    font-size: 65px;
+    height: 65px;
+    width: 65px;
+}
