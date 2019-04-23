@@ -4,18 +4,16 @@
 }
 
 ::ng-deep {
-  & .not-free-time, & .selected-time {
-    & .cal-event-title {
-      display: none !important;
-    }
+  & .cal-event-title {
+    display: none !important;
   }
 }
 
-::ng-deep .not-free-time{
+::ng-deep .not-free-time {
   opacity: 50%;
 }
 
-::ng-deep .cal-event{
+::ng-deep .cal-event {
   border-radius: 0px !important;
 }
 
@@ -26,4 +24,13 @@
 
 ::ng-deep .now-time .cal-event {
   background: #00675b;
+}
+
+@for $i from 0 through 100 {
+  $opacity: 0.5 + ($i/100*0.5);
+  ::ng-deep .not-free-time-#{$i} .cal-event {
+    background: repeating-linear-gradient(-45deg, rgba(255, 193, 198, 0.5), rgba(255, 193, 198, 0.5) 15px, rgba(255, 97, 97, $opacity) 15px, rgba(255, 97, 97, $opacity) 20px);
+    background-color: transparent !important;
+  }
+
 }

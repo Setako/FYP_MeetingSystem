@@ -69,6 +69,7 @@ export class GoogleServiceSettingComponent implements OnInit {
     this.googleOauthService.disconnectGoogle().subscribe(() => {
       this.querying = false;
       this.updateAuthStatus();
+      this.statusUpdate.emit();
     });
   }
 }

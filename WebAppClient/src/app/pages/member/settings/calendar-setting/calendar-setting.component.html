@@ -16,7 +16,7 @@
         <td align="right">
           <mat-form-field style="height: 35px; border: none;">
             <mat-select [(ngModel)]="markEventOnCalendarId">
-              <mat-option [value]="null">No marking</mat-option>
+              <mat-option disabled value="">Select your calendar</mat-option>
               <mat-option *ngFor="let calendar of possibleCalendars"
                           [value]="calendar.id">{{calendar.summary}}</mat-option>
             </mat-select>
@@ -44,18 +44,18 @@
 
       <tr *ngFor="let calendarImportance of calendarImportances" class="type-row">
         <td>
-          {{getCalendarSummary(calendarImportance.carlendarId)}}
+          {{getCalendarSummary(calendarImportance.calendarId)}}
         </td>
         <td align="right">
           <mat-form-field style="height: 35px; border: none; width: 125px">
             <mat-select [(ngModel)]="calendarImportance.importance">
-              <mat-option hidden></mat-option>
-              <mat-option value="1">Major</mat-option>
-              <mat-option value="2">Normal</mat-option>
-              <mat-option value="3">Minor</mat-option>
+              <mat-option disabled value="">Select the importance</mat-option>
+              <mat-option [value]="1">Major</mat-option>
+              <mat-option [value]="2">Normal</mat-option>
+              <mat-option [value]="3">Minor</mat-option>
             </mat-select>
           </mat-form-field>
-          <button class="ml-1" mat-icon-button>
+          <button (click)="deleteCalendar(calendarImportance)" class="ml-1" mat-icon-button>
             <mat-icon>delete</mat-icon>
           </button>
         </td>

@@ -87,7 +87,7 @@ export class WeekFreetimeComponent implements OnInit {
             end: new Date(busyTime.toDate),
             title: busyTime.users.map(user => user.displayName).join(', ') + ' may not free at this period',
             color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-            cssClass: 'not-free-time'
+            cssClass: 'not-free-time-' + Math.floor(busyTime.busyLevel)
           });
         });
 

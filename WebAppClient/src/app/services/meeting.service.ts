@@ -16,7 +16,7 @@ export class MeetingService {
     const meeting: Meeting = JSON.parse(JSON.stringify(meetingDTO));
     const attendanceMap = new Map<String, MeetingAttendance>();
     if (meeting.attendance != null) {
-      meeting.attendance.forEach((attendance: MeetingAttendance) => attendanceMap.set(attendance.username, attendance));
+      meeting.attendance.forEach((attendance: MeetingAttendance) => attendanceMap.set(attendance.user.username, attendance));
       meeting.attendance = attendanceMap;
     }
     return meeting as Meeting;
@@ -103,11 +103,7 @@ export class MeetingService {
 
 
   public toggleMarkMeetingCalendar(meeting: Meeting): Observable<any> {
-    return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}/calendar`,
-      {
-        mark: meeting.attendance.get(this.authService.loggedInUser.username).googleCalendarEventId == null
-      }
-    );
+    return this.http.put(`${AppConfig.API_PATH}/meeting/${meeting.id}/calendar`, {});
   }
 
   public deleteMeetingDraft(meeting: Meeting): Observable<any> {
