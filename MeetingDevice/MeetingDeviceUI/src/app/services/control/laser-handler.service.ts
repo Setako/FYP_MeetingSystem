@@ -7,12 +7,27 @@ export class LaserHandlerService {
 
     public laserOrientationOffset;
     public listener;
+    public lastReceive = 0;
+
+    get display() {
+        return new Date().getTime() <= this.lastReceive + 1000;
+    }
 
     constructor() {
     }
 
     public laserMove(orientationOffset) {
+        this.lastReceive = new Date().getTime();
         this.laserOrientationOffset = orientationOffset;
+        if (orientationOffset[0] < -180) {
+            orientationOffset[0] = 360 - orientationOffset;
+        }
+        if (orientationOffset[0] > 180) {
+            orientationOffset[0] = orientationOffset[0] - 360;
+        }
+        // if (360 - orientationOffset[0]) {
+        console.log(orientationOffset);
+        // }
         this.listener();
     }
 

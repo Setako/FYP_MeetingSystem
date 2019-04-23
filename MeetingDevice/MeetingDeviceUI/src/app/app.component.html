@@ -8,8 +8,8 @@
         <!--<app-hand-gesture-menu></app-hand-gesture-menu>-->
         <div #windowContainer id="testing"></div>
         <!--<button (click)="test()"></button>-->
-        <div style="position: absolute;width: 100%;height: 100%;overflow: hidden; pointer-events: none" >
-            <div style=" width: 10px; height: 10px;position: absolute;border-radius: 50%;     box-shadow:
+        <div style="position: absolute;width: 100%;height: 100%;overflow: hidden; pointer-events: none">
+            <div *ngIf="laserHandler.display" style=" width: 10px; height: 10px;position: absolute;border-radius: 50%;     box-shadow:
         0 0 5px 2px #fffdfb,
         0 0 10px 5px #ff0006;"
                  [ngStyle]="{'left':laserHandler.laserPosition[0]+'%','top':laserHandler.laserPosition[1]+'%'}">

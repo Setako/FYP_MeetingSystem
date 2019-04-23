@@ -43,10 +43,10 @@ export class DocumentPlayerComponent extends ControllableComponent implements On
     swipe(direction: string) {
         switch (direction) {
             case GestureActionType.SWIPE_UP:
-                // this.robot.keyDown(NormalKeys.);
+                this.robot.keyDown('pageup');
                 break;
             case GestureActionType.SWIPE_RIGHT:
-                // this.robot.keyDown(NormalKeys.LEFT);
+                this.robot.keyDown('pagedown');
                 break;
         }
     }

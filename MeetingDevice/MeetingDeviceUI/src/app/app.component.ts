@@ -5,6 +5,7 @@ import {
     ComponentFactory,
     ComponentRef,
     Injector,
+    NgZone,
     OnInit,
     ViewChild,
     ViewContainerRef,
@@ -16,11 +17,8 @@ import {ElectronService} from 'ngx-electron';
 import {RobotService} from './services/robot.service';
 import {IPCService} from './services/common/ipc.service';
 import {MeetingStateHolderService} from './services/interact/meeting-state-holder.service';
-import {SlideShowPlayerComponent} from './shared/components/window/resource-player/slide-show-player/slide-show-player.component';
 import {ActionReceiverService} from './services/interact/action-receiver.service';
 import {ResourceOpenerService} from './services/interact/resource-opener.service';
-import {ImagePlayerComponent} from './shared/components/window/resource-player/image-player/image-player.component';
-import {timer} from 'rxjs';
 import {LaserHandlerService} from './services/control/laser-handler.service';
 
 declare let electron: any;
@@ -48,12 +46,16 @@ export class AppComponent implements OnInit, AfterViewInit {
         private actionReceiver: ActionReceiverService,
         private meetingStateHolderService: MeetingStateHolderService,
         private laserHandler: LaserHandlerService,
-        private readonly resourceOpener: ResourceOpenerService
+        private readonly resourceOpener: ResourceOpenerService,
+        private ngZone: NgZone
     ) {
         ipcService.addCdr(cdr);
     }
 
     ngOnInit() {
+        setInterval(() => {
+            this.ngZone.run(() => this.cdr.detectChanges());
+        });
         this.laserHandler.setListener(() => this.cdr.detectChanges());
         this.controlIPCListener.init();
         this.windowStackService.registerWindowsContainer(this);
