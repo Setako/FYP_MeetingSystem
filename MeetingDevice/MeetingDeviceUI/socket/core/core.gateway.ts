@@ -80,7 +80,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     newFaceRecognition() {
-        if (this.configService.fromEnvironment('DISABLE_FACE_RECOGNITION') != 'false') {
+        if (
+            this.configService.fromEnvironment('DISABLE_FACE_RECOGNITION') !=
+            'false'
+        ) {
             return;
         }
 
@@ -309,11 +312,11 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
             const data = userIdList
                 .filter(id => {
-                    console.log(
-                        id,
-                        notArrivalUserIds,
-                        notArrivalUserIds.includes(id),
-                    );
+                    // console.log(
+                    //     id,
+                    //     notArrivalUserIds,
+                    //     notArrivalUserIds.includes(id),
+                    // );
                     return notArrivalUserIds.includes(id);
                 })
                 .map(userId => ({
@@ -324,6 +327,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             if (data.length === 0) return;
 
             console.log('recognised-user', data);
+
+            this.ipcService.sendMessage('recognised-user', {
+                userIds: data.map(item => item.userId),
+            });
 
             this.socketClient.emit('device-mark-attendance', {
                 attendance: data,
