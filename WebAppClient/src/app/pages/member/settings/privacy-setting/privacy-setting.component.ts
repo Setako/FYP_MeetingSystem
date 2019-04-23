@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {AuthService} from '../../../../services/auth.service';
 import {User} from '../../../../shared/models/user';
 import {UserService} from '../../../../services/user.service';
+import {MatSnackBar} from '@angular/material';
 
 @Component({
   selector: 'app-privacy-setting',
@@ -9,10 +10,10 @@ import {UserService} from '../../../../services/user.service';
   styleUrls: ['./privacy-setting.component.scss']
 })
 export class PrivacySettingComponent implements OnInit {
-  private allowFriendRequest: boolean;
-  private querying = false;
+  allowFriendRequest: boolean;
+  querying = false;
 
-  constructor(private authService: AuthService, private  userService: UserService) {
+  constructor(private authService: AuthService, private  userService: UserService, private snackBar: MatSnackBar) {
   }
 
   ngOnInit() {
@@ -31,6 +32,7 @@ export class PrivacySettingComponent implements OnInit {
 
     this.querying = true;
     this.userService.editUser(user).subscribe(() => {
+      this.snackBar.open('Update success', 'DISMISS', {duration: 4000});
       this.querying = false;
     });
 

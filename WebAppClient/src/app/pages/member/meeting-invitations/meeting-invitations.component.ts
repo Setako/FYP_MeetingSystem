@@ -38,9 +38,9 @@ export class MeetingInvitationsComponent implements OnInit {
 
   public updateList() {
     this.meetingListQuerySubscription = this.meetingService.findMeetings(
-      this.invitingFromFriend === undefined
+      this.invitingFromFriend == null
         ? {invitingMe: true} as MeetingSearchingFilter
-        : {invitingMe: this.invitingFromFriend} as MeetingSearchingFilter,
+        : {invitingMe: true, invitingFromFriend: this.invitingFromFriend} as MeetingSearchingFilter,
       this.pageSize, this.pageIndex + 1)
       .subscribe(
         res => {
@@ -56,6 +56,7 @@ export class MeetingInvitationsComponent implements OnInit {
   }
 
   public changeFrom(status: string) {
+    console.log(status);
     switch (status) {
       case 'From friends':
         this.invitingFromFriend = true;
@@ -64,7 +65,7 @@ export class MeetingInvitationsComponent implements OnInit {
         this.invitingFromFriend = false;
         break;
       case 'All':
-        this.invitingFromFriend = undefined;
+        this.invitingFromFriend = null;
     }
     this.updateList();
   }
