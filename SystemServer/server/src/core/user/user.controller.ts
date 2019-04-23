@@ -134,9 +134,17 @@ export class UsersController {
     @UseGuards(SelfGuard)
     @UseGuards(AuthGuard('jwt'))
     edit(
+        @Auth() user: InstanceType<User>,
         @Param('username') username: string,
         @Body() editUserDto: EditUserDto,
     ) {
+        if (
+            editUserDto.password &&
+            !user.checkPassword(editUserDto.currentPassword)
+        ) {
+            throw new BadRequestException('Current password is incorrect');
+        }
+
         return from(this.userService.edit(username, editUserDto)).pipe(
             documentToPlain(UserDto),
         );
