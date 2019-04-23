@@ -181,7 +181,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                             .to('recognition')
                             .emit('start-recognition', {
                                 trainedModel: res.data,
-                                showImage: true,
+                                showImage: this.configService.fromEnvironment('RECOGNITION_SHOW_IMAGE') === 'true',
                             });
 
                         this.ipcService.sendMessage('start-recognition', {
