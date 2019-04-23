@@ -11,11 +11,8 @@
   <a *ngIf="attendance!=null && attendance.status==null"
      href="#" mat-list-item (click)="toggleMarkCalendar($event)">
 
-    <span mat-line *ngIf="attendance.googleCalendarEventId == null">
-      Mark on my calendar
-    </span>
-    <span mat-line *ngIf="attendance.googleCalendarEventId != null">
-      Unmark on my calendar
+    <span mat-line>
+      Mark/Unmark on my calendar
     </span>
   </a>
 

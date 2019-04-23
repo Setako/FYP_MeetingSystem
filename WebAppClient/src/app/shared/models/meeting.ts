@@ -44,12 +44,11 @@ export interface MeetingInvitation {
 }
 
 export interface MeetingAttendance {
-  username: string;
+  user: User;
   priority: number;
   arrivalTime?: Date;
   status?: MeetingAttendanceStatus;
   permission: AccessPostMeetingPermission;
-  googleCalendarEventId?: string;
 }
 
 export interface MeetingResources {

@@ -19,7 +19,7 @@ export class CalendarSettingComponent implements OnInit {
   markEventOnCalendarId: string;
   connectedGoogle = false;
   calendarImportances: {
-    carlendarId: string,
+    calendarId: string,
     importance: number
   }[] = [];
 
@@ -50,11 +50,11 @@ export class CalendarSettingComponent implements OnInit {
   addCalendar() {
     this.dialog.open(SelectCalendarDialogComponent, {
       data: {
-        existCalendarsId: this.calendarImportances.map(entry => entry.carlendarId)
+        existCalendarsId: this.calendarImportances.map(entry => entry.calendarId)
       }
     }).afterClosed().subscribe((calendarId: string) => {
       if (calendarId != null) {
-        this.calendarImportances.push({carlendarId: calendarId, importance: 1});
+        this.calendarImportances.push({calendarId: calendarId, importance: 1});
       }
     });
   }
@@ -81,5 +81,8 @@ export class CalendarSettingComponent implements OnInit {
     });
   }
 
+  deleteCalendar(importance) {
+    this.calendarImportances.splice(this.calendarImportances.indexOf(importance), 1);
+  }
 }
 

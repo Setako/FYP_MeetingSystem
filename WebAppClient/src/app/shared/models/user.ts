@@ -26,7 +26,7 @@ export interface Friend {
 export interface UserSettings {
   markEventOnCalendarId?: string;
   calendarImportance?: {
-    carlendarId: string,
+    calendarId: string,
     importance: number
   }[];
   notification?: { [id: string]: { email: boolean, notification: boolean } };
