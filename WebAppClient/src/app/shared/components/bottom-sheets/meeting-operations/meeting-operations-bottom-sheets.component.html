@@ -10,7 +10,7 @@
 
   <a *ngIf="attendance!=null && attendance.status==null"
      href="#" mat-list-item (click)="toggleMarkCalendar($event)">
-
+    <mat-icon matListIcon>calendar_today</mat-icon>
     <span mat-line>
       Mark/Unmark on my calendar
     </span>
