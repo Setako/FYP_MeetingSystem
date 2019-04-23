@@ -773,6 +773,11 @@ export class MeetingController {
                     users: Array<InstanceType<User>>;
                     busyLevel: number;
                 }> = [];
+
+                if (!items.length) {
+                    return list;
+                }
+
                 const sorted = items.sort(item => item.fromDate.getTime());
                 for (
                     let loopTime = items[0].fromDate;
