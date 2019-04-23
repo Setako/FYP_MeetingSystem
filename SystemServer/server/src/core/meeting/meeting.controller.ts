@@ -55,6 +55,7 @@ import {
     pluck,
     defaultIfEmpty,
     concatMap,
+    catchError,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -653,14 +654,13 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingBusyTimeQueryDto,
     ) {
-        const friendsId$ = from(
+        const friendsIds = await from(
             this.meetingService.getAllFriendIdsInInvitations(id, user.id),
-        ).pipe(
-            map(list => [...new Set(list).add(user.id)]),
-            flatMap(identity),
-        );
+        )
+            .pipe(map(list => [...new Set(list).add(user.id)]))
+            .toPromise();
 
-        const friend$ = friendsId$.pipe(
+        const friend$ = from(friendsIds).pipe(
             flatMap(friendId => this.userService.getById(friendId)),
             skipFalsy(),
             shareReplay(),
@@ -721,11 +721,19 @@ export class MeetingController {
             whoHasGoogleService$,
             userBusyEventCalendar$,
         ).pipe(
+            filter(
+                ([userInstance, eventCalendar]) =>
+                    Boolean(userInstance) && Boolean(eventCalendar),
+            ),
             flatMap(([userInstance, eventCalendar]) =>
                 from(eventCalendar).pipe(
+                    filter(item => typeof item === 'object'),
                     map(item => {
-                        return Object.entries(item).map(
-                            ([calendar, freebusy]) => {
+                        return Object.entries(item)
+                            .filter(
+                                ([_, freebusy]) => typeof freebusy === 'object',
+                            )
+                            .map(([calendar, freebusy]) => {
                                 const find = userInstance.setting.calendarImportance.find(
                                     val => val.calendarId === calendar,
                                 );
@@ -733,9 +741,9 @@ export class MeetingController {
                                     ...freebusy,
                                     level: find ? find.importance : 3,
                                 };
-                            },
-                        );
+                            });
                     }),
+                    catchError(() => empty()),
                     flatMap(identity),
                     filter(item => !item.errors),
                     flatMap(item =>
@@ -793,14 +801,30 @@ export class MeetingController {
                     if (!inRange.length) {
                         continue;
                     }
+
+                    const userUnique = [
+                        ...new Set(inRange.map(item => item.user)),
+                    ];
+                    const busyLevelUnique = new Map();
+                    inRange.map(item => {
+                        const old = busyLevelUnique.get(item.user.username);
+                        if (!old || old > item.busyLevel) {
+                            busyLevelUnique.set(
+                                item.user.username,
+                                item.busyLevel,
+                            );
+                        }
+                    });
+
                     list.push({
                         fromDate: loopTime,
                         toDate: new Date(loopTime.getTime() + 30 * 60000),
-                        users: [...new Set(inRange.map(item => item.user))],
-                        busyLevel: inRange.reduce(
-                            (acc, xs) => acc + ((4 - xs.busyLevel) / 4) * 100,
-                            0,
-                        ),
+                        users: userUnique,
+                        busyLevel:
+                            [...busyLevelUnique.values()].reduce(
+                                (acc, xs) => acc + ((4 - xs) / 3) * 100,
+                                0,
+                            ) / friendsIds.length,
                     });
                 }
 
