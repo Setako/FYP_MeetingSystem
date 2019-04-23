@@ -14,11 +14,11 @@ import {UserService} from '../../../../services/user.service';
   styleUrls: ['./calendar-setting.component.scss']
 })
 export class CalendarSettingComponent implements OnInit {
-  private possibleCalendars: GoogleCalendar[] = [];
-  private querying = false;
-  private markEventOnCalendarId: string;
-  private connectedGoogle: boolean = false;
-  private calendarImportances: {
+  possibleCalendars: GoogleCalendar[] = [];
+  querying = false;
+  markEventOnCalendarId: string;
+  connectedGoogle = false;
+  calendarImportances: {
     carlendarId: string,
     importance: number
   }[] = [];
