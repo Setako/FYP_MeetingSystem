@@ -47,7 +47,6 @@ import {
     toArray,
     mapTo,
     tap,
-    groupBy,
     mergeAll,
     shareReplay,
     takeWhile,
@@ -679,16 +678,16 @@ export class MeetingController {
 
         const whoHasGoogleService$ = friend$.pipe(
             filter(({ googleRefreshToken }) => Boolean(googleRefreshToken)),
-            flatMap(friend =>
-                from(
-                    this.googleAuthService.isRefreshTokenAvailable(
-                        friend.googleRefreshToken,
+            flatMap(async item => {
+                return {
+                    item,
+                    available: await this.googleAuthService.isRefreshTokenAvailable(
+                        item.googleRefreshToken,
                     ),
-                ).pipe(
-                    filter(identity),
-                    map(() => friend),
-                ),
-            ),
+                };
+            }),
+            filter(({ available }) => available),
+            map(({ item }) => item),
             shareReplay(),
         );
 
@@ -702,14 +701,6 @@ export class MeetingController {
                 item.setting.calendarImportance.map(cal => cal.calendarId),
             ),
         );
-
-        // const userCalendarIdList$ = userRefreshToken$.pipe(
-        //     concatMap(token =>
-        //         this.googleCalendarService.getAllCalendars(token),
-        //     ),
-        //     pluck('id'),
-        //     toArray(),
-        // );
 
         const userBusyEventCalendar$ = zip(
             userRefreshToken$,
@@ -774,27 +765,51 @@ export class MeetingController {
         );
 
         const groupedBusyTime$ = merge(busyTime$, systemBusyTime$).pipe(
-            groupBy(
-                time => time.fromDate.toISOString() + time.toDate.toISOString(),
-            ),
-            flatMap(group => group.pipe(toArray())),
+            toArray(),
+            map(items => {
+                const list: Array<{
+                    fromDate: Date;
+                    toDate: Date;
+                    users: Array<InstanceType<User>>;
+                    busyLevel: number;
+                }> = [];
+
+                if (!items.length) {
+                    return list;
+                }
+
+                const sorted = items.sort(item => item.fromDate.getTime());
+                for (
+                    let loopTime = items[0].fromDate;
+                    loopTime.getTime() <=
+                    items[items.length - 1].toDate.getTime();
+                    loopTime = new Date(loopTime.getTime() + 30 * 60000)
+                ) {
+                    const inRange = sorted.filter(
+                        item =>
+                            item.fromDate <= loopTime &&
+                            loopTime <= item.toDate,
+                    );
+                    if (!inRange.length) {
+                        continue;
+                    }
+                    list.push({
+                        fromDate: loopTime,
+                        toDate: new Date(loopTime.getTime() + 30 * 60000),
+                        users: [...new Set(inRange.map(item => item.user))],
+                        busyLevel: inRange.reduce(
+                            (acc, xs) => acc + ((4 - xs.busyLevel) / 4) * 100,
+                            0,
+                        ),
+                    });
+                }
+
+                return list;
+            }),
+            flatMap(identity),
         );
 
         const result$ = groupedBusyTime$.pipe(
-            map(group => ({
-                fromDate: group.length !== 0 ? group[0].fromDate : undefined,
-                toDate: group.length !== 0 ? group[0].toDate : undefined,
-                users: group.reduce(
-                    (acc, xs) =>
-                        acc.includes(xs.user) ? acc : acc.concat(xs.user),
-                    [] as Array<InstanceType<User>>,
-                ),
-                busyLevel: group
-                    .reduce((acc, xs) => {
-                        return acc + ((4 - xs.busyLevel) / 4) * 100;
-                    }, 0)
-                    .toFixed(),
-            })),
             filter(item => Boolean(item.fromDate) && Boolean(item.toDate)),
             map(item => ({
                 ...item,
