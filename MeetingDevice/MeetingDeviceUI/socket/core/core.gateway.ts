@@ -80,6 +80,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     }
 
     newFaceRecognition() {
+        if (this.configService.fromEnvironment('DISABLE_FACE_RECOGNITION') != 'false') {
+            return;
+        }
+
         const cwd = `${process.cwd()}/recognition/`;
         const pythonPath =
             this.configService.fromEnvironment('PYTHON_PATH') || 'python3';
