@@ -88,8 +88,13 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         }
 
         const cwd = `${process.cwd()}/recognition/`;
-        const pythonPath =
-            this.configService.fromEnvironment('PYTHON_PATH') || 'python3';
+        const pythonPath = this.configService.fromEnvironment('PYTHON_PATH');
+
+        if (!pythonPath) {
+            console.log('Please provide python path');
+            return;
+        }
+
         const recognition = spawn(
             pythonPath,
             [
@@ -181,7 +186,10 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                             .to('recognition')
                             .emit('start-recognition', {
                                 trainedModel: res.data,
-                                showImage: this.configService.fromEnvironment('RECOGNITION_SHOW_IMAGE') === 'true',
+                                showImage:
+                                    this.configService.fromEnvironment(
+                                        'RECOGNITION_SHOW_IMAGE',
+                                    ) === 'true',
                             });
 
                         this.ipcService.sendMessage('start-recognition', {
@@ -311,14 +319,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                 .map(item => item.user.id);
 
             const data = userIdList
-                .filter(id => {
-                    // console.log(
-                    //     id,
-                    //     notArrivalUserIds,
-                    //     notArrivalUserIds.includes(id),
-                    // );
-                    return notArrivalUserIds.includes(id);
-                })
+                .filter(id => notArrivalUserIds.includes(id))
                 .map(userId => ({
                     userId,
                     time: Date(),
