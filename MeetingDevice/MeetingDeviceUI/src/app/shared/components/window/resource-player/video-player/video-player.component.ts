@@ -1,4 +1,4 @@
-import {AfterViewInit, ChangeDetectorRef, Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, ViewChild} from '@angular/core';
 import {ControllableComponent} from '../../../controllable/controllable.component';
 import {WINDOW_DATA} from '../../../../../services/window/window-ref';
 import {WindowData} from '../../../../../services/window/window-data';
@@ -16,7 +16,7 @@ export class VideoPlayerComponent extends ControllableComponent
     constructor(
         @Inject(WINDOW_DATA) data: WindowData<VideoPlayerComponent>,
         private robot: RobotService,
-        private cdr: ChangeDetectorRef,
+        private ngZone: NgZone
     ) {
         super();
         this.url = data.data;
@@ -55,16 +55,21 @@ export class VideoPlayerComponent extends ControllableComponent
 
     ngOnInit() {
         this.webContent.nativeElement.addEventListener('did-finish-load', () => {
-            this.loaded = true;
-            this.cdr.detectChanges();
-            this.webContent.nativeElement.focus();
-            this.robot.setMouseDelay(5);
-            this.robot.setKeyboardDelay(5);
-            this.robot.keyDown(NormalKeys.SPACE);
-            this.robot.keyDown('f');
-            this.robot.moveMouse(50, 50);
-            this.robot.mouseClick();
-            this.robot.moveMouse(100, 100);
+            this.ngZone.run(() => {
+                this.loaded = true;
+                // this.webContent.nativeElement.focus();
+                setTimeout(() => {
+                    this.robot.setMouseDelay(5);
+                    this.robot.setKeyboardDelay(5);
+                    this.robot.moveMouse(50, 50);
+                    this.robot.mouseClick();
+                    this.robot.keyDown('f');
+                    setTimeout(() => {
+                        this.robot.mouseClick();
+                        this.robot.moveMouse(100, 0);
+                    }, 25);
+                }, 1000);
+            });
         });
     }
 
