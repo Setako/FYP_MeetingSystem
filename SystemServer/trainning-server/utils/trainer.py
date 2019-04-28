@@ -55,6 +55,18 @@ class Trainer:
 
         return knn_clf
 
+    def make_knn_classifier_info_from_xy(self, x, y):
+        n_neighbors = (
+            self.knn_neighbors
+            if not self.knn_neighbors is None
+            else int(round(sqrt(len(x))))
+        )
 
-if __name__ == "__main__":
-    print(Path(sys.argv[0]).absolute())
+        return {
+            "n_neighbors": n_neighbors,
+            "algorithm": self.knn_algo,
+            "weights": self.knn_weights,
+            "x": x,
+            "y": y,
+        }
+
