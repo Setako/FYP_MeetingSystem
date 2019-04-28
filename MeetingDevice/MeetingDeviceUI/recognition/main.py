@@ -1,4 +1,5 @@
 import pickle
+import sys
 import time
 from multiprocessing import Manager, Process
 
@@ -6,7 +7,17 @@ import click
 import cv2
 import socketio
 from face_recognition import face_encodings, face_locations
-import sys
+from sklearn import neighbors
+
+
+def make_classifier(info):
+    classifier = neighbors.KNeighborsClassifier(
+        n_neighbors=info["n_neighbors"],
+        algorithm=info["algorithm"],
+        weights=info["weights"],
+    )
+    classifier.fit(info["x"], info["y"])
+    return classifier
 
 
 def predict(Global, result_list, sio, distance_threshold=0.6):
@@ -125,7 +136,7 @@ def setup_event(Global, result_list, sio):
             )
             return
 
-        Global.model = pickle.loads(data["trainedModel"])
+        Global.model = make_classifier(pickle.loads(data["trainedModel"]))
         Global.show_image = data["showImage"] is True
 
     @sio.on("end-recognition")
