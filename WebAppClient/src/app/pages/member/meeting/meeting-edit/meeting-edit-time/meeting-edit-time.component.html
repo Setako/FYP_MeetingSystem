@@ -24,7 +24,8 @@
   <div>
     Pick time from range:
     <mat-form-field class="pr-3">
-      <input matInput placeholder="From" aria-label="State" [matAutocomplete]="fromTimeAuto">
+      <input matInput placeholder="From" aria-label="State" [matAutocomplete]="fromTimeAuto"
+             [(ngModel)]="searchTimeStart">
       <mat-autocomplete #fromTimeAuto="matAutocomplete">
         <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
           {{time}}
@@ -32,7 +33,7 @@
       </mat-autocomplete>
     </mat-form-field>
     <mat-form-field class="pr-3">
-      <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto">
+      <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto" [(ngModel)]="searchTimeEnd">
       <mat-autocomplete #toTimeAuto="matAutocomplete">
         <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
           {{time}}
@@ -54,6 +55,7 @@
 <div>
   <h2>Calendar</h2>
 
-  <app-week-freetime [meeting]="meeting" [dayStartHour]="10.5" [dayEndHour]="19"></app-week-freetime>
+  <app-week-freetime [meeting]="meeting" [dayStartHour]="searchTimeStartFormated"
+                     [dayEndHour]="searchTimeEndFormated"></app-week-freetime>
 </div>
 

@@ -40,7 +40,7 @@ export class MemberComponent implements OnInit {
   constructor(public auth: AuthService, private snackBar: MatSnackBar,
               public userService: UserService,
               private  changeDetectorRef: ChangeDetectorRef, private mediaMatcher: MediaMatcher,
-              private  notificationService: NotificationService) {
+              public notificationService: NotificationService) {
     this.mobileQuery = mediaMatcher.matchMedia('(max-width: 767px)');
     this.mobileQuery.addListener(() => changeDetectorRef.detectChanges());
   }

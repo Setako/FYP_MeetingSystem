@@ -28,7 +28,7 @@
           </mat-form-field>
 
           <mat-form-field class="w-100">
-            <input formControlName="email" matInput placeholder="Email" required>
+            <input formControlName="email" matInput placeholder="Email" readonly>
             <mat-error *ngIf="userInformationForm.get('email').hasError('required')"> Email is required.</mat-error>
             <mat-error *ngIf="userInformationForm.get('email').hasError('email')"> Format is incorret.</mat-error>
           </mat-form-field>
