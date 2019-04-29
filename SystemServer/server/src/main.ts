@@ -5,21 +5,20 @@ import logger from 'morgan';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from './shared/pipe/validation.pipe';
+import { json } from 'body-parser';
 
 declare const module: any;
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    app.setGlobalPrefix('/api').useGlobalPipes(
-        new ValidationPipe({
-            transform: true,
-        }),
-    );
+    app.setGlobalPrefix('/api').useGlobalPipes(new ValidationPipe());
 
     if (process.env.NODE_ENV === 'development') {
         app.use(logger('dev')).enableCors();
     }
+
+    app.use(json({ limit: '50mb' }));
 
     await app.listen(process.env.PORT || 80);
 

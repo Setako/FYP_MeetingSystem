@@ -1,4 +1,7 @@
 <div style="position: relative">
+  <div *ngIf="selectedDate!=null">
+    Selected: {{selectedDate|toDate|date: 'medium'}}
+  </div>
   <div *ngIf="queryingSubscription!=null" style="position: absolute; height: 100%; width: 100%">
     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
   </div>
@@ -6,7 +9,7 @@
     <div class="d-flex align-items-center justify-content-between " style="max-width: 400px; width: 100%;">
 
 
-      <button (viewDateChange)="update()" [(viewDate)]="viewDate" [view]="view" mat-icon-button
+      <button (viewDateChange)="update($event)" [(viewDate)]="viewDate" [view]="view" mat-icon-button
               mwlCalendarPreviousView>
         <mat-icon>chevron_left</mat-icon>
       </button>
@@ -15,10 +18,11 @@
 
 
       <div>
-        <button (viewDateChange)="update()" [(viewDate)]="viewDate" [view]="view" mat-icon-button mwlCalendarNextView>
+        <button (viewDateChange)="update($event)" [(viewDate)]="viewDate" [view]="view" mat-icon-button
+                mwlCalendarNextView>
           <mat-icon>chevron_right</mat-icon>
         </button>
-        <button (viewDateChange)="update()" [(viewDate)]="viewDate" mat-button mwlCalendarToday>
+        <button (viewDateChange)="update($event)" [(viewDate)]="viewDate" mat-button mwlCalendarToday>
           <mat-icon>today</mat-icon>
           Today
         </button>
@@ -36,6 +40,7 @@
   <mwl-calendar-week-view
     #calendar
     (hourSegmentClicked)="setPlanningTime($event)"
+    (eventClicked)="setPlanningTimeOnEvent($event)"
     [dayEndHour]="Math.floor(dayEndHour)"
     [dayEndMinute]="dayEndHour%1"
     [dayStartHour]="Math.floor(dayStartHour)"

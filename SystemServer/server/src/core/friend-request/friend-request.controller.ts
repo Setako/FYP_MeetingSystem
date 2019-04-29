@@ -36,8 +36,10 @@ import { FriendRequestService } from './friend-request.service';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { defer, identity, from, combineLatest } from 'rxjs';
 import { map, flatMap, toArray } from 'rxjs/operators';
+import { GetSentReqeustQuery } from './dto/get-sent-request.dto';
+import { documentToPlain } from '@commander/shared/operator/document';
 
-@Controller('friend/request')
+@Controller('friend-request')
 @UseGuards(AuthGuard('jwt'))
 export class FriendRequestController {
     constructor(
@@ -51,9 +53,14 @@ export class FriendRequestController {
     @Get()
     async getAllSentRequests(
         @Auth() user: InstanceType<User>,
-        @Query() query: PaginationQueryDto,
+        @Query() query: GetSentReqeustQuery,
     ) {
         const { resultPageNum, resultPageSize } = query;
+        const options = query.status
+            ? {
+                  status: { $in: query.status },
+              }
+            : {};
 
         const list = defer(() =>
             resultPageSize
@@ -61,19 +68,27 @@ export class FriendRequestController {
                       user.username,
                       NumberUtils.parseOrThrow(resultPageSize),
                       NumberUtils.parseOr(resultPageNum, 1),
+                      options,
                   )
-                : this.friendRequestService.getAllByUser(user.username),
+                : this.friendRequestService.getAllByUser(
+                      user.username,
+                      options,
+                  ),
         ).pipe(flatMap(identity));
 
         const items = list.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetFriendRequestDto)),
+            documentToPlain(GetFriendRequestDto),
+            toArray(),
         );
 
         const length = from(
-            this.friendRequestService.countDocumentsByUser(user.username),
+            this.friendRequestService.countDocumentsByUser(
+                user.username,
+                options,
+            ),
         );
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -85,34 +100,54 @@ export class FriendRequestController {
     @Post(':username')
     @UseGuards(UserGuard)
     async sendRequest(
-        @Auth() user: InstanceType<User>,
-        @Param('username') username: string,
+        @Auth() sender: InstanceType<User>,
+        @Param('username') receiverUsername: string,
     ) {
-        if (username === user.username) {
+        if (receiverUsername === sender.username) {
             throw new BadRequestException('You cannot add youself as friend');
         }
 
-        const target = await this.userService.getByUsername(username);
+        const target = await this.userService
+            .getByUsername(receiverUsername)
+            .toPromise();
         if (!target) {
             throw new NotFoundException('Target user not found');
         }
 
-        if (await this.friendService.isFriends(user.id, target.id)) {
+        if (
+            await this.friendService.isFriends(sender.id, target.id).toPromise()
+        ) {
             throw new BadRequestException('Target user already is friend');
         }
 
         if (
             await this.friendRequestService.hasReqeustedRequest(
-                user.username,
-                username,
+                sender.username,
+                receiverUsername,
             )
         ) {
             throw new BadRequestException('Request already sent');
         }
 
+        if (!target.setting.privacy) {
+            this.userService.edit(target.username, {
+                setting: {
+                    privacy: {
+                        allowOtherToSendFirendRequest: true,
+                    },
+                },
+            });
+        }
+
+        if (!target.setting.privacy.allowOtherToSendFirendRequest) {
+            throw new BadRequestException(
+                'Target does not allow others to send friend request',
+            );
+        }
+
         const created = await this.friendRequestService.create(
-            user.username,
-            username,
+            sender.username,
+            receiverUsername,
         );
 
         this.notificationService.create({
@@ -122,6 +157,10 @@ export class FriendRequestController {
             object: created._id,
             objectModel: NotificationObjectModel.FriendRequest,
         });
+
+        if (target.setting.notification.friendRequest.email) {
+            this.notificationService.sendFirendRequestEmail(created.id);
+        }
 
         return ObjectUtils.DocumentToPlain(created, GetFriendRequestDto);
     }
@@ -168,14 +207,15 @@ export class FriendRequestController {
         ).pipe(flatMap(identity));
 
         const items = list.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetFriendRequestDto)),
+            documentToPlain(GetFriendRequestDto),
+            toArray(),
         );
 
         const length = from(
             this.friendRequestService.countDocumentsByTarget(user.username),
         );
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,

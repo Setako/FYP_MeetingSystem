@@ -1,5 +1,5 @@
 import { ObjectId } from 'bson';
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Exclude, Expose, Type, Transform } from 'class-transformer';
 import { FriendRequestStatus } from '../friend-request.model';
 import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 
@@ -20,9 +20,8 @@ export class GetFriendRequestDto {
     requestTime!: string;
 
     @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     _id!: ObjectId;
 

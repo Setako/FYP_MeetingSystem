@@ -7,7 +7,7 @@ export enum NotificationType {
     FriendRequestAccepted = 'friendRequestAccepted',
     FriendRequestRejected = 'friendRequestRejected',
 
-    MeetingInviteReceived = 'meetingInviteRecived',
+    MeetingInviteReceived = 'meetingInviteReceived',
     MeetingUpdated = 'meetingUpdated',
     MeetingCancelled = 'meetingCancelled',
     MeetingReminder = 'meetingReminder',

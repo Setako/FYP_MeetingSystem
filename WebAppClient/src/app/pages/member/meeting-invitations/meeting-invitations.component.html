@@ -3,7 +3,7 @@
   <mat-tab-group class="no-content-tab" (selectedTabChange)="changeFrom($event.tab.textLabel)">
     <mat-tab label="All"></mat-tab>
     <mat-tab label="From friends"></mat-tab>
-    <mat-tab label="From stranger"></mat-tab>
+    <mat-tab label="From strangers"></mat-tab>
   </mat-tab-group>
   <mat-paginator [length]="meetingsLength"
                  [pageIndex]="pageIndex"
@@ -20,13 +20,13 @@
             Hosted by {{meeting.owner.displayName}} (@{{meeting.owner.username}})
           </div>
           <div class="flex-shrink-0 flex-grow-0 d-flex justify-content-center align-items-center">
-            <button mat-icon-button>
+            <button (click)="responseInvitation(meeting,false)" mat-icon-button>
               <mat-icon class="cc-color-no">close</mat-icon>
             </button>
-            <button mat-icon-button>
+            <button (click)="responseInvitation(meeting,true)" mat-icon-button>
               <mat-icon class="cc-color-yes">check</mat-icon>
             </button>
-            <button mat-icon-button>
+            <button [routerLink]="'member/meeting/'+meeting.id" mat-icon-button>
               <mat-icon>more_vert</mat-icon>
             </button>
           </div>

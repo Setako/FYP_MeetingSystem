@@ -11,10 +11,10 @@
     </mat-tab>
 
     <mat-tab label="Google Service">
-      <app-google-service-setting></app-google-service-setting>
+      <app-google-service-setting (statusUpdate)="googleConnectStatusUpdate()"></app-google-service-setting>
     </mat-tab>
 
-    <mat-tab label="Calendar">
+    <mat-tab #calendarSetting label="Calendar">
       <app-calendar-setting></app-calendar-setting>
     </mat-tab>
 

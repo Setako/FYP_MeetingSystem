@@ -1,16 +1,23 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { Types } from 'mongoose';
-import { AccessPostMeetingPermission } from '../meeting.model';
+import {
+    AccessPostMeetingPermission,
+    MeetingResources,
+    MeetingStatus,
+    Resources,
+} from '../meeting.model';
 import { AttendanceDto } from './attendance.dto';
 import { SimpleUserDto } from '@commander/core/user/dto/simple-user.dto';
 import { GetInvitationDto } from './get-invitation.dto';
+import { User } from '@commander/core/user/user.model';
+import { InstanceType } from 'typegoose';
 
 export class GetMeetingDto {
     type!: string;
 
     title!: string;
 
-    status!: string;
+    status!: MeetingStatus;
 
     length!: number;
 
@@ -30,6 +37,8 @@ export class GetMeetingDto {
 
     location?: string;
 
+    agendaGoogleResourceId?: string;
+
     @Transform((val: Types.ObjectId) => val.toHexString())
     device?: string;
 
@@ -45,16 +54,33 @@ export class GetMeetingDto {
     @Type(() => AccessPostMeetingPermission)
     generalPermission!: AccessPostMeetingPermission;
 
+    @Transform((val: MeetingResources) => ({
+        ...val,
+        user: new Map(
+            val.user.map(
+                ({ sharer, resources }) =>
+                    [(sharer as InstanceType<User>).username, resources] as [
+                        string,
+                        Resources
+                    ],
+            ),
+        ),
+        group: new Map(val.group),
+    }))
+    public resources: object;
+
     @Expose()
-    get id(): string {
-        return this._id.toHexString();
-    }
+    @Transform((_val, obj) => obj._id.toHexString())
+    id: string;
 
     @Exclude()
-    _id!: Types.ObjectId;
+    _id: Types.ObjectId;
 
     @Exclude()
     __v!: number;
+
+    @Exclude()
+    trainedModelPath: string;
 
     constructor(partial: Partial<GetMeetingDto>) {
         Object.assign(this, partial);

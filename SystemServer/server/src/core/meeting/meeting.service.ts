@@ -7,7 +7,11 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { EditMeetingDto } from './dto/edit-meeting.dto';
-import { MeetingQueryDto } from './dto/meeting-query.dto';
+import {
+    MeetingQueryDto,
+    MeetingSortBy,
+    MeetingOrderBy,
+} from './dto/meeting-query.dto';
 import { InvitationsDto } from './dto/invitations.dto';
 import {
     Invitation,
@@ -15,10 +19,24 @@ import {
     Meeting,
     MeetingStatus,
     AttendanceStatus,
+    Resources,
+    ResourcesSharing,
 } from './meeting.model';
-import { from, merge, identity, of, empty, defer } from 'rxjs';
-import { map, flatMap, filter, toArray, tap } from 'rxjs/operators';
+import {
+    from,
+    merge,
+    of,
+    empty,
+    defer,
+    Observable,
+    concat,
+    identity,
+    fromEvent,
+} from 'rxjs';
+import { map, flatMap, filter, toArray, defaultIfEmpty } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
+import { GoogleDriveService } from '../google/google-drive.service';
+import { skipFalsy } from '@commander/shared/operator/function';
 
 @Injectable()
 export class MeetingService {
@@ -26,35 +44,59 @@ export class MeetingService {
         @InjectModel(Meeting) private readonly meetingModel: ModelType<Meeting>,
         private readonly userService: UserService,
         private readonly friendService: FriendService,
+        private readonly googleDriveService: GoogleDriveService,
     ) {}
 
-    async getById(id: string) {
-        return this.meetingModel.findById(id).exec();
+    watchModelSave(): Observable<InstanceType<Meeting>> {
+        return fromEvent(this.meetingModel, 'save');
     }
 
-    async getByIds(ids: string[]) {
-        return this.meetingModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .exec();
+    getById(id: string) {
+        return of(id).pipe(
+            flatMap(meetingId => this.meetingModel.findById(meetingId).exec()),
+        );
     }
 
-    async getByIdsWithPage(ids: string[], pageSize: number, pageNum = 1) {
-        return this.meetingModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+    getByIds(ids: string[]) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions => this.meetingModel.find(conditions).exec()),
+            flatMap(identity),
+        );
     }
 
-    async getQueryOption(query: MeetingQueryDto, ownerId: string) {
+    getByIdsWithPage(ids: string[], pageSize: number, pageNum = 1) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
+    }
+
+    turnAllStartedMeetingsToEnded(realEndTime = new Date()) {
+        return from(
+            this.meetingModel
+                .updateMany(
+                    {
+                        status: MeetingStatus.Started,
+                    },
+                    {
+                        status: MeetingStatus.Ended,
+                        realEndTime,
+                    },
+                )
+                .exec(),
+        );
+    }
+
+    async getQueryOption(
+        query: MeetingQueryDto,
+        ownerId: string,
+    ): Promise<object> {
         let options = {} as any;
 
         if (query.status) {
@@ -82,11 +124,9 @@ export class MeetingService {
                         };
                     }
 
-                    const friends = await from(
-                        this.friendService.getAllByUserId(ownerId),
-                    )
+                    const friends = await this.friendService
+                        .getAllByUserId(ownerId)
                         .pipe(
-                            flatMap(identity),
                             flatMap(item =>
                                 item.friends.filter(
                                     friend =>
@@ -114,8 +154,12 @@ export class MeetingService {
                         MeetingStatus.Started,
                     ],
                 },
-                'invitations.user': { $eq: Types.ObjectId(ownerId) },
-                'invitations.status': InvitationStatus.Waiting,
+                invitations: {
+                    $elemMatch: {
+                        user: { $eq: Types.ObjectId(ownerId) },
+                        status: InvitationStatus.Waiting,
+                    },
+                },
                 ...ownerOptions,
             };
         } else if (hostedByAnyone) {
@@ -129,16 +173,14 @@ export class MeetingService {
                         'attendance.user': { $eq: Types.ObjectId(ownerId) },
                     },
                     {
-                        $and: [
-                            {
-                                'invitations.user': {
+                        invitations: {
+                            $elemMatch: {
+                                user: {
                                     $eq: Types.ObjectId(ownerId),
                                 },
+                                status: InvitationStatus.Accepted,
                             },
-                            {
-                                'invitations.status': InvitationStatus.Accepted,
-                            },
-                        ],
+                        },
                     },
                 ],
             };
@@ -153,8 +195,14 @@ export class MeetingService {
                 $or: [
                     { 'attendance.user': { $eq: Types.ObjectId(ownerId) } },
                     {
-                        'invitations.user': { $eq: Types.ObjectId(ownerId) },
-                        'invitations.status': InvitationStatus.Accepted,
+                        invitations: {
+                            $elemMatch: {
+                                user: {
+                                    $eq: Types.ObjectId(ownerId),
+                                },
+                                status: InvitationStatus.Accepted,
+                            },
+                        },
                     },
                 ],
             };
@@ -177,38 +225,157 @@ export class MeetingService {
         return options;
     }
 
-    async countDocumentsByIds(ids: string[]) {
-        return this.meetingModel
-            .find({
-                _id: {
-                    $in: ids,
-                },
-            })
-            .countDocuments()
-            .exec();
+    sortMeetings(
+        list: Observable<InstanceType<Meeting>>,
+        sortBy: MeetingSortBy = MeetingSortBy.Date,
+        orderBy: MeetingOrderBy = MeetingOrderBy.DESC,
+    ) {
+        const haveRealStartTime = list.pipe(
+            filter(item => Boolean(item.realStartTime)),
+            toArray(),
+            flatMap(items =>
+                items.sort((a, b) =>
+                    orderBy === MeetingOrderBy.ASC
+                        ? a.realStartTime.getTime() - b.realStartTime.getTime()
+                        : b.realStartTime.getTime() - a.realStartTime.getTime(),
+                ),
+            ),
+        );
+
+        const havePlannedStartTime = list.pipe(
+            filter(
+                item =>
+                    !Boolean(item.realStartTime) &&
+                    Boolean(item.plannedStartTime),
+            ),
+            toArray(),
+            flatMap(items =>
+                items.sort((a, b) =>
+                    orderBy === MeetingOrderBy.ASC
+                        ? a.plannedStartTime.getTime() -
+                          b.plannedStartTime.getTime()
+                        : b.plannedStartTime.getTime() -
+                          a.plannedStartTime.getTime(),
+                ),
+            ),
+        );
+
+        const haveCreateDate = list.pipe(
+            filter(
+                item =>
+                    !Boolean(item.realStartTime) &&
+                    !Boolean(item.plannedStartTime),
+            ),
+            toArray(),
+            flatMap(items =>
+                items.sort((a, b) =>
+                    orderBy === MeetingOrderBy.ASC
+                        ? (a._id as Types.ObjectId).getTimestamp().getTime() -
+                          (b._id as Types.ObjectId).getTimestamp().getTime()
+                        : (b._id as Types.ObjectId).getTimestamp().getTime() -
+                          (a._id as Types.ObjectId).getTimestamp().getTime(),
+                ),
+            ),
+        );
+
+        if (sortBy === MeetingSortBy.Date) {
+            const order = [
+                haveCreateDate,
+                havePlannedStartTime,
+                haveRealStartTime,
+            ];
+            return orderBy === MeetingOrderBy.ASC
+                ? concat(...order)
+                : concat(...order.reverse());
+        } else if (sortBy === MeetingSortBy.Owner) {
+            return list.pipe(
+                toArray(),
+                map(items =>
+                    items.sort((a, b) =>
+                        a.title > b.title ? -1 : a.title < b.title ? 1 : 0,
+                    ),
+                ),
+                flatMap(items =>
+                    orderBy === MeetingOrderBy.ASC ? items : items.reverse(),
+                ),
+            );
+        } else {
+            return list.pipe(
+                toArray(),
+                map(items =>
+                    items.sort((a, b) => {
+                        const aOwner = (a.owner as InstanceType<User>)
+                            .displayName;
+                        const bOwner = (b.owner as InstanceType<User>)
+                            .displayName;
+                        return aOwner > bOwner ? -1 : aOwner < bOwner ? 1 : 0;
+                    }),
+                ),
+                flatMap(items =>
+                    orderBy === MeetingOrderBy.ASC ? items : items.reverse(),
+                ),
+            );
+        }
     }
 
-    async countDocuments(options = {}) {
-        return this.meetingModel
-            .find(options)
-            .countDocuments()
-            .exec();
+    countDocumentsByIds(ids: string[]) {
+        return of({ _id: { $in: ids } }).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async getAll(options = {}) {
-        return this.meetingModel.find(options).exec();
+    countDocuments(options = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async getAllWithPage(pageSize: number, pageNum = 1, options = {}) {
-        return this.meetingModel
-            .find(options)
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+    getAll(options = {}, sortOptions = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .sort(sortOptions)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
+    }
+
+    getAllWithPage(
+        pageSize: number,
+        pageNum = 1,
+        options = {},
+        sortOptions = {},
+    ) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.meetingModel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .sort(sortOptions)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
     findAll(options = {}) {
-        return this.meetingModel.find(options);
+        return of(options).pipe(
+            flatMap(item => this.meetingModel.find(item).exec()),
+            flatMap(identity),
+        );
     }
 
     async create(createMeetingDto: CreateMeetingDto, owner: User) {
@@ -226,7 +393,7 @@ export class MeetingService {
     }
 
     async edit(id: string, editMeetingDto: EditMeetingDto) {
-        let edited = await this.meetingModel.findById(id);
+        let edited = await this.meetingModel.findById(id).populate('owner');
 
         if (!edited) {
             return null;
@@ -248,11 +415,36 @@ export class MeetingService {
             'location',
             'language',
             'priority',
-            'status',
             'generalPermission',
+            'agendaGoogleResourceId',
         ].forEach(
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
+
+        if (edited.agendaGoogleResourceId) {
+            this.googleDriveService
+                .setAnyoneWithLinkPermission(
+                    (edited.owner as InstanceType<User>).googleRefreshToken,
+                    edited.agendaGoogleResourceId,
+                )
+                .subscribe();
+        }
+
+        edited.resources.main =
+            editMeetingDto.mainResources ||
+            (editMeetingDto.resources && editMeetingDto.resources.main) ||
+            edited.resources.main;
+
+        from(edited.resources.main.googleDriveResources)
+            .pipe(
+                flatMap(item =>
+                    this.googleDriveService.setAnyoneWithLinkPermission(
+                        (edited.owner as InstanceType<User>).googleRefreshToken,
+                        item.resId,
+                    ),
+                ),
+            )
+            .subscribe();
 
         edited.plannedStartTime = editMeetingDto.plannedStartTime
             ? new Date(editMeetingDto.plannedStartTime)
@@ -264,7 +456,118 @@ export class MeetingService {
             ? new Date(editMeetingDto.realEndTime)
             : edited.realEndTime;
 
-        return edited.save();
+        await edited.save();
+
+        return edited.depopulate('owner');
+    }
+
+    async updateUserSharedResource(
+        meetingId: string,
+        userId: string,
+        newResources: Resources,
+    ) {
+        const meeting = await this.getById(meetingId).toPromise();
+
+        const userResourcesMap = new Map(
+            meeting.resources.user.map(
+                ({ sharer, resources }) =>
+                    [(sharer as Types.ObjectId).toHexString(), resources] as [
+                        string,
+                        Resources
+                    ],
+            ),
+        );
+
+        if (newResources.googleDriveResources.length === 0) {
+            userResourcesMap.delete(userId);
+        } else {
+            userResourcesMap.set(userId, newResources);
+
+            const user = await this.userService.getById(userId).toPromise();
+            from(newResources.googleDriveResources)
+                .pipe(
+                    flatMap(item =>
+                        this.googleDriveService.setAnyoneWithLinkPermission(
+                            user.googleRefreshToken,
+                            item.resId,
+                        ),
+                    ),
+                )
+                .subscribe();
+        }
+
+        meeting.resources.user = [...userResourcesMap.entries()].map(
+            ([sharer, resources]) => ({
+                sharer: Types.ObjectId(sharer),
+                resources,
+            }),
+        );
+
+        meeting.resources.user = meeting.resources.user.filter(
+            item => item.resources.googleDriveResources.length,
+        );
+
+        return meeting.save();
+    }
+
+    async getAccessableResources(meetingId: string, operatorId: string) {
+        const meeting = await this.getById(meetingId).toPromise();
+        const resources = meeting.resources;
+
+        if (!(meeting.owner as Types.ObjectId).equals(operatorId)) {
+            resources.main = this.filterNoPublicResourcesBySharingStatus(
+                resources.main,
+                meeting.status,
+            );
+        }
+
+        const userResources = resources.user.filter(item => item);
+
+        const operatorShared = userResources.filter(({ sharer }) =>
+            Types.ObjectId(operatorId).equals(sharer as any),
+        );
+
+        const otherShared = userResources.filter(
+            ({ sharer }) => !Types.ObjectId(operatorId).equals(sharer as any),
+        );
+
+        const otherAccessable = otherShared.map(item => {
+            item.resources = this.filterNoPublicResourcesBySharingStatus(
+                item.resources,
+                meeting.status,
+            );
+            return item;
+        });
+
+        resources.user = operatorShared
+            .concat(otherAccessable)
+            .filter(item => item.resources.googleDriveResources.length);
+
+        return resources;
+    }
+
+    filterNoPublicResourcesBySharingStatus(
+        resources: Resources,
+        status: MeetingStatus,
+    ) {
+        resources.googleDriveResources = resources.googleDriveResources.filter(
+            ({ sharing }) => {
+                switch (sharing) {
+                    case ResourcesSharing.PreMeeting:
+                        return true;
+                    case ResourcesSharing.InMeeting:
+                        return [
+                            MeetingStatus.Started,
+                            MeetingStatus.Ended,
+                        ].includes(status);
+                    case ResourcesSharing.PostMeeting:
+                        return MeetingStatus.Ended === status;
+                    default:
+                        return false;
+                }
+            },
+        );
+        return resources;
     }
 
     async addAttendance(id: string, attendeeId: string) {
@@ -286,7 +589,6 @@ export class MeetingService {
             flatMap(list =>
                 list.includes(attendeeId) ? empty() : of(attendeeId),
             ),
-            tap(console.log.bind(console)),
         );
 
         const saveAttendee$ = ifNotExistAttendee$.pipe(
@@ -366,7 +668,10 @@ export class MeetingService {
                         return of(item);
                     }
 
-                    attendee.arrivalTime = arrivalTime;
+                    attendee.status = arrivalTime
+                        ? AttendanceStatus.Present
+                        : AttendanceStatus.Absent;
+                    attendee.arrivalTime = arrivalTime || undefined;
                     return item.save();
                 }),
             )
@@ -415,7 +720,7 @@ export class MeetingService {
             .toPromise();
     }
 
-    async findNewInviteeIds(meetingId: string, invitations: InvitationsDto) {
+    async findNewInviteeInfo(meetingId: string, invitations: InvitationsDto) {
         const invitationList = invitations || undefined;
         const emails = new Set(invitationList ? invitationList.emails : []);
         const friends = new Set(invitationList ? invitationList.friends : []);
@@ -424,30 +729,51 @@ export class MeetingService {
             .findById(meetingId)
             .populate('owner invitations.user')
             .exec();
+        const owner = meeting.owner as InstanceType<User>;
 
-        [meeting.owner as InstanceType<User>].map(owner => {
-            emails.delete(owner.email);
-            friends.delete(owner.username);
+        emails.delete(owner.email);
+        friends.delete(owner.username);
+
+        meeting.invitations.forEach(item => {
+            emails.delete(item.email);
+            friends.delete(
+                item.user ? (item.user as InstanceType<User>).username : null,
+            );
         });
 
-        const friendIds$ = from(friends.values()).pipe(
-            flatMap(item => from(this.userService.getByUsername(item))),
-            filter(Boolean.bind(Boolean)),
-            map(item => item.id),
+        const friendInfo$ = from(friends.values()).pipe(
+            flatMap(item => this.userService.getByUsername(item)),
+            skipFalsy(),
+            map(({ id, email }) => ({
+                userId: id,
+                email,
+            })),
         );
 
-        const emailOnwerId$ = from(emails.values()).pipe(
-            flatMap(email =>
-                from(this.userService.getByEmail(email)).pipe(
-                    filter(item => Boolean(item)),
-                    map(item => item.id),
+        const emailInfo$ = from(emails.values()).pipe(
+            flatMap(item =>
+                this.userService.getByUsername(item).pipe(
+                    skipFalsy(),
+                    map(({ id, email }) => ({
+                        userId: id,
+                        email,
+                    })),
+                    defaultIfEmpty({
+                        userId: null,
+                        email: item,
+                    }),
                 ),
             ),
         );
 
-        return merge(friendIds$, emailOnwerId$)
+        return merge(friendInfo$, emailInfo$)
             .pipe(toArray())
-            .toPromise();
+            .toPromise() as Promise<
+            Array<{
+                userId?: string;
+                email: string;
+            }>
+        >;
     }
 
     async editInvitations(meetingId: string, invitations: InvitationsDto) {
@@ -479,29 +805,20 @@ export class MeetingService {
         );
 
         const friends$ = from(friends.values()).pipe(
-            flatMap(item => from(this.userService.getByUsername(item))),
-            filter(Boolean.bind(Boolean)),
-            map(item => ({
+            flatMap(item => this.userService.getByUsername(item)),
+            filter(Boolean.bind(null)),
+            map(({ _id }) => ({
                 id: uuidv4(),
-                user: item._id,
+                user: _id as Types.ObjectId,
                 status: InvitationStatus.Waiting,
             })),
         );
 
         const emails$ = from(emails.values()).pipe(
             flatMap(email =>
-                from(this.userService.getByEmail(email)).pipe(
-                    map(user =>
-                        user
-                            ? {
-                                  user: user._id,
-                                  email,
-                              }
-                            : {
-                                  email,
-                              },
-                    ),
-                ),
+                this.userService
+                    .getByEmail(email)
+                    .pipe(map(user => (user ? { user, email } : { email }))),
             ),
             map(item => ({
                 ...item,
@@ -616,17 +933,27 @@ export class MeetingService {
 
     async updateDevice(meetingId: string, deviceId: string) {
         return this.meetingModel
-            .findByIdAndUpdate(meetingId, {
-                device: Types.ObjectId(deviceId),
-            })
+            .findOneAndUpdate(
+                {
+                    _id: Types.ObjectId(meetingId),
+                },
+                {
+                    device: Types.ObjectId(deviceId),
+                },
+            )
             .exec();
     }
 
     async clearRealEndTime(meetingId: string) {
         return this.meetingModel
-            .findByIdAndUpdate(meetingId, {
-                $unset: { realEndTime: '' },
-            })
+            .findOneAndUpdate(
+                {
+                    _id: Types.ObjectId(meetingId),
+                },
+                {
+                    $unset: { realEndTime: '' },
+                },
+            )
             .exec();
     }
 
@@ -643,7 +970,7 @@ export class MeetingService {
         return new Date(meeting.realEndTime.getTime() + oneHour) >= now;
     }
 
-    async hasViewPermission(meetingId: string, userId: string) {
+    hasViewPermission(meetingId: string, userId: string) {
         const meetingObjectId = Types.ObjectId(meetingId);
         const userObjectId = Types.ObjectId(userId);
         const options = {
@@ -670,8 +997,8 @@ export class MeetingService {
             ],
         };
 
-        return from(this.meetingModel.countDocuments(options).exec())
-            .pipe(map(n => n !== 0))
-            .toPromise();
+        return from(this.meetingModel.countDocuments(options).exec()).pipe(
+            map(n => n !== 0),
+        );
     }
 }

@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+rx = "*"
+python-socketio = {extras = ["client"],version = "*"}
+click = "*"
+scikit-learn = "==0.19.2"
+numpy = "*"
+opencv-python = "*"
+dlib = "*"
+face-recognition = "*"
+
+[dev-packages]
+black = "*"
+cmake = "*"
+v = {editable = true,version = "*"}
+
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

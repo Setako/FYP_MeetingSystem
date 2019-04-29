@@ -1,0 +1,12 @@
+<mat-chip-list class="d-flex">
+  <mat-chip (click)="showListFilesDialog()"
+            *ngIf="meeting.resources!=null && meeting.resources.main!=null && meeting.resources.main.googleDriveResources!=null&& meeting.resources.main.googleDriveResources.length>0"
+            class="d-flex align-items-center mr-2">
+    <mat-icon color="primary">attach_file</mat-icon>
+    File shared
+  </mat-chip>
+  <mat-chip (click)="openAgenda()" *ngIf="meeting.agendaGoogleResourceId!=null" class="d-flex align-items-center mr-2">
+    <mat-icon color="primary">list_alt</mat-icon>
+    Agenda shared
+  </mat-chip>
+</mat-chip-list>

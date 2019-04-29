@@ -9,10 +9,27 @@ import {
     IsString,
     MinLength,
     ValidateNested,
+    Allow,
 } from 'class-validator';
 import { MeetingStatus, MeetingType, MeetingPriority } from '../meeting.model';
 import { InvitationsDto } from './invitations.dto';
 import { PermissionDto } from './permission.dto';
+import { MeetingResourcesDto } from './meeting-resouces.dto';
+
+class MeetingResources {
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => MeetingResourcesDto)
+    main?: MeetingResourcesDto;
+
+    @Allow()
+    @Type(() => MeetingResourcesDto)
+    user?: Map<string, MeetingResourcesDto>;
+
+    @Allow()
+    @Type(() => MeetingResourcesDto)
+    group?: Map<string, MeetingResourcesDto>;
+}
 
 export class EditMeetingDto {
     @IsOptional()
@@ -74,4 +91,18 @@ export class EditMeetingDto {
     @ValidateNested()
     @Type(() => InvitationsDto)
     readonly invitations?: InvitationsDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => MeetingResourcesDto)
+    readonly mainResources?: MeetingResourcesDto;
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => MeetingResources)
+    readonly resources?: MeetingResources;
+
+    @IsOptional()
+    @IsString()
+    readonly agendaGoogleResourceId?: string;
 }

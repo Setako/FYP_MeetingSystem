@@ -1,16 +1,17 @@
-import { ArgumentMetadata, Injectable, PipeTransform } from '@nestjs/common';
-import { plainToClass, deserialize, classToPlain } from 'class-transformer';
+import {
+    ArgumentMetadata,
+    Injectable,
+    PipeTransform,
+    Optional,
+} from '@nestjs/common';
+import { plainToClass, classToPlain } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import { ValidationException } from '../exception/validation.exception';
 import { Document } from 'mongoose';
 
 @Injectable()
 export class ValidationPipe implements PipeTransform<any> {
-    private isTransform: boolean;
-
-    constructor({ transform = false }) {
-        this.isTransform = transform;
-    }
+    constructor(@Optional() private readonly isTransform: boolean = true) {}
 
     async transform(value: any, metadata: ArgumentMetadata) {
         const { metatype } = metadata;
@@ -19,6 +20,7 @@ export class ValidationPipe implements PipeTransform<any> {
             return value;
         }
 
+        value = classToPlain(value);
         const object = plainToClass(metatype, value);
         const errors = await validate(object);
         if (errors.length > 0) {
@@ -44,7 +46,7 @@ export class ValidationPipe implements PipeTransform<any> {
         return !types.find(item => metatype === item);
     }
 
-    private throwError(errors: ValidationError[]) {
+    protected throwError(errors: ValidationError[]) {
         const { constraints, children } = errors[0];
 
         if (constraints) {

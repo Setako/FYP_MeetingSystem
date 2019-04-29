@@ -28,7 +28,8 @@
         ],
         "object-literal-key-quotes": [true, "as-needed"],
         "no-return-await": true,
-        "prefer-object-spread": true
+        "prefer-object-spread": true,
+        "no-unused-variable": true
     },
     "rulesDirectory": []
 }

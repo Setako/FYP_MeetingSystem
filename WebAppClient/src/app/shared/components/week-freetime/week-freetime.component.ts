@@ -14,6 +14,7 @@ import {Subscription} from 'rxjs';
 export class WeekFreetimeComponent implements OnInit {
   @Input() dayStartHour: number;
   @Input() dayEndHour: number;
+  @Input() includeDays: number[];
   @ViewChild('calendar') calendar: CalendarWeekViewComponent;
   busyTimes: CalendarEvent[] = [];
   public view = CalendarView.Week;
@@ -21,14 +22,25 @@ export class WeekFreetimeComponent implements OnInit {
 
   Math: any;
   viewDate = new Date();
-  private selectedDate: Date;
+
+  @Input()
+  selectedDate: Date;
   public CalendarView = CalendarView;
 
   constructor(public meetingService: MeetingService, public snackBar: MatSnackBar) {
     this.Math = Math;
   }
 
-  private _meeting: Meeting;
+  private _meeting: Meeting = null;
+
+  public get excludeDays() {
+    return [0, 1, 2, 3, 4, 5, 6].filter(it => {
+      if (this.includeDays.indexOf(it) < 0) {
+        console.log(it);
+      }
+      return this.includeDays.indexOf(it) < 0;
+    });
+  }
 
   get meeting(): Meeting {
     return this._meeting;
@@ -44,7 +56,7 @@ export class WeekFreetimeComponent implements OnInit {
   }
 
   get events(): CalendarEvent[] {
-    return this.selectedDate == null
+    return (this.selectedDate == null
       ? this.busyTimes
       : this.busyTimes.concat({
         start: this.selectedDate,
@@ -52,17 +64,27 @@ export class WeekFreetimeComponent implements OnInit {
         title: 'Planning time',
         color: {primary: '#ffecb3', secondary: '#ffc107'},
         cssClass: 'selected-time'
+      })).concat({
+        start: moment().toDate(),
+        end: moment().add('5', 'minute').toDate(),
+        title: 'Now',
+        color: {primary: '#00675b', secondary: ''},
+        cssClass: 'now-time'
       });
   }
 
   ngOnInit() {
+    this.selectedDate = this._meeting.plannedStartTime == null ? null : new Date(this._meeting.plannedStartTime);
     this.update();
   }
 
-  update() {
+  update(date?: Date) {
+    if (date != null) {
+      this.viewDate = date;
+    }
     if (this.meeting != null) {
-      const start = moment(this.viewDate).isoWeekday(0).hour(0).minute(0).second(0).toDate();
-      const end = moment(this.viewDate).isoWeekday(6).hour(23).minute(59).second(59).toDate();
+      const start = moment(this.viewDate).startOf('week').hour(0).minute(0).second(0).toDate();
+      const end = moment(this.viewDate).endOf('week').minute(59).second(59).toDate();
 
       if (this.queryingSubscription != null) {
         this.queryingSubscription.unsubscribe();
@@ -77,12 +99,21 @@ export class WeekFreetimeComponent implements OnInit {
             end: new Date(busyTime.toDate),
             title: busyTime.users.map(user => user.displayName).join(', ') + ' may not free at this period',
             color: {primary: '#ffbab1', secondary: '#ff6d6f'},
-            cssClass: 'not-free-time'
+            cssClass: 'not-free-time-' + Math.floor(busyTime.busyLevel)
           });
         });
 
         this.queryingSubscription = null;
       });
+    }
+  }
+
+  setPlanningTimeOnEvent($event: { event: CalendarEvent<any> }) {
+    if (moment($event.event.start).isAfter()) {
+      this.selectedDate = $event.event.start;
+      this.meeting.plannedStartTime = $event.event.start.toISOString();
+    } else {
+      this.snackBar.open('You can\'t select a passed time', 'Dismiss', {duration: 3000});
     }
   }
 

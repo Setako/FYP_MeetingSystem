@@ -1,0 +1,13 @@
+.shared-file {
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  width: 300px;
+  column-gap: 10px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.shared-file:hover {
+  background: rgba(0, 0, 0, 0.04);
+}

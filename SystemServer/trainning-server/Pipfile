@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+click = "*"
+scikit-learn = "==0.19.2"
+numpy = "*"
+dlib = "*"
+face-recognition = "*"
+aiofiles = "*"
+scipy = "*"
+requests = "*"
+opencv-python = "*"
+python-socketio = "*"
+aiohttp = "*"
+python-dotenv = "*"
+google-cloud-storage = "*"
+
+[dev-packages]
+black = "*"
+cmake = "*"
+
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

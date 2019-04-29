@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {NotificationService} from '../../../services/notification.service';
+import {UserNotification} from '../../models/userNotification';
 
 @Component({
   selector: 'app-notifications',
@@ -14,4 +15,11 @@ export class NotificationsComponent implements OnInit {
   ngOnInit() {
   }
 
+  dismiss(notification: UserNotification) {
+    this.notificationService.dismissNotification(notification).subscribe();
+  }
+
+  dismissAll() {
+    this.notificationService.dismissNotifications().subscribe();
+  }
 }

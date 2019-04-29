@@ -18,6 +18,7 @@ export class MeetingInvitationsComponent implements OnInit {
   public pageSize = 5;
   public meetingsLength = 0;
   public invitingFromFriend = true;
+  public querying = true;
 
   constructor(public meetingService: MeetingService, public authService: AuthService, public bottomSheet: MatBottomSheet,
               public snackBar: MatSnackBar) {
@@ -37,7 +38,9 @@ export class MeetingInvitationsComponent implements OnInit {
 
   public updateList() {
     this.meetingListQuerySubscription = this.meetingService.findMeetings(
-      {invitingMe: true} as MeetingSearchingFilter,
+      this.invitingFromFriend == null
+        ? {invitingMe: true} as MeetingSearchingFilter
+        : {invitingMe: true, invitingFromFriend: this.invitingFromFriend} as MeetingSearchingFilter,
       this.pageSize, this.pageIndex + 1)
       .subscribe(
         res => {
@@ -53,6 +56,7 @@ export class MeetingInvitationsComponent implements OnInit {
   }
 
   public changeFrom(status: string) {
+    console.log(status);
     switch (status) {
       case 'From friends':
         this.invitingFromFriend = true;
@@ -61,9 +65,20 @@ export class MeetingInvitationsComponent implements OnInit {
         this.invitingFromFriend = false;
         break;
       case 'All':
-        this.invitingFromFriend = undefined;
+        this.invitingFromFriend = null;
     }
     this.updateList();
+  }
+
+  public responseInvitation(meeting: Meeting, accept: boolean) {
+    this.meetingListQuerySubscription = this.meetingService.responseInvitation(meeting.id, accept).subscribe(() => {
+      this.meetingListQuerySubscription = null;
+      this.updateList();
+    }, err => {
+      this.snackBar.open('Failed to response invitation', 'Dismiss', {duration: 4000});
+      this.meetingListQuerySubscription = null;
+      this.updateList();
+    });
   }
 
 

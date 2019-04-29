@@ -38,7 +38,7 @@ export class Relation {
 }
 
 export class CalendarImportance {
-    public carlendarId!: string;
+    public calendarId!: string;
 
     public importance!: number;
 }
@@ -61,6 +61,10 @@ export class UserSetting {
         meetingReminder: NotificationSetting;
     };
 
+    public privacy: {
+        allowOtherToSendFirendRequest: boolean;
+    };
+
     constructor(partial: Partial<UserSetting> = {}) {
         if (partial.markEventOnCalendarId) {
             this.markEventOnCalendarId = partial.markEventOnCalendarId;
@@ -72,25 +76,30 @@ export class UserSetting {
             ? partial.notification
             : {
                   friendRequest: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingInfoUpdate: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingInvitation: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingCancelled: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingReminder: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
+              };
+        this.privacy = partial.privacy
+            ? partial.privacy
+            : {
+                  allowOtherToSendFirendRequest: true,
               };
     }
 }

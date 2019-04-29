@@ -1,11 +1,12 @@
 export type FriendRequestStatus = 'accept' | 'deny' | 'requested';
 
 export interface User {
-  username: string;
+  username?: string;
   password?: string;
-  displayName: string;
-  email: string;
-  userMeetingRelation: string[];
+  displayName?: string;
+  email?: string;
+  userMeetingRelation?: string[];
+  setting?: UserSettings;
 }
 
 
@@ -20,4 +21,16 @@ export interface Friend {
   user: User;
   addDate: Date;
   stared: boolean;
+}
+
+export interface UserSettings {
+  markEventOnCalendarId?: string;
+  calendarImportance?: {
+    calendarId: string,
+    importance: number
+  }[];
+  notification?: { [id: string]: { email: boolean, notification: boolean } };
+  privacy?: {
+    allowOtherToSendFirendRequest?: boolean
+  };
 }

@@ -16,7 +16,6 @@ export class MeetingCreateComponent implements OnInit {
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
     length: new FormControl('', [Validators.required]),
-    type: new FormControl('', [Validators.required]),
     priority: new FormControl('', [Validators.required]),
     location: new FormControl('', [Validators.required]),
     description: new FormControl('')
@@ -35,7 +34,7 @@ export class MeetingCreateComponent implements OnInit {
       this.meetingService.createMeeting({
         title: this.basicForm.value.title,
         length: this.basicForm.value.length * Millisecond.Hour,
-        type: this.basicForm.value.type,
+        type: 'presentation',
         priority: parseInt(this.basicForm.value.priority, 10),
         location: this.basicForm.value.location,
         description: this.basicForm.value.description

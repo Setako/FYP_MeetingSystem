@@ -45,6 +45,7 @@ export class MeetingOperationsBottomSheetsComponent implements OnInit {
 
 
     this.attendance = this.meeting.attendance == null ? null : this.meeting.attendance.get(authService.loggedInUser.username);
+    console.log(this.meeting.attendance.get(authService.loggedInUser.username));
     this.isOwner = this.meeting.owner.username === authService.loggedInUser.username;
   }
 
@@ -54,9 +55,11 @@ export class MeetingOperationsBottomSheetsComponent implements OnInit {
   toggleMarkCalendar(event: MouseEvent) {
     this.bottomSheetRef.dismiss();
     this.meetingService.toggleMarkMeetingCalendar(this.meeting)
-      .subscribe(() => {
+      .subscribe((res) => {
         this.refreshCallback();
-        this.snackBar.open('Calendar updated!', 'Dismiss', {duration: 4000});
+        this.snackBar.open(`Calendar ${res.isMarked ? 'marked' : 'unmarked'} successfully`, 'Dismiss', {duration: 4000});
+      }, (err) => {
+        this.snackBar.open(`Please grant google service permission before using calendar`, 'Dismiss', {duration: 4000});
       });
     this.bottomSheetRef.dismiss();
     event.preventDefault();
@@ -68,6 +71,8 @@ export class MeetingOperationsBottomSheetsComponent implements OnInit {
       () => {
         this.refreshCallback();
         this.snackBar.open('Status updated!', 'Dismiss', {duration: 4000});
+      }, (err) => {
+        this.snackBar.open('Update state failed, ' + err.error.message, 'Dismiss', {duration: 4000});
       }
     );
     event.preventDefault();

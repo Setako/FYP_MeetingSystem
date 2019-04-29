@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, EventEmitter, NgZone, OnInit, Output} from '@angular/core';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
 import {MatSnackBar} from '@angular/material';
 
@@ -12,7 +12,10 @@ export class GoogleServiceSettingComponent implements OnInit {
   public queryingAction: string;
   public auth: boolean;
 
-  constructor(private googleOauthService: GoogleOauthService, private  snackBar: MatSnackBar) {
+  @Output()
+  statusUpdate: EventEmitter<any> = new EventEmitter();
+
+  constructor(private googleOauthService: GoogleOauthService, private  snackBar: MatSnackBar, private ngZone: NgZone) {
   }
 
   ngOnInit() {
@@ -24,12 +27,18 @@ export class GoogleServiceSettingComponent implements OnInit {
     this.querying = true;
     this.googleOauthService.connectGoogle().subscribe(
       token => {
-        this.snackBar.open('Connected successfully', 'Dismiss', {duration: 3000});
-        this.querying = false;
-        this.updateAuthStatus();
+        this.ngZone.run(() => {
+          this.snackBar.open('Connected successfully', 'Dismiss', {duration: 3000});
+          this.querying = false;
+          this.updateAuthStatus();
+          this.statusUpdate.emit();
+        });
       }, (err) => {
-        this.snackBar.open(err.message, 'Dismiss', {duration: 3000});
-        this.querying = false;
+        this.ngZone.run(() => {
+          this.snackBar.open(err.message, 'Dismiss', {duration: 3000});
+          this.querying = false;
+          this.statusUpdate.emit();
+        });
       }
     );
   }
@@ -41,7 +50,6 @@ export class GoogleServiceSettingComponent implements OnInit {
       () => {
         this.querying = false;
         this.auth = true;
-        console.log('success');
       },
       (err) => {
         console.log(err);
@@ -51,7 +59,6 @@ export class GoogleServiceSettingComponent implements OnInit {
       () => {
         this.querying = false;
         this.auth = true;
-        console.log('success');
       }
     );
   }
@@ -62,6 +69,7 @@ export class GoogleServiceSettingComponent implements OnInit {
     this.googleOauthService.disconnectGoogle().subscribe(() => {
       this.querying = false;
       this.updateAuthStatus();
+      this.statusUpdate.emit();
     });
   }
 }

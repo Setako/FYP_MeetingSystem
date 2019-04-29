@@ -68,9 +68,8 @@ export class GoogleAuthService {
     }
 
     async getRefreshToken(code: string) {
-        return of(this.getClient())
-            .pipe(flatMap(client => client.getToken(code)))
-            .toPromise();
+        const client = this.getClient();
+        return client.getToken(code);
     }
 
     async getAccessToken(refreshToken: string) {
@@ -96,7 +95,7 @@ export class GoogleAuthService {
                     }),
                 ),
                 flatMap(client => client.getRequestHeaders()),
-                catchError(e => of(false)),
+                catchError(() => of(false)),
                 map(item => Boolean(item)),
             )
             .toPromise();

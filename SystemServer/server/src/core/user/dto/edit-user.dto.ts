@@ -13,6 +13,11 @@ export class EditUserDto {
     @IsOptional()
     readonly password?: string;
 
+    @Length(8, 60)
+    @IsString()
+    @IsOptional()
+    readonly currentPassword?: string;
+
     @IsEmail()
     @IsString()
     @IsOptional()
@@ -26,7 +31,7 @@ export class EditUserDto {
     @IsOptional()
     readonly userMeetingRelation?: any[];
 
-    @ValidateNested()
     @IsOptional()
+    @ValidateNested()
     readonly setting?: EditUserSettingDto;
 }

@@ -1,12 +1,13 @@
 import { MeetingService } from '@commander/core/meeting/meeting.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { from, of, empty } from 'rxjs';
-import { map, flatMap, catchError, defaultIfEmpty } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { map, catchError, defaultIfEmpty, pluck } from 'rxjs/operators';
 import { Types } from 'mongoose';
+import { skipFalsy } from '../operator/function';
 
 @Injectable()
 export class MeetingOwnerGuard implements CanActivate {
-    constructor(private readonly meetingService: MeetingService) {}
+    constructor(protected readonly meetingService: MeetingService) {}
 
     canActivate(context: ExecutionContext) {
         const {
@@ -14,11 +15,16 @@ export class MeetingOwnerGuard implements CanActivate {
             params: { id },
         } = context.switchToHttp().getRequest();
 
-        return from(this.meetingService.getById(id)).pipe(
-            flatMap(item => (item ? of(item.owner) : empty())),
-            map(owner => Types.ObjectId(user.id).equals(owner as any)),
-            defaultIfEmpty(false),
+        return this.validate(id, user.id);
+    }
+
+    protected validate(meetingId: string, userId: string) {
+        return this.meetingService.getById(meetingId).pipe(
+            pluck('owner'),
+            skipFalsy(),
+            map(owner => Types.ObjectId(userId).equals(owner as any)),
             catchError(() => of(false)),
+            defaultIfEmpty(false),
         );
     }
 }

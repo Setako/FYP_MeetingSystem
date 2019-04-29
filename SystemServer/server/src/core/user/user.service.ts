@@ -7,7 +7,7 @@ import uuidv4 from 'uuid/v4';
 import { CreateUserDto } from './dto/create-user.dto';
 import { EditUserDto } from './dto/edit-user.dto';
 import { User } from './user.model';
-import { from, of, empty } from 'rxjs';
+import { from, of, empty, pipe, identity } from 'rxjs';
 import { flatMap } from 'rxjs/operators';
 
 @Injectable()
@@ -17,78 +17,92 @@ export class UserService {
         private readonly userModel: typeof User & ModelType<User>,
     ) {}
 
-    async getByEmail(email: string) {
-        return this.userModel
-            .findOne({
-                email,
-            })
-            .exec();
+    getByEmail(email: string) {
+        return of({ email }).pipe(
+            flatMap(options => this.userModel.findOne(options).exec()),
+        );
     }
 
-    async getById(id: string) {
-        return this.userModel.findById(id);
+    getById(id: string) {
+        return of(id).pipe(
+            flatMap(item => this.userModel.findById(item).exec()),
+        );
     }
 
-    async getByUsername(username: string) {
-        return this.userModel.findByUsername(username);
+    getByUsername(username: string) {
+        return of(username).pipe(
+            flatMap(item => this.userModel.findByUsername(item)),
+        );
     }
 
-    async getByUsernames(usernames: string[]) {
-        return Promise.all(
-            usernames.map(async username =>
-                this.userModel.findByUsername(username),
+    getByUsernames(usernames: string[]) {
+        return from(usernames).pipe(
+            flatMap(username => this.userModel.findByUsername(username)),
+        );
+    }
+
+    getByUsernamesWithPage(usernames: string[], pageSize: number, pageNum = 1) {
+        return of({ username: { $in: usernames } }).pipe(
+            flatMap(
+                pipe(conditions =>
+                    this.userModel
+                        .find(conditions)
+                        .skip(pageSize * (pageNum - 1))
+                        .limit(pageSize)
+                        .exec(),
+                ),
+            ),
+            flatMap(identity),
+        );
+    }
+
+    countDocumentsByUsernames(usernames: string[], options = {}) {
+        return of({ ...options, username: { $in: usernames } }).pipe(
+            flatMap(conditions =>
+                this.userModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
             ),
         );
     }
 
-    async getByUsernamesWithPage(
-        usernames: string[],
-        pageSize: number,
-        pageNum = 1,
-    ) {
-        return this.userModel
-            .find({
-                username: {
-                    $in: usernames,
-                },
-            })
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+    countDocuments(options = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.userModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async countDocumentsByUsernames(usernames: string[]) {
-        return this.userModel
-            .find({
-                username: {
-                    $in: usernames,
-                },
-            })
-            .countDocuments()
-            .exec();
+    getAll(options = {}) {
+        return of(options).pipe(
+            flatMap(conditions => this.userModel.find(conditions).exec()),
+            flatMap(identity),
+        );
     }
 
-    async countDocuments() {
-        return this.userModel
-            .find()
-            .countDocuments()
-            .exec();
-    }
-
-    async getAll() {
-        return this.userModel.find().exec();
-    }
-
-    async getAllWithPage(pageSize: number, pageNum = 1) {
-        return this.userModel
-            .find()
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+    getAllWithPage(pageSize: number, pageNum = 1, options = {}) {
+        return of(options).pipe(
+            flatMap(conditions =>
+                this.userModel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
     findAll(options = {}) {
-        return this.userModel.find(options);
+        return of(options).pipe(
+            flatMap(conditions => this.userModel.find(conditions).exec()),
+            flatMap(identity),
+        );
     }
 
     async create(createUserDto: CreateUserDto) {
@@ -144,6 +158,7 @@ export class UserService {
                 notification:
                     editUserDto.setting.notification ||
                     edited.setting.notification,
+                privacy: editUserDto.setting.privacy || edited.setting.privacy,
             };
         }
 
@@ -151,11 +166,6 @@ export class UserService {
     }
 
     async editGoogleRefreshToken(userId: string, refreshToken?: string) {
-        // const edited = await this.userModel.findByUsername(username);
-        // if (!edited) {
-        //     return null;
-        // }
-
         return from(this.userModel.findById(userId).exec())
             .pipe(
                 flatMap(item => (item ? of(item) : empty())),
@@ -165,10 +175,6 @@ export class UserService {
                 }),
             )
             .toPromise();
-
-        // edited.googleRefreshToken = refreshToken;
-
-        // return edited.save();
     }
 
     async delete(username: string) {

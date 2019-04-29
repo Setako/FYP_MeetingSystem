@@ -44,7 +44,6 @@ export class LoginComponent implements OnInit {
             this.snackBar.open('Login Success', 'Dismiss', {duration: 4000});
           },
           (err) => {
-            console.log(err);
             this.snackBar.open('Username or password wrong', 'Dismiss', {duration: 4000});
           }
         );

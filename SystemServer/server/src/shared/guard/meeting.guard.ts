@@ -5,7 +5,7 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
-import { from, of } from 'rxjs';
+import { of } from 'rxjs';
 import { catchError, tap, flatMap } from 'rxjs/operators';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class MeetingGuard implements CanActivate {
             params: { id },
         } = context.switchToHttp().getRequest();
 
-        return from(this.meetingService.countDocumentsByIds([id])).pipe(
+        return this.meetingService.countDocumentsByIds([id]).pipe(
             catchError(() => of(0)),
             tap(item => {
                 if (item === 0) {

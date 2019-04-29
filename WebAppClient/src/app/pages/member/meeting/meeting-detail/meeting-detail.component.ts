@@ -1,11 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {MeetingService} from '../../../../services/meeting.service';
-import {Meeting, priorityDisplay} from '../../../../shared/models/meeting';
+import {Meeting, MeetingInvitation, priorityDisplay} from '../../../../shared/models/meeting';
 import {MatBottomSheet, MatSnackBar} from '@angular/material';
-import {
-  MeetingOperationsBottomSheetsComponent
-} from '../../../../shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
+import {MeetingOperationsBottomSheetsComponent} from '../../../../shared/components/bottom-sheets/meeting-operations/meeting-operations-bottom-sheets.component';
 
 @Component({
   selector: 'app-meeting-detail',
@@ -50,5 +48,13 @@ export class MeetingDetailComponent implements OnInit {
         refreshCallback: () => this.updateMeeting(meeting.id),
       }
     });
+  }
+
+  get invitations(): { [status: string]: MeetingInvitation[] } {
+    return {
+      waiting: this.meeting.invitations.filter(invitation => invitation.status === 'waiting'),
+      declined: this.meeting.invitations.filter(invitation => invitation.status === 'declined'),
+      accepted: this.meeting.invitations.filter(invitation => invitation.status === 'accepted'),
+    };
   }
 }

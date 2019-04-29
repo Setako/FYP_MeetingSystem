@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import {Component, NgZone, OnInit, ViewChild} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {MeetingService} from '../../../../services/meeting.service';
 import {ActivatedRoute, Router} from '@angular/router';
@@ -10,7 +10,10 @@ import {SelectFriendsDialogComponent} from '../../../../shared/components/dialog
 import {User} from '../../../../shared/models/user';
 import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
 import {GoogleOauthService} from '../../../../services/google/google-oauth.service';
-import {mapTo} from 'rxjs/operators';
+import {flatMap, map, mapTo} from 'rxjs/operators';
+import {from, Observable} from 'rxjs';
+
+declare var gapi: any;
 
 @Component({
   selector: 'app-meeting-edit',
@@ -30,14 +33,19 @@ export class MeetingEditComponent implements OnInit {
 
   @ViewChild('selectFriend') selectFriend: MatSelectionList;
 
+  @ViewChild('selectGoogleDriveFolder') selectFolder: MatSelectionList;
+
   public meeting: Meeting;
   public meetingParticipantFriends: User[] = [];
   public meetingParticipantEmails = '';
+  public noGoogleOauthWarningDisplay = false;
+
+  public pickedFolders: { resId: string, name: string }[] = [];
+  public pickedAgenda: { resId: string, name: string };
 
   public basicForm = new FormGroup({
     title: new FormControl('', [Validators.required]),
     length: new FormControl('', [Validators.required]),
-    type: new FormControl('', [Validators.required]),
     priority: new FormControl('', [Validators.required]),
     location: new FormControl('', [Validators.required]),
     description: new FormControl('')
@@ -45,7 +53,8 @@ export class MeetingEditComponent implements OnInit {
 
   constructor(private activatedRoute: ActivatedRoute, private  meetingService: MeetingService,
               private snackBar: MatSnackBar, private router: Router,
-              private dialog: MatDialog, private googleOauthService: GoogleOauthService) {
+              private dialog: MatDialog, private googleOauthService: GoogleOauthService,
+              private ngZone: NgZone) {
   }
 
   ngOnInit() {
@@ -64,7 +73,7 @@ export class MeetingEditComponent implements OnInit {
           this.meeting.title = this.basicForm.value.title;
           this.meeting.length = this.basicForm.value.length * Millisecond.Hour;
           this.meeting.type = this.basicForm.value.type;
-          this.meeting.priority = parseInt(this.basicForm.value.title, 10);
+          this.meeting.priority = parseInt(this.basicForm.value.priority, 10);
           this.meeting.location = this.basicForm.value.location;
           this.meeting.description = this.basicForm.value.description;
 
@@ -96,6 +105,25 @@ export class MeetingEditComponent implements OnInit {
             this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
           });
         break;
+      case 2:
+        this.queryingAction = 'Updating resources';
+        this.meetingService.saveMeeting({
+          id: this.meeting.id,
+          mainResources: {
+            googleDriveResources: this.pickedFolders.map(folder => {
+              return {resId: folder.resId, sharing: 'pre_meeting'};
+            })
+          },
+          agendaGoogleResourceId: this.pickedAgenda == null ? null : this.pickedAgenda.resId
+        } as Meeting).pipe(mapTo(this.updateMeeting(this.meeting.id))).subscribe(
+          () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data saved!', 'Dismiss', {duration: 4000});
+          }, () => {
+            this.queryingAction = null;
+            this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
+          });
+        break;
       case 3:
         this.queryingAction = 'Updating planned start time';
         this.meetingService.saveMeeting({
@@ -109,6 +137,22 @@ export class MeetingEditComponent implements OnInit {
             this.queryingAction = null;
             this.snackBar.open('Data failed to save!', 'Dismiss', {duration: 4000});
           });
+    }
+  }
+
+
+  public deleteSelectedFolders() {
+    const deletingFoldersId = this.selectFolder.selectedOptions.selected.map(opt => opt.value.resId);
+    if (deletingFoldersId.length === 0) {
+      this.dialog.open(ConfirmationDialogComponent, {
+        data: {title: 'Confirmation', content: 'Delete all Folders?'}
+      }).afterClosed().subscribe(res => {
+        this.pickedFolders = res ? [] : this.pickedFolders;
+      });
+
+    } else {
+      this.pickedFolders = this.pickedFolders
+        .filter(folder => deletingFoldersId.indexOf(folder.resId) === -1);
     }
   }
 
@@ -162,6 +206,8 @@ export class MeetingEditComponent implements OnInit {
           .filter(invitation => invitation.email != null)
           .map(invitation => invitation.email).join('\n');
 
+        this.updateResources();
+
         this.queryingAction = null;
         this.meeting = meeting;
       },
@@ -173,19 +219,126 @@ export class MeetingEditComponent implements OnInit {
     );
   }
 
-  addFolder() {
+  public updateResources() {
+    this.pickedFolders = [];
+    this.pickedAgenda = null;
     this.googleOauthService.gapiInit().subscribe(() => {
-      console.log('ok');
+    }, err => {
+    }, () => {
+
+      // Folders
+      this.googleOauthService.doRequest<any>(
+        (token) => {
+          return from(this.meeting.resources.main.googleDriveResources)
+            .pipe(
+              map(resource => resource.resId),
+              flatMap(id => this.getFileById(id)),
+            );
+        }
+      ).subscribe(
+        res => {
+          this.pickedFolders.push({
+            resId: res.id,
+            name: res.title
+          });
+        }, err => console.log(err)
+      );
+
+      // Agenda
+      if (this.meeting.agendaGoogleResourceId != null) {
+        this.googleOauthService.doRequest<any>(
+          (token) => this.getFileById(this.meeting.agendaGoogleResourceId)
+        ).subscribe(
+          res => {
+            this.pickedAgenda = {
+              resId: res.id,
+              name: res.title
+            };
+          }, err => console.log(err)
+        );
+      }
+
+    });
+  }
+
+  public getFileById(id: string): Observable<any> {
+    return Observable.create((observer) => {
+      gapi.client.drive.files.get({'fileId': id}).execute(resp => {
+        observer.next(resp);
+        observer.complete();
+      });
+    });
+  }
+
+
+  pickAgenda() {
+    this.noGoogleOauthWarningDisplay = true;
+    const self = this;
+    this.googleOauthService.gapiInit().subscribe(() => {
     }, err => {
       console.log('e ' + err);
     }, () => {
-      console.log('c');
-      this.googleOauthService.doRequest(
-        (token) => this.googleOauthService.test(token),
+      this.googleOauthService.doRequest<any>(
+        (token) => this.googleOauthService.showFilePicker(token, 'DOCS'),
       ).subscribe(
-        null, err => console.log(err)
+        (res) => {
+          this.ngZone.run(() => {
+            res.docs.forEach((doc) => {
+              this.pickedAgenda = {
+                resId: doc.id,
+                name: doc.name
+              };
+            });
+          });
+        }, err => {
+          if (this.noGoogleOauthWarningDisplay) {
+            this.noGoogleOauthWarningDisplay = false;
+            this.snackBar.open('You are not connected to google yet', 'DISMISS', {duration: 4000});
+          }
+        }
       );
 
+    });
+  }
+
+
+  addFolder() {
+    this.noGoogleOauthWarningDisplay = true;
+    const self = this;
+    this.googleOauthService.gapiInit().subscribe(() => {
+    }, err => {
+      console.log('e ' + err);
+    }, () => {
+      this.googleOauthService.doRequest<any>(
+        (token) => this.googleOauthService.showFilePicker(token, 'FOLDERS', true, true),
+      ).subscribe(
+        (res) => {
+          this.ngZone.run(() => {
+            res.docs.forEach((doc) => {
+              if (this.pickedFolders.map(folder => folder.resId).indexOf(doc.id) === -1) {
+                this.pickedFolders.push({
+                  resId: doc.id,
+                  name: doc.name
+                });
+              }
+            });
+          });
+        }, err => {
+          if (this.noGoogleOauthWarningDisplay) {
+            this.noGoogleOauthWarningDisplay = false;
+            this.snackBar.open('You are not connected to google yet', 'DISMISS', {duration: 4000});
+          }
+        }
+      );
+
+    });
+  }
+
+  deleteAgenda() {
+    this.dialog.open(ConfirmationDialogComponent, {
+      data: {title: 'Confirmation', content: 'Delete agenda?'}
+    }).afterClosed().subscribe(res => {
+      this.pickedAgenda = res ? null : this.pickedAgenda;
     });
   }
 }

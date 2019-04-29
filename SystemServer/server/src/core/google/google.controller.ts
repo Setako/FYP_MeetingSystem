@@ -22,32 +22,35 @@ import {
     catchError,
     map,
     tap,
-    mapTo,
-    mergeMapTo,
     flatMap,
-    filter,
     defaultIfEmpty,
+    shareReplay,
+    toArray,
+    pluck,
 } from 'rxjs/operators';
 import { UserService } from '../user/user.service';
 import { GetAccessTokenDto } from './dto/get-access-token.dto';
 import { Response } from 'express';
 import { GetAuthUrlQueryDto } from './dto/get-auth-url-query.dto';
+import { skipFalsy } from '@commander/shared/operator/function';
+import { GoogleCalendarService } from './google-calendar.service';
 
 @Controller('google')
 export class GoogleController {
     constructor(
+        private readonly googleCalendarService: GoogleCalendarService,
         private readonly authService: GoogleAuthService,
         private readonly userService: UserService,
     ) {}
 
     @Get('auth/url')
     @UseGuards(AuthGuard('jwt'))
-    async getAuthUrl(
+    getAuthUrl(
         @Auth() user: InstanceType<User>,
         @Query() query: GetAuthUrlQueryDto,
     ) {
         const isTokenAvailable$ = of(user.googleRefreshToken).pipe(
-            filter(Boolean),
+            skipFalsy(),
             flatMap(token => this.authService.isRefreshTokenAvailable(token)),
             tap(available => {
                 if (available) {
@@ -60,11 +63,11 @@ export class GoogleController {
 
         const clearUserToken$ = isTokenAvailable$.pipe(
             defaultIfEmpty(null),
-            mergeMapTo(this.userService.editGoogleRefreshToken(user.id)),
+            flatMap(() => this.userService.editGoogleRefreshToken(user.id)),
         );
 
         const authUrl$ = clearUserToken$.pipe(
-            mapTo(
+            map(() =>
                 this.authService.getAuthUrl(
                     user.id,
                     query.successRedirect
@@ -96,7 +99,7 @@ export class GoogleController {
 
         const state$ = defer(() =>
             of(this.authService.decodeAuthState(authDto.state)),
-        );
+        ).pipe(shareReplay());
         const userId$ = state$.pipe(map(item => item.userId));
         const successRedirect$ = state$.pipe(
             flatMap(({ successRedirect }) =>
@@ -112,6 +115,39 @@ export class GoogleController {
             flatMap(() => zip(userId$, refreshToken$)),
             flatMap(([id, { tokens: { refresh_token } }]) =>
                 this.userService.editGoogleRefreshToken(id, refresh_token),
+            ),
+            flatMap(user =>
+                this.googleCalendarService
+                    .getAllCalendars(user.googleRefreshToken)
+                    .pipe(
+                        pluck('id'),
+                        toArray(),
+                        flatMap(item =>
+                            this.userService.edit(user.username, {
+                                setting: {
+                                    calendarImportance: item.map(
+                                        calendarId => ({
+                                            calendarId,
+                                            importance: 1,
+                                        }),
+                                    ),
+                                },
+                            }),
+                        ),
+                    ),
+            ),
+            flatMap(user =>
+                this.googleCalendarService
+                    .getCalendarById(user.googleRefreshToken, 'primary')
+                    .pipe(
+                        flatMap(cal =>
+                            this.userService.edit(user.username, {
+                                setting: {
+                                    markEventOnCalendarId: cal.id,
+                                },
+                            }),
+                        ),
+                    ),
             ),
             flatMap(() => successRedirect$),
             tap(url => (url ? res.redirect(url) : res.end())),
@@ -153,5 +189,29 @@ export class GoogleController {
     @UseGuards(AuthGuard('jwt'))
     async getRefreshToken(@Auth() user: InstanceType<User>) {
         await this.userService.editGoogleRefreshToken(user.id);
+        await this.userService.edit(user.username, {
+            setting: {
+                calendarImportance: [],
+                markEventOnCalendarId: null,
+            },
+        });
+    }
+
+    @Get('calendar')
+    @UseGuards(AuthGuard('jwt'))
+    getCalendarList(@Auth() user: InstanceType<User>) {
+        if (!user.googleRefreshToken) {
+            throw new BadRequestException(
+                'Please enable Google services first',
+            );
+        }
+
+        return this.googleCalendarService
+            .getAllCalendars(user.googleRefreshToken)
+            .pipe(
+                map(({ id, summary }) => ({ id, summary })),
+                toArray(),
+                map(items => ({ items, length: items.length })),
+            );
     }
 }

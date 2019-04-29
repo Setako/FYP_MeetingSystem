@@ -2,14 +2,14 @@ import { LoginFailedException } from '@commander/shared/exception/auth/login-fai
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignOptions } from 'jsonwebtoken';
+import { empty, of } from 'rxjs';
+import { flatMap } from 'rxjs/operators';
 import uuidv4 from 'uuid/v4';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { JwtPayload } from './dto/jwt-payload.dto';
 import { LoginDto } from './dto/login.dto';
-import { from, of, empty } from 'rxjs';
-import { flatMap } from 'rxjs/operators';
 
 @Injectable()
 export class AuthService {
@@ -18,15 +18,28 @@ export class AuthService {
         private readonly jwtService: JwtService,
     ) {}
 
-    async validateUser(payload: JwtPayload) {
+    validateUser(payload: JwtPayload) {
         return this.userService.getByUsername(payload.username);
+    }
+
+    verifyToken(token: string) {
+        this.jwtService.verify(token);
+    }
+
+    decodeToken(token: string): JwtPayload {
+        return {
+            ...(this.jwtService.decode(token) as any),
+        };
     }
 
     async login(
         loginDto: LoginDto,
         options: SignOptions = { expiresIn: '7d' },
     ) {
-        const user = await this.userService.getByUsername(loginDto.username);
+        const user = await this.userService
+            .getByUsername(loginDto.username)
+            .toPromise();
+
         if (!user) {
             throw new LoginFailedException();
         }
@@ -57,9 +70,9 @@ export class AuthService {
     }
 
     async logout(user: User) {
-        const user$ = from(this.userService.getByUsername(user.username)).pipe(
-            flatMap(item => (item ? of(item) : empty())),
-        );
+        const user$ = this.userService
+            .getByUsername(user.username)
+            .pipe(flatMap(item => (item ? of(item) : empty())));
 
         return user$
             .pipe(

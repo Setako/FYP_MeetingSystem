@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { google } from 'googleapis';
-import { defer, empty } from 'rxjs';
-import { expand, flatMap } from 'rxjs/operators';
+import { google, calendar_v3 } from 'googleapis';
+import { defer, empty, of } from 'rxjs';
+import { expand, flatMap, catchError, map } from 'rxjs/operators';
+import { InstanceType } from 'typegoose';
+import { Meeting } from '../meeting/meeting.model';
 
 @Injectable()
 export class GoogleCalendarService {
@@ -38,16 +40,78 @@ export class GoogleCalendarService {
         });
     }
 
+    getCalendarById(refeshToken: string, calendarId: string) {
+        const calendar = this.getCalendar(refeshToken);
+        return defer(() => calendar.calendars.get({ calendarId })).pipe(
+            map(item => item.data),
+        );
+    }
+
     getAllCalendars(refreshToken: string) {
         const calendar = this.getCalendar(refreshToken);
-        const list = calendar.calendarList.list;
-        return defer(() => list()).pipe(
+        return defer(() => calendar.calendarList.list()).pipe(
             expand(result =>
                 result.data.nextPageToken
-                    ? list({ pageToken: result.data.nextPageToken })
+                    ? calendar.calendarList.list({
+                          pageToken: result.data.nextPageToken,
+                      })
                     : empty(),
             ),
             flatMap(item => item.data.items),
+            catchError(() => [] as calendar_v3.Schema$CalendarListEntry[]),
         );
+    }
+
+    markEventOnCalendar(
+        refeshToken: string,
+        calendarId: string,
+        event: calendar_v3.Schema$Event,
+    ) {
+        return of(this.getCalendar(refeshToken)).pipe(
+            flatMap(calendar =>
+                calendar.events.insert({
+                    calendarId,
+                    requestBody: event,
+                }),
+            ),
+        );
+    }
+
+    unmarkEventOnCalendar(
+        refeshToken: string,
+        eventId: string,
+        calendarId: string,
+    ) {
+        return of(this.getCalendar(refeshToken)).pipe(
+            flatMap(calendar =>
+                calendar.events.delete({
+                    eventId,
+                    calendarId,
+                }),
+            ),
+        );
+    }
+
+    generateEventFromMeeting(
+        meeting: InstanceType<Meeting>,
+    ): calendar_v3.Schema$Event {
+        return {
+            summary: meeting.title,
+            location: meeting.location,
+            description: meeting.description,
+            start: {
+                dateTime: meeting.plannedStartTime.toISOString(),
+            },
+            end: {
+                dateTime: meeting.plannedEndTime.toISOString(),
+            },
+            reminders: {
+                useDefault: false,
+                overrides: [
+                    { method: 'popup', minutes: 30 },
+                    { method: 'popup', minutes: 60 },
+                ],
+            },
+        };
     }
 }

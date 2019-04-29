@@ -1,7 +1,7 @@
 <mat-action-list (click)="$event.stopPropagation()" class="pt-0">
   <div class="d-flex flex-row justify-content-between py-1" style="padding-right: 16px;padding-left: 16px;">
     <h3 class="my-1">Notifications</h3>
-    <button mat-button color="warn">
+    <button mat-button color="warn" (click)="dismissAll()">
       Dismiss all
     </button>
   </div>
@@ -11,12 +11,12 @@
       <div class="py-2">
         <div>
           <h4 class="my-1 mr-2" style="display: inline-block">{{notification.title}}</h4>
-          <span style="color: gray; font-size: 0.85em">{{notifications | timeAgo }}</span>
+          <span style="color: gray; font-size: 0.85em">{{notification.time | timeAgo }}</span>
         </div>
         <span>{{notification.content}}</span>
       </div>
       <div>
-        <button mat-icon-button>
+        <button mat-icon-button (click)="dismiss(notification)">
           <mat-icon color="warn">close</mat-icon>
         </button>
       </div>

@@ -19,11 +19,13 @@ import { User } from '../user/user.model';
 import { UserService } from '../user/user.service';
 import { GetFriendDto } from './dto/get-friend.dto';
 import { FriendService } from './friend.service';
-import { from, identity, defer, combineLatest, pipe } from 'rxjs';
-import { flatMap, map, toArray, filter } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { flatMap, map, toArray } from 'rxjs/operators';
 import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
 import { ObjectUtils } from '@commander/shared/utils/object.utils';
 import { Friend } from './friend.model';
+import { populate } from '@commander/shared/operator/document';
+import { skipFalsy } from '@commander/shared/operator/function';
 
 @Controller('friend')
 @UseGuards(AuthGuard('jwt'))
@@ -34,58 +36,37 @@ export class FriendController {
     ) {}
 
     @Get()
-    async getAll(
+    getAll(
         @Auth() user: InstanceType<User>,
         @Query() query: PaginationQueryDto,
     ) {
-        const length = from(this.friendService.countDocumentsByUserId(user.id));
+        const length = this.friendService.countDocumentsByUserId(user.id);
 
-        const list = defer(() =>
-            query.resultPageSize
-                ? this.friendService.getAllByUserIdWithPage(
-                      user.id,
-                      NumberUtils.parseOrThrow(query.resultPageSize),
-                      NumberUtils.parseOr(query.resultPageNum, 1),
-                  )
-                : this.friendService.getAllByUserId(user.id),
-        ).pipe(
-            flatMap(identity),
-            flatMap(item => item.populate('friends').execPopulate()),
-        );
+        const friend$ = query.resultPageSize
+            ? this.friendService.getAllByUserIdWithPage(
+                  user.id,
+                  NumberUtils.parseOrThrow(query.resultPageSize),
+                  NumberUtils.parseOr(query.resultPageNum, 1),
+              )
+            : this.friendService.getAllByUserId(user.id);
 
-        const items = list.pipe(
+        const populated$ = friend$.pipe(populate('friends'));
+
+        const items = populated$.pipe(
             map(item => ({
                 user: item.friends.find(
-                    friend =>
-                        !(friend as InstanceType<User>)._id.equals(user.id),
+                    (friend: InstanceType<User>) => !friend._id.equals(user.id),
+                ) as InstanceType<User>,
+                stared: item.stared.some((id: Types.ObjectId) =>
+                    id.equals(user.id),
                 ),
                 addDate: item.addDate,
-                stared: item.stared.some(id =>
-                    (id as Types.ObjectId).equals(user.id),
-                ),
             })),
+            map(item => ObjectUtils.ObjectToPlain(item, GetFriendDto)),
+            toArray(),
         );
 
-        // const items = list.pipe(
-        //     map(item => ({
-        //         user: item.friends.filter(
-        //             (friend: InstanceType<User>) =>
-        //                 !Types.ObjectId(friend.id).equals(user.id),
-        //         )[0],
-        //         addDate: item.addDate,
-        //         stared: item.stared.some((id: Types.ObjectId) =>
-        //             id.equals(user.id),
-        //         ),
-        //     })),
-        // );
-
-        return combineLatest(
-            items.pipe(
-                map(item => ObjectUtils.ObjectToPlain(item, GetFriendDto)),
-                toArray(),
-            ),
-            length,
-        ).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -95,67 +76,35 @@ export class FriendController {
     }
 
     @Get(':usernames')
-    async getAllByUsernames(
+    getAllByUsernames(
         @Auth() user: InstanceType<User>,
         @Param('usernames', new SplitSemicolonPipe()) usernames: string[],
     ) {
-        const users = from(
-            this.userService.getByUsernames(
+        const users = this.userService
+            .getByUsernames(
                 usernames.filter(username => username !== user.username),
-            ),
-        ).pipe(
-            flatMap(identity),
-            filter(item => Boolean(item)),
-            map(item => item as InstanceType<User>),
-        );
+            )
+            .pipe(skipFalsy());
 
         const friends = users.pipe(
-            flatMap(
-                pipe(
-                    item => this.friendService.getByFriends(user.id, item.id),
-                    item => from(item),
-                ),
-            ),
-            filter(item => Boolean(item)),
-            flatMap(item => item!.populate('friends').execPopulate()),
+            flatMap(item => this.friendService.getByFriends(user.id, item.id)),
+            skipFalsy(),
+            populate('friends'),
         );
 
         const items = friends.pipe(
-            map(
-                pipe(
-                    item => ({
-                        user: item.friends.find(friend =>
-                            (friend as InstanceType<User>)._id.equals(user.id),
-                        ),
-                        addDate: item.addDate,
-                        stared: item.stared.some(id =>
-                            (id as Types.ObjectId).equals(user.id),
-                        ),
-                    }),
-                    item => ObjectUtils.ObjectToPlain(item, GetFriendDto),
+            map(item => ({
+                user: item.friends.find(
+                    (friend: InstanceType<User>) => !friend._id.equals(user.id),
                 ),
-            ),
+                stared: item.stared.some((id: Types.ObjectId) =>
+                    id.equals(user.id),
+                ),
+                addDate: item.addDate,
+            })),
+            map(item => ObjectUtils.ObjectToPlain(item, GetFriendDto)),
             toArray(),
         );
-
-        // const items = friends.pipe(
-        //     map(
-        //         pipe(
-        //             item => ({
-        //                 user: item.friends.filter(
-        //                     (friend: InstanceType<User>) =>
-        //                         !Types.ObjectId(friend.id).equals(user.id),
-        //                 )[0],
-        //                 addDate: item.addDate,
-        //                 stared: item.stared.some((id: Types.ObjectId) =>
-        //                     id.equals(user.id),
-        //                 ),
-        //             }),
-        //             item => ObjectUtils.ObjectToPlain(item, GetFriendDto),
-        //         ),
-        //     ),
-        //     toArray(),
-        // );
 
         return items.pipe(
             map(itemList => ({
@@ -176,10 +125,12 @@ export class FriendController {
             throw new NotFoundException('Target user is not your friend');
         }
 
-        const friend = (await this.userService.getByUsername(
-            friendUsername,
-        )) as InstanceType<User>;
-        const isFriend = await this.friendService.isFriends(user.id, friend.id);
+        const friend = await this.userService
+            .getByUsername(friendUsername)
+            .toPromise();
+        const isFriend = await this.friendService
+            .isFriends(user.id, friend.id)
+            .toPromise();
 
         if (!isFriend) {
             throw new NotFoundException('Target user is not your friend');
@@ -198,10 +149,12 @@ export class FriendController {
             throw new NotFoundException('Target user is not your friend');
         }
 
-        const friend = (await this.userService.getByUsername(
-            friendUsername,
-        )) as InstanceType<User>;
-        const isFriend = await this.friendService.isFriends(user.id, friend.id);
+        const friend = await this.userService
+            .getByUsername(friendUsername)
+            .toPromise();
+        const isFriend = await this.friendService
+            .isFriends(user.id, friend.id)
+            .toPromise();
 
         if (!isFriend) {
             throw new NotFoundException('Target user is not your friend');

@@ -8,7 +8,7 @@ import {
 export function IsUsername(
     validationOptions: ValidationOptions = {
         message:
-            '$property can only contain hyphens, underscores, letters, and numbers',
+            '$property can only contain hyphens, underscores, letters, and numbers, and length between 2 and 20',
     },
 ) {
     return (object: object, propertyName: string) => {
@@ -19,7 +19,7 @@ export function IsUsername(
             constraints: [],
             options: validationOptions,
             validator: {
-                validate(value: any, args: ValidationArguments) {
+                validate(value: any, _args: ValidationArguments) {
                     const validator = new Validator();
                     const isAlphanumeric = validator.isAlphanumeric.bind(
                         validator,

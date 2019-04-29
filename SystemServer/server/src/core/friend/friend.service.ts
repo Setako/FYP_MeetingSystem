@@ -3,6 +3,8 @@ import { Types } from 'mongoose';
 import { InjectModel } from 'nestjs-typegoose';
 import { ModelType } from 'typegoose';
 import { Friend } from './friend.model';
+import { of, identity } from 'rxjs';
+import { flatMap, map } from 'rxjs/operators';
 
 @Injectable()
 export class FriendService {
@@ -15,60 +17,52 @@ export class FriendService {
         return this.friendModel.find(options);
     }
 
-    async countDocumentsByUserId(userId: string, options = {}) {
-        return this.friendModel
-            .find({
-                ...options,
-                friends: userId,
-            })
-            .countDocuments()
-            .exec();
+    countDocumentsByUserId(userId: string, options = {}) {
+        return of({ ...options, friends: userId }).pipe(
+            flatMap(conditions =>
+                this.friendModel
+                    .find(conditions)
+                    .countDocuments()
+                    .exec(),
+            ),
+        );
     }
 
-    async getAllByUserId(userId: string, options = {}) {
-        return this.friendModel
-            .find({
-                ...options,
-                friends: userId,
-            })
-            .exec();
+    getAllByUserId(userId: string, options = {}) {
+        return of({ ...options, friends: userId }).pipe(
+            flatMap(conditions => this.friendModel.find(conditions).exec()),
+            flatMap(identity),
+        );
     }
 
-    async getAllByUserIdWithPage(
+    getAllByUserIdWithPage(
         userId: string,
         pageSize: number,
         pageNum = 1,
         options = {},
     ) {
-        return this.friendModel
-            .find({
-                ...options,
-                friends: userId,
-            })
-            .skip(pageSize * (pageNum - 1))
-            .limit(pageSize)
-            .exec();
+        return of({ ...options, friends: userId }).pipe(
+            flatMap(conditions =>
+                this.friendModel
+                    .find(conditions)
+                    .skip(pageSize * (pageNum - 1))
+                    .limit(pageSize)
+                    .exec(),
+            ),
+            flatMap(identity),
+        );
     }
 
-    async getByFriends(userId: string, friendId: string) {
-        return this.friendModel
-            .findOne({
-                friends: {
-                    $all: [userId, friendId],
-                },
-            })
-            .exec();
+    getByFriends(userId: string, friendId: string) {
+        return of({ friends: { $all: [userId, friendId] } }).pipe(
+            flatMap(conditions => this.friendModel.findOne(conditions).exec()),
+        );
     }
 
-    async isFriends(userId: string, friendId: string) {
-        return (
-            (await this.friendModel
-                .find({
-                    friends: {
-                        $all: [userId, friendId],
-                    },
-                })
-                .exec()).length !== 0
+    isFriends(userId: string, friendId: string) {
+        return of({ friends: { $all: [userId, friendId] } }).pipe(
+            flatMap(conditions => this.friendModel.find(conditions).exec()),
+            map(items => items.length !== 0),
         );
     }
 

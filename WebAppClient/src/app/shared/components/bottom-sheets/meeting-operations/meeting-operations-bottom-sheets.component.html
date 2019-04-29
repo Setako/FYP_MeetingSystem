@@ -1,12 +1,18 @@
 <mat-nav-list>
+
+  <a *ngIf="meeting.status != 'draft'"
+     [routerLink]="'/member/meeting/'+meeting.id"
+     (click)="bottomSheetRef.dismiss()"
+     mat-list-item>
+    <mat-icon matListIcon>visibility</mat-icon>
+    <span mat-line>Meeting detail</span>
+  </a>
+
   <a *ngIf="attendance!=null && attendance.status==null"
      href="#" mat-list-item (click)="toggleMarkCalendar($event)">
-
-    <span mat-line *ngIf="attendance.googleCalendarEventId == null">
-      Mark on my calendar
-    </span>
-    <span mat-line *ngIf="attendance.googleCalendarEventId != null">
-      Unmark on my calendar
+    <mat-icon matListIcon>calendar_today</mat-icon>
+    <span mat-line>
+      Mark/Unmark on my calendar
     </span>
   </a>
 

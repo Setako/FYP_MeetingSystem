@@ -17,6 +17,9 @@ import {
     BadRequestException,
     HttpStatus,
     HttpCode,
+    ForbiddenException,
+    Inject,
+    forwardRef,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from '../user/user.model';
@@ -35,6 +38,7 @@ import {
     empty,
     Observable,
     of,
+    interval,
 } from 'rxjs';
 import {
     flatMap,
@@ -42,12 +46,16 @@ import {
     map,
     toArray,
     mapTo,
-    switchMap,
     tap,
-    mergeMapTo,
-    groupBy,
-    catchError,
     mergeAll,
+    shareReplay,
+    takeWhile,
+    every,
+    take,
+    pluck,
+    defaultIfEmpty,
+    concatMap,
+    catchError,
 } from 'rxjs/operators';
 import { InstanceType } from 'typegoose';
 import { MeetingOwnerGuard } from '@commander/shared/guard/meeting-owner.guard';
@@ -57,6 +65,7 @@ import {
     MeetingStatus,
     Meeting,
     AttendanceStatus,
+    Resources,
 } from './meeting.model';
 import { AcceptDto } from '@commander/shared/dto/accept.dto';
 import { EditMeetingStatusDto } from './dto/edit-meeting.status.dto';
@@ -73,8 +82,14 @@ import { GoogleAuthService } from '../google/google-auth.service';
 import { GoogleEventService } from '../google/google-event.service';
 import { GoogleCalendarService } from '../google/google-calendar.service';
 import { BusyTimeDto } from './dto/busy-time.dto';
-import { DeviceService } from '../device/device.service';
 import { EditAttendeeStatusDto } from './dto/edit-attendee-status.dto';
+import { MeetingSuggestTimeQuery } from './dto/meeting-suggest-time-query';
+import { SuggestTimeDto } from './dto/suggest-time.dto';
+import { PaginationQueryDto } from '@commander/shared/dto/pagination-query.dto';
+import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
+import { skipFalsy } from '@commander/shared/operator/function';
+import { populate, documentToPlain } from '@commander/shared/operator/document';
+import { MeetingResourcesDto } from './dto/meeting-resouces.dto';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -82,11 +97,11 @@ export class MeetingController {
     constructor(
         private readonly meetingService: MeetingService,
         private readonly userService: UserService,
-        private readonly notificationService: NotificationService,
         private readonly googleAuthService: GoogleAuthService,
         private readonly googleEventService: GoogleEventService,
         private readonly googleCalendarService: GoogleCalendarService,
-        private readonly deviceService: DeviceService,
+        @Inject(forwardRef(() => NotificationService))
+        private readonly notificationService: NotificationService,
     ) {}
 
     @Get()
@@ -99,31 +114,45 @@ export class MeetingController {
             user.id,
         );
 
-        const list = defer(() =>
-            query.resultPageSize
-                ? this.meetingService.getAllWithPage(
-                      NumberUtils.parseOrThrow(query.resultPageSize),
-                      NumberUtils.parseOr(query.resultPageNum, 1),
-                      options,
-                  )
-                : this.meetingService.getAll(options),
-        ).pipe(
-            flatMap(identity),
-            filter(item => Boolean(item)),
-            flatMap(item =>
-                item
-                    .populate('owner invitations.user attendance.user')
-                    .execPopulate(),
+        const meeting$ = query.resultPageSize
+            ? this.meetingService.getAllWithPage(
+                  NumberUtils.parseOrThrow(query.resultPageSize),
+                  NumberUtils.parseOr(query.resultPageNum, 1),
+                  options,
+              )
+            : this.meetingService.getAll(options);
+
+        const populated$ = meeting$.pipe(
+            skipFalsy(),
+            flatMap(async meeting => {
+                meeting.resources = await this.meetingService.getAccessableResources(
+                    meeting.id,
+                    user.id,
+                );
+                return meeting;
+            }),
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
             ),
         );
 
-        const items = list.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+        const sorted$ = this.meetingService.sortMeetings(
+            populated$,
+            query.sortBy,
+            query.orderBy,
         );
 
-        const length = from(this.meetingService.countDocuments(options));
+        const items = sorted$.pipe(
+            documentToPlain(GetMeetingDto),
+            toArray(),
+        );
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        const length = this.meetingService.countDocuments(options);
+
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -138,20 +167,19 @@ export class MeetingController {
         @Param(
             'ids',
             new SplitSemicolonPipe(),
+            new UniqueArrayPipe(),
             new FilterNotObjectIdStringPipe(),
         )
         ids: string[],
-        @Query() query,
+        @Query() query: PaginationQueryDto,
     ) {
-        const { resultPageNum = 1, resultPageSize } = query;
+        const { resultPageNum = '1', resultPageSize } = query;
 
         ids = await from(ids)
             .pipe(
-                switchMap(id =>
-                    from(
-                        this.meetingService.hasViewPermission(id, user.id),
-                    ).pipe(
-                        filter(Boolean),
+                flatMap(id =>
+                    this.meetingService.hasViewPermission(id, user.id).pipe(
+                        skipFalsy(),
                         mapTo(id),
                     ),
                 ),
@@ -159,30 +187,38 @@ export class MeetingController {
             )
             .toPromise();
 
-        const list = defer(() =>
-            resultPageSize
-                ? this.meetingService.getByIdsWithPage(
-                      ids,
-                      NumberUtils.parseOrThrow(resultPageSize),
-                      NumberUtils.parseOrThrow(resultPageNum),
-                  )
-                : this.meetingService.getByIds(ids),
-        ).pipe(
-            flatMap(identity),
-            flatMap(item =>
-                item
-                    .populate('owner invitations.user attendance.user')
-                    .execPopulate(),
+        const meeting$ = resultPageSize
+            ? this.meetingService.getByIdsWithPage(
+                  ids,
+                  NumberUtils.parseOrThrow(resultPageSize),
+                  NumberUtils.parseOrThrow(resultPageNum),
+              )
+            : this.meetingService.getByIds(ids);
+
+        const populated$ = meeting$.pipe(
+            flatMap(async meeting => {
+                meeting.resources = await this.meetingService.getAccessableResources(
+                    meeting.id,
+                    user.id,
+                );
+                return meeting;
+            }),
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
             ),
         );
 
-        const items = list.pipe(
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+        const items = populated$.pipe(
+            documentToPlain(GetMeetingDto),
+            toArray(),
         );
 
-        const length = from(this.meetingService.countDocumentsByIds(ids));
+        const length = this.meetingService.countDocumentsByIds(ids);
 
-        return combineLatest(items.pipe(toArray()), length).pipe(
+        return combineLatest(items, length).pipe(
             map(([itemList, totalLength]) => ({
                 items: itemList,
                 length: totalLength,
@@ -192,12 +228,10 @@ export class MeetingController {
     }
 
     @Post()
-    async create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
+    create(@Auth() owner: User, @Body() meeting: CreateMeetingDto) {
         return from(this.meetingService.create(meeting, owner)).pipe(
-            flatMap(item =>
-                item.populate('owner invitations.user').execPopulate(),
-            ),
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
+            populate('owner', 'invitations.user'),
+            documentToPlain(GetMeetingDto),
         );
     }
 
@@ -205,54 +239,111 @@ export class MeetingController {
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
     async edit(
+        @Auth() user: InstanceType<User>,
         @Param('id') id: string,
         @Body() editMeetingDto: EditMeetingDto,
     ) {
-        const sendNotification$ = from(this.meetingService.getById(id))
-            .pipe(
-                filter(
-                    item =>
-                        Boolean(item) &&
-                        [
-                            MeetingStatus.Planned,
-                            MeetingStatus.Confirmed,
-                        ].includes(item.status),
-                ),
+        const meeting = await this.meetingService.getById(id).toPromise();
+
+        if (
+            [MeetingStatus.Planned, MeetingStatus.Confirmed].includes(
+                meeting.status,
             )
-            .pipe(
-                mergeMapTo(
-                    this.meetingService.findNewInviteeIds(
-                        id,
-                        editMeetingDto.invitations,
-                    ),
-                ),
-                flatMap(identity),
-            )
-            .pipe(
-                filter(inviteeId => Boolean(inviteeId)),
-                flatMap(inviteeId =>
-                    this.notificationService.create({
-                        receiver: Types.ObjectId(inviteeId),
-                        type: NotificationType.MeetingInviteReceived,
-                        time: new Date(),
-                        object: Types.ObjectId(id),
-                        objectModel: NotificationObjectModel.Meeting,
-                    }),
-                ),
+        ) {
+            const newInviteeInfo = await this.meetingService.findNewInviteeInfo(
+                id,
+                editMeetingDto.invitations,
             );
 
-        return from(this.meetingService.edit(id, editMeetingDto)).pipe(
-            map(item => item!._id),
-            flatMap(_id =>
-                this.meetingService
-                    .findAll({ _id: { $eq: _id } })
-                    .populate('owner invitations.user attendance.user')
-                    .exec(),
+            from(newInviteeInfo)
+                .pipe(
+                    flatMap(({ userId, email }) =>
+                        this.notificationService.sendMeetingInvitationEmail(
+                            id,
+                            userId,
+                            email,
+                        ),
+                    ),
+                )
+                .subscribe();
+        }
+
+        if (
+            [
+                MeetingStatus.Confirmed,
+                MeetingStatus.Ended,
+                MeetingStatus.Planned,
+                MeetingStatus.Started,
+            ].includes(meeting.status)
+        ) {
+            this.notificationService.sendMeetingInfoUpdateEmail(meeting.id);
+        }
+
+        const meeting$ = from(
+            this.meetingService.edit(id, editMeetingDto),
+        ).pipe(
+            flatMap(async meetingInstance => {
+                meetingInstance.resources = await this.meetingService.getAccessableResources(
+                    meetingInstance.id,
+                    user.id,
+                );
+                return meetingInstance;
+            }),
+            populate(
+                'owner',
+                'invitations.user',
+                'attendance.user',
+                'resources.user.sharer',
             ),
-            flatMap(identity),
-            map(item => ObjectUtils.DocumentToPlain(item, GetMeetingDto)),
-            tap(() => sendNotification$.subscribe()),
+            documentToPlain(GetMeetingDto),
         );
+
+        return meeting$;
+    }
+
+    @Get(':id/resources/:username')
+    @UseGuards(MeetingGuard)
+    async getUserSharedResource(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Param('username') username: string,
+    ) {
+        const targetUser = await this.userService
+            .getByUsername(username)
+            .toPromise();
+
+        return from(this.meetingService.getAccessableResources(id, user.id))
+            .pipe(
+                pluck('user'),
+                flatMap(identity),
+                filter(({ sharer }) => {
+                    return (sharer as Types.ObjectId).equals(targetUser._id);
+                }),
+                pluck('resources'),
+                defaultIfEmpty(new Resources()),
+            )
+            .toPromise();
+    }
+
+    @Put(':id/resources/:username')
+    @UseGuards(MeetingGuard)
+    updateUserSharedResource(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Param('username') username: string,
+        @Body() resourcesDto: MeetingResourcesDto,
+    ) {
+        if (user.username !== username) {
+            throw new ForbiddenException();
+        }
+
+        return from(
+            this.meetingService.updateUserSharedResource(
+                id,
+                user.id,
+                resourcesDto,
+            ),
+        ).pipe(flatMap(() => this.getUserSharedResource(user, id, username)));
     }
 
     @Put(':id/status')
@@ -262,9 +353,9 @@ export class MeetingController {
     async editStatus(
         @Auth() owner: InstanceType<User>,
         @Param('id') id: string,
-        @Body() { status, ...editStatusDto }: EditMeetingStatusDto,
+        @Body() { status }: EditMeetingStatusDto,
     ) {
-        const meeting = await this.meetingService.getById(id);
+        const meeting = await this.meetingService.getById(id).toPromise();
 
         const allowStatusTo = new Map([
             [
@@ -309,37 +400,18 @@ export class MeetingController {
         const checkIsMeetingValidate = async (
             meetingInstance: InstanceType<Meeting>,
             editedStatus: MeetingStatus,
-            editStatusPartial: Partial<EditMeetingStatusDto>,
         ) => {
             switch (editedStatus) {
                 case MeetingStatus.Planned:
-                    await new ValidationPipe({
-                        transform: true,
-                    }).transformDocument(
+                    await new ValidationPipe().transformDocument(
                         meetingInstance,
                         ReadyToPlannedMeetingDto,
                     );
                     break;
-                case MeetingStatus.Started:
-                    await defer(() =>
-                        editStatusPartial.deviceToken
-                            ? of(editStatusPartial.deviceToken).pipe(
-                                  map(token =>
-                                      this.deviceService.verifyToken(token),
-                                  ),
-                                  catchError(e => {
-                                      const message = e.message
-                                          .replace('token', 'state')
-                                          .replace('jwt', 'token');
-                                      throw new BadRequestException(message);
-                                  }),
-                              )
-                            : empty(),
-                    ).toPromise();
             }
         };
 
-        await checkIsMeetingValidate(meeting, status, editStatusDto);
+        await checkIsMeetingValidate(meeting, status);
 
         const preUpdateAction = (
             oldStatus: MeetingStatus,
@@ -389,12 +461,23 @@ export class MeetingController {
                 case MeetingStatus.Planned:
                     return defer(() => {
                         const inviteeInWaiting = updatedMeeting.invitations.filter(
-                            item =>
-                                item.status === InvitationStatus.Waiting &&
-                                item.user,
+                            item => item.status === InvitationStatus.Waiting,
+                        );
+
+                        const sendEmail$ = from(inviteeInWaiting).pipe(
+                            flatMap(invitee =>
+                                this.notificationService.sendMeetingInvitationEmail(
+                                    updatedMeeting.id,
+                                    invitee.user
+                                        ? (invitee.user as Types.ObjectId).toHexString()
+                                        : null,
+                                    invitee.email,
+                                ),
+                            ),
                         );
 
                         const addNotification$ = from(inviteeInWaiting).pipe(
+                            filter(item => Boolean(item.user)),
                             flatMap(invitee =>
                                 this.notificationService.create({
                                     receiver: invitee.user as Types.ObjectId,
@@ -412,27 +495,43 @@ export class MeetingController {
                             this.meetingService.addAttendance(id, owner.id),
                         );
 
-                        return of(addNotification$, addOwnerAttendance$).pipe(
-                            mergeAll(),
-                        );
+                        return of(
+                            sendEmail$,
+                            addNotification$,
+                            addOwnerAttendance$,
+                        ).pipe(mergeAll());
                     });
-                case MeetingStatus.Started:
-                    return defer(() =>
-                        editStatusDto.deviceToken
-                            ? this.meetingService.updateDevice(
-                                  updatedMeeting.id,
-                                  this.deviceService.decodeToken(
-                                      editStatusDto.deviceToken,
-                                  ),
-                              )
-                            : empty(),
-                    );
                 case MeetingStatus.Ended:
                     return defer(() =>
                         this.meetingService.edit(updatedMeeting.id, {
                             realEndTime: new Date().toISOString(),
                         }),
                     );
+                case MeetingStatus.Cancelled:
+                    return defer(() => {
+                        return from(
+                            updatedMeeting.attendance
+                                .map(item => item.user as Types.ObjectId)
+                                .filter(item => !item.equals(owner.id)),
+                        ).pipe(
+                            flatMap(receiver =>
+                                this.notificationService.create({
+                                    receiver,
+                                    type: NotificationType.MeetingCancelled,
+                                    time: new Date(),
+                                    object: updatedMeeting._id,
+                                    objectModel:
+                                        NotificationObjectModel.Meeting,
+                                }),
+                            ),
+                            toArray(),
+                            flatMap(() =>
+                                this.notificationService.sendMeetingCancelledEmail(
+                                    updatedMeeting.id,
+                                ),
+                            ),
+                        );
+                    });
                 default:
                     return empty();
             }
@@ -456,31 +555,33 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() acceptDto: AcceptDto,
     ) {
-        const isInvited$ = from(
-            this.meetingService.countDocuments({
+        const isInvited$ = this.meetingService
+            .countDocuments({
                 $and: [
                     { _id: { $eq: Types.ObjectId(id) } },
                     {
-                        'invitations.user': {
-                            $eq: Types.ObjectId(user.id),
-                        },
-                    },
-                    {
-                        'invitations.status': {
-                            $in: [InvitationStatus.Waiting],
+                        invitations: {
+                            $elemMatch: {
+                                user: {
+                                    $eq: Types.ObjectId(user.id),
+                                },
+                                status: {
+                                    $in: [InvitationStatus.Waiting],
+                                },
+                            },
                         },
                     },
                 ],
-            }),
-        ).pipe(
-            tap(item => {
-                if (item === 0) {
-                    throw new BadRequestException(
-                        'You have not been invited to this meeting or have accepted or rejected this invitation.',
-                    );
-                }
-            }),
-        );
+            })
+            .pipe(
+                tap(item => {
+                    if (item === 0) {
+                        throw new BadRequestException(
+                            'You have not been invited to this meeting or have accepted or rejected this invitation.',
+                        );
+                    }
+                }),
+            );
 
         const addAttendance$ = defer(() =>
             acceptDto.accept
@@ -503,6 +604,115 @@ export class MeetingController {
         addAttendance$.subscribe();
     }
 
+    @Get(':id/suggest-time')
+    @UseGuards(MeetingOwnerGuard)
+    @UseGuards(MeetingGuard)
+    async getSuggestTime(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+        @Query() query: MeetingSuggestTimeQuery,
+    ) {
+        const fromDate = query.fromDate.setHours(0, 0, 0, 0);
+        const toDate = query.toDate.setHours(24, 0, 0, 0);
+        const [fromHours, fromMinutes] = query.fromTime
+            .split(':')
+            .map(n => parseInt(n, 10));
+        const [toHours, toMinutes] = query.toTime
+            .split(':')
+            .map(n => parseInt(n, 10));
+
+        if (query.weekDays.length === 0) {
+            throw new BadRequestException(
+                'weekDays must contain at least 1 elements',
+            );
+        }
+
+        if (fromDate >= toDate) {
+            throw new BadRequestException(
+                'fromDate must be smaller than toDate',
+            );
+        }
+
+        const busyTime$ = from(
+            this.getBusyTime(user, id, {
+                fromDate: new Date(fromDate),
+                toDate: new Date(toDate),
+            }),
+        ).pipe(
+            flatMap(identity),
+            flatMap(({ items }) => items),
+            shareReplay(),
+        );
+
+        const meeting$ = this.meetingService.getById(id);
+
+        const meetingLength$ = meeting$.pipe(
+            pluck('length'),
+            shareReplay(),
+        );
+
+        const selectedRange$ = interval().pipe(
+            flatMap(time =>
+                meetingLength$.pipe(
+                    map(length => [
+                        fromDate + length * time,
+                        fromDate + length * (time + 1),
+                    ]),
+                ),
+            ),
+        );
+
+        const freeTimeRange$ = selectedRange$.pipe(
+            takeWhile(([_, toDateTime]) => toDateTime <= toDate),
+            filter(([fromDateTime, toDateTime]) => {
+                const fromDateIns = new Date(fromDateTime);
+                const toDateIns = new Date(toDateTime);
+
+                return (
+                    query.weekDays.includes(fromDateIns.getDay()) &&
+                    query.weekDays.includes(toDateIns.getDay()) &&
+                    fromDateIns.getHours() >= fromHours &&
+                    fromDateIns.getMinutes() >= fromMinutes &&
+                    toDateIns.getHours() <= toHours &&
+                    toDateIns.getMinutes() <= toMinutes
+                );
+            }),
+            flatMap(([fromDateTime, toDateTime]) =>
+                busyTime$
+                    .pipe(
+                        // false if any busy time contained, true mean the time range is free
+                        every(busy => {
+                            const inRange = (ms: number) =>
+                                fromDateTime >= ms && ms <= toDateTime;
+                            return !(
+                                inRange(busy.fromDate.getTime()) ||
+                                inRange(busy.toDate.getTime())
+                            );
+                        }),
+                    )
+                    .pipe(
+                        map(isFree => ({
+                            fromDateTime,
+                            toDateTime,
+                            isFree,
+                        })),
+                    ),
+            ),
+            filter(item => item.isFree),
+        );
+
+        return freeTimeRange$.pipe(
+            take(query.take || 5),
+            map(item => ({
+                fromDate: new Date(item.fromDateTime),
+                toDate: new Date(item.toDateTime),
+            })),
+            map(item => ObjectUtils.ObjectToPlain(item, SuggestTimeDto)),
+            toArray(),
+            map(items => ({ items, length: items.length })),
+        );
+    }
+
     @Get(':id/busy-time')
     @UseGuards(MeetingOwnerGuard)
     @UseGuards(MeetingGuard)
@@ -511,16 +721,16 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingBusyTimeQueryDto,
     ) {
-        const friendsId$ = from(
+        const friendsIds = await from(
             this.meetingService.getAllFriendIdsInInvitations(id, user.id),
-        ).pipe(
-            map(list => [...new Set(list).add(user.id)]),
-            flatMap(identity),
-        );
+        )
+            .pipe(map(list => [...new Set(list).add(user.id)]))
+            .toPromise();
 
-        const friend$ = friendsId$.pipe(
+        const friend$ = from(friendsIds).pipe(
             flatMap(friendId => this.userService.getById(friendId)),
-            filter(item => Boolean(item)),
+            skipFalsy(),
+            shareReplay(),
         );
 
         const friendJoinedMeeting$ = friend$.pipe(
@@ -535,40 +745,42 @@ export class MeetingController {
 
         const whoHasGoogleService$ = friend$.pipe(
             filter(({ googleRefreshToken }) => Boolean(googleRefreshToken)),
-            flatMap(friend =>
-                from(
-                    this.googleAuthService.isRefreshTokenAvailable(
-                        friend.googleRefreshToken,
+            flatMap(async item => {
+                return {
+                    item,
+                    available: await this.googleAuthService.isRefreshTokenAvailable(
+                        item.googleRefreshToken,
                     ),
-                ).pipe(
-                    filter(identity),
-                    mapTo(friend),
-                ),
-            ),
+                };
+            }),
+            filter(({ available }) => available),
+            map(({ item }) => item),
+            shareReplay(),
         );
 
         const userRefreshToken$ = whoHasGoogleService$.pipe(
-            map(friend => friend.googleRefreshToken),
+            pluck('googleRefreshToken'),
+            shareReplay(),
         );
 
-        const userCalendarIdList$ = userRefreshToken$.pipe(
-            flatMap(token => this.googleCalendarService.getAllCalendars(token)),
-            map(calendar => calendar.id),
-            toArray(),
+        const userCalendarIdList$ = whoHasGoogleService$.pipe(
+            map(item =>
+                item.setting.calendarImportance.map(cal => cal.calendarId),
+            ),
         );
 
         const userBusyEventCalendar$ = zip(
             userRefreshToken$,
             userCalendarIdList$,
         ).pipe(
-            flatMap(([refreshToken, calendarIds]) => {
-                return this.googleEventService.getAllBusyEvent({
+            concatMap(([refreshToken, calendarIds]) =>
+                this.googleEventService.getAllBusyEvent({
                     refreshToken,
                     calendarIds,
                     timeMax: query.toDate,
                     timeMin: query.fromDate,
-                });
-            }),
+                }),
+            ),
             toArray(),
         );
 
@@ -576,15 +788,39 @@ export class MeetingController {
             whoHasGoogleService$,
             userBusyEventCalendar$,
         ).pipe(
+            filter(
+                ([userInstance, eventCalendar]) =>
+                    Boolean(userInstance) && Boolean(eventCalendar),
+            ),
             flatMap(([userInstance, eventCalendar]) =>
                 from(eventCalendar).pipe(
-                    flatMap(item => Object.values(item)),
+                    filter(item => typeof item === 'object'),
+                    map(item => {
+                        return Object.entries(item)
+                            .filter(
+                                ([_, freebusy]) => typeof freebusy === 'object',
+                            )
+                            .map(([calendar, freebusy]) => {
+                                const find = userInstance.setting.calendarImportance.find(
+                                    val => val.calendarId === calendar,
+                                );
+                                return {
+                                    ...freebusy,
+                                    level: find ? find.importance : 3,
+                                };
+                            });
+                    }),
+                    catchError(() => empty()),
+                    flatMap(identity),
                     filter(item => !item.errors),
-                    flatMap(item => item.busy),
-                    map(({ start, end }) => ({
+                    flatMap(item =>
+                        item.busy.map(busy => ({ ...busy, level: item.level })),
+                    ),
+                    map(({ start, end, level }) => ({
                         fromDate: new Date(start),
                         toDate: new Date(end),
                         user: userInstance,
+                        busyLevel: level,
                     })),
                 ),
             ),
@@ -597,29 +833,74 @@ export class MeetingController {
                         fromDate: item.plannedStartTime,
                         toDate: item.plannedEndTime,
                         user: userInstance,
+                        busyLevel: item.priority,
                     })),
                 ),
             ),
         );
 
         const groupedBusyTime$ = merge(busyTime$, systemBusyTime$).pipe(
-            groupBy(time => ({
-                a: time.fromDate.getTime(),
-                b: time.fromDate.getTime(),
-            })),
-            flatMap(group => group.pipe(toArray())),
+            toArray(),
+            map(items => {
+                const list: Array<{
+                    fromDate: Date;
+                    toDate: Date;
+                    users: Array<InstanceType<User>>;
+                    busyLevel: number;
+                }> = [];
+
+                if (!items.length) {
+                    return list;
+                }
+
+                const sorted = items.sort(item => item.fromDate.getTime());
+                for (
+                    let loopTime = items[0].fromDate;
+                    loopTime.getTime() <=
+                    items[items.length - 1].toDate.getTime();
+                    loopTime = new Date(loopTime.getTime() + 30 * 60000)
+                ) {
+                    const inRange = sorted.filter(
+                        item =>
+                            item.fromDate <= loopTime &&
+                            loopTime <= item.toDate,
+                    );
+                    if (!inRange.length) {
+                        continue;
+                    }
+
+                    const userUnique = [
+                        ...new Set(inRange.map(item => item.user)),
+                    ];
+                    const busyLevelUnique = new Map();
+                    inRange.map(item => {
+                        const old = busyLevelUnique.get(item.user.username);
+                        if (!old || old > item.busyLevel) {
+                            busyLevelUnique.set(
+                                item.user.username,
+                                item.busyLevel,
+                            );
+                        }
+                    });
+
+                    list.push({
+                        fromDate: loopTime,
+                        toDate: new Date(loopTime.getTime() + 30 * 60000),
+                        users: userUnique,
+                        busyLevel:
+                            [...busyLevelUnique.values()].reduce(
+                                (acc, xs) => acc + ((4 - xs) / 3) * 100,
+                                0,
+                            ) / friendsIds.length,
+                    });
+                }
+
+                return list;
+            }),
+            flatMap(identity),
         );
 
         const result$ = groupedBusyTime$.pipe(
-            map(group => ({
-                fromDate: group.length !== 0 ? group[0].fromDate : undefined,
-                toDate: group.length !== 0 ? group[0].toDate : undefined,
-                users: group.reduce(
-                    (acc, xs) =>
-                        acc.includes(xs.user) ? acc : acc.concat(xs.user),
-                    [] as Array<InstanceType<User>>,
-                ),
-            })),
             filter(item => Boolean(item.fromDate) && Boolean(item.toDate)),
             map(item => ({
                 ...item,
@@ -631,14 +912,74 @@ export class MeetingController {
         return result$.pipe(
             map(item => ObjectUtils.ObjectToPlain(item, BusyTimeDto)),
             toArray(),
-            map(items => ({ items })),
+            map(items => ({ items, length: items.length })),
         );
     }
 
     @Put(':id/calendar')
     @UseGuards(MeetingGuard)
-    async markOrUnMarkCalendar() {
-        // Todo: mark the calendar
+    async markOrUnMarkCalendar(
+        @Auth() user: InstanceType<User>,
+        @Param('id') id: string,
+    ) {
+        if (!user.googleRefreshToken) {
+            throw new BadRequestException(
+                'user should first connect to Google',
+            );
+        }
+
+        if (!user.setting.markEventOnCalendarId) {
+            throw new BadRequestException(
+                'user should first set up a calendar to mark events',
+            );
+        }
+
+        const meeting = await this.meetingService.getById(id).toPromise();
+
+        const attendee = meeting.attendance.find(item =>
+            Types.ObjectId(user.id).equals(item.user as any),
+        );
+
+        if (!attendee) {
+            throw new BadRequestException(
+                'user should first accept the meeting invitation',
+            );
+        }
+
+        if (attendee.googleCalendarEventId) {
+            await this.googleCalendarService
+                .unmarkEventOnCalendar(
+                    user.googleRefreshToken,
+                    attendee.googleCalendarEventId,
+                    user.setting.markEventOnCalendarId,
+                )
+                .toPromise();
+
+            attendee.googleCalendarEventId = undefined;
+
+            await meeting.save();
+            return {
+                isMarked: false,
+            };
+        }
+
+        const event = this.googleCalendarService.generateEventFromMeeting(
+            meeting,
+        );
+
+        const markedEvent = await this.googleCalendarService
+            .markEventOnCalendar(
+                user.googleRefreshToken,
+                user.setting.markEventOnCalendarId,
+                event,
+            )
+            .toPromise();
+
+        attendee.googleCalendarEventId = markedEvent.data.id;
+        await meeting.save();
+        return {
+            isMarked: true,
+        };
     }
 
     @Put(':id/attendance/:attendee')
@@ -650,9 +991,7 @@ export class MeetingController {
         @Param('attendee') attendeeUsername: string,
         @Body() editAttendeeStatusDto: EditAttendeeStatusDto,
     ) {
-        const attendee$ = from(
-            this.userService.getByUsername(attendeeUsername),
-        ).pipe(
+        const attendee$ = this.userService.getByUsername(attendeeUsername).pipe(
             tap(attendee => {
                 if (!attendee) {
                     throw new BadRequestException(
