@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+    <body style="margin: 0 auto;max-width: 600px;">
+        <!-- header -->
+        <div>
+            <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href="http://fyp.setako.net/member/user/info"
+            >
+                <img
+                    height="100"
+                    src="https://storage.googleapis.com/fyp-ccomander-resources/static/icon.png"
+                />
+            </a>
+        </div>
+
+        <!-- main -->
+        <div
+            style="padding: 10px;
+            border: outset 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 2px 0px -2px rgba(0, 0, 0, 0.2),0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+            "
+        >
+            <!-- info -->
+            <div style="font-size: 1.1rem">
+                <div>
+                    <% if (receiverDisplayName) { %> Hi there,<span
+                        style="font-weight: bold;"
+                    >
+                        <%= receiverDisplayName %></span
+                    >! <% } else { %> Hi there! <% } %>
+                </div>
+                <div style="font-style: oblique;margin-top:10px">
+                    A meeting invitation have been sent to you.
+                </div>
+            </div>
+
+            <!-- detail -->
+            <div
+                style="margin: 20px;
+                text-align: center;"
+            >
+                <br />
+                <div style="font-weight: bold;font-size: 2rem;margin: 5px;">
+                    <%= meeting.title %>
+                </div>
+                <div style="margin: 5px;margin-bottom: 20px">
+                    Host by <%= meeting.ownerDisplayName %>
+                </div>
+                <div style="margin: 5px;">Status: <%= meeting.status %></div>
+                <div style="margin: 5px;">
+                    Location: <%= meeting.location %>
+                </div>
+                <div style="margin: 5px;">
+                    Length: <%= meeting.length %> Hours
+                </div>
+                <div style="margin: 5px;">
+                    Planned Date: <%= meeting.plannedDate %>
+                </div>
+            </div>
+
+            <!-- action -->
+            <div
+                style="
+                display: flex;
+                flex-wrap: wrap;"
+            >
+                <a
+                    style="margin-left: auto;margin-right: auto;
+                    color: rgba(202, 198, 198, 0.842);
+                    font-weight: bold;
+                    text-decoration: none;"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="<%= meeting.agendaLink %>"
+                >
+                    <div style="text-align: center">
+                        <div
+                            style="border: none;
+                            color: white;
+                            padding: 15px 32px;
+                            text-align: center;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-size: 16px;
+                            margin: 4px 2px;
+                            cursor: pointer;
+                            background-color: #008cba;"
+                        >
+                            Check meeting agenda
+                        </div>
+                    </div>
+                </a>
+                <a
+                    style="margin-left: auto;margin-right: auto;
+                    color: rgba(202, 198, 198, 0.842);
+                    font-weight: bold;
+                    text-decoration: none;"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href="http://fyp.setako.net/member/meeting-invitations"
+                >
+                    <div style="text-align: center">
+                        <div
+                            style="border: none;
+                            color: white;
+                            padding: 15px 32px;
+                            text-align: center;
+                            text-decoration: none;
+                            display: inline-block;
+                            font-size: 16px;
+                            margin: 4px 2px;
+                            cursor: pointer;
+                            background-color: #008cba;"
+                        >
+                            Reply meeting invitation
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- footer -->
+        <div
+            style="color: rgba(202, 198, 198, 0.842);
+            margin-top: 10px;text-align: center"
+        >
+            We send this email when a meeting invitation is sent to you. Free
+            free to
+            <a
+                style="color: rgba(202, 198, 198, 0.842);
+                font-weight: bold;
+                text-decoration: none;"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="http://fyp.setako.net/member/settings"
+            >
+                turn off
+            </a>
+            those email at any time.
+        </div>
+    </body>
+</html>

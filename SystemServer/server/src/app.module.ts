@@ -12,6 +12,7 @@ import { GoogleModule } from './core/google/google.module';
 import { WebsocketModule } from './core/websocket/websocket.module';
 import { SearchModule } from './core/search/search.module';
 import { BreakChangeModule } from './core/break-change/break-change.module';
+import { ScheduleModule } from './core/schedule/schedule.module';
 
 @Module({
     imports: [
@@ -23,7 +24,6 @@ import { BreakChangeModule } from './core/break-change/break-change.module';
         MailerModule.forRoot({
             transport: JSON.parse(process.env.MAIL_TRANSPORT),
         }),
-        MailerModule,
         AuthModule,
         UserModule,
         MeetingModule,
@@ -35,6 +35,7 @@ import { BreakChangeModule } from './core/break-change/break-change.module';
         SearchModule,
         WebsocketModule,
         BreakChangeModule,
+        ScheduleModule,
     ],
     controllers: [],
     providers: [],

@@ -76,23 +76,23 @@ export class UserSetting {
             ? partial.notification
             : {
                   friendRequest: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingInfoUpdate: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingInvitation: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingCancelled: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
                   meetingReminder: {
-                      email: true,
+                      email: false,
                       notification: true,
                   },
               };

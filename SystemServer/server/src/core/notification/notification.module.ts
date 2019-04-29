@@ -6,6 +6,8 @@ import { NotificationController } from './notification.controller';
 import { Notification } from './notification.model';
 import { NotificationService } from './notification.service';
 import { MeetingModule } from '../meeting/meeting.module';
+import { GoogleModule } from '../google/google.module';
+import { MailerModule } from '@nest-modules/mailer';
 
 @Module({
     imports: [
@@ -13,6 +15,8 @@ import { MeetingModule } from '../meeting/meeting.module';
         forwardRef(() => FriendRequestModule),
         forwardRef(() => MeetingModule),
         UserModule,
+        GoogleModule,
+        MailerModule,
     ],
     controllers: [NotificationController],
     providers: [NotificationService],

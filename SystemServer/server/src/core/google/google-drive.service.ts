@@ -54,4 +54,15 @@ export class GoogleDriveService {
             catchError(_ => of(false)),
         );
     }
+
+    public getFile(refreshToken: string, fileId: string, fields: string = '*') {
+        const drive = this.getDrive(refreshToken);
+
+        return defer(() =>
+            drive.files.get({
+                fileId,
+                fields,
+            }),
+        ).pipe(map(item => item.data));
+    }
 }
