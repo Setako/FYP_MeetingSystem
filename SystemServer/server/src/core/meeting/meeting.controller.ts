@@ -612,8 +612,14 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingSuggestTimeQuery,
     ) {
-        const fromTime = query.fromDate.getTime();
-        const toTime = query.toDate.getTime();
+        const fromDate = query.fromDate.setHours(0, 0, 0, 0);
+        const toDate = query.toDate.setHours(24, 0, 0, 0);
+        const [fromHours, fromMinutes] = query.fromTime
+            .split(':')
+            .map(n => parseInt(n, 10));
+        const [toHours, toMinutes] = query.toTime
+            .split(':')
+            .map(n => parseInt(n, 10));
 
         if (query.weekDays.length === 0) {
             throw new BadRequestException(
@@ -621,13 +627,18 @@ export class MeetingController {
             );
         }
 
-        if (fromTime >= toTime) {
+        if (fromDate >= toDate) {
             throw new BadRequestException(
                 'fromDate must be smaller than toDate',
             );
         }
 
-        const busyTime$ = from(this.getBusyTime(user, id, query)).pipe(
+        const busyTime$ = from(
+            this.getBusyTime(user, id, {
+                fromDate: new Date(fromDate),
+                toDate: new Date(toDate),
+            }),
+        ).pipe(
             flatMap(identity),
             flatMap(({ items }) => items),
             shareReplay(),
@@ -644,20 +655,28 @@ export class MeetingController {
             flatMap(time =>
                 meetingLength$.pipe(
                     map(length => [
-                        fromTime + length * time,
-                        fromTime + length * (time + 1),
+                        fromDate + length * time,
+                        fromDate + length * (time + 1),
                     ]),
                 ),
             ),
         );
 
         const freeTimeRange$ = selectedRange$.pipe(
-            takeWhile(([_, toDateTime]) => toDateTime <= toTime),
-            filter(
-                ([fromDateTime, toDateTime]) =>
-                    query.weekDays.includes(new Date(fromDateTime).getDay()) &&
-                    query.weekDays.includes(new Date(toDateTime).getDay()),
-            ),
+            takeWhile(([_, toDateTime]) => toDateTime <= toDate),
+            filter(([fromDateTime, toDateTime]) => {
+                const fromDateIns = new Date(fromDateTime);
+                const toDateIns = new Date(toDateTime);
+
+                return (
+                    query.weekDays.includes(fromDateIns.getDay()) &&
+                    query.weekDays.includes(toDateIns.getDay()) &&
+                    fromDateIns.getHours() >= fromHours &&
+                    fromDateIns.getMinutes() >= fromMinutes &&
+                    toDateIns.getHours() <= toHours &&
+                    toDateIns.getMinutes() <= toMinutes
+                );
+            }),
             flatMap(([fromDateTime, toDateTime]) =>
                 busyTime$
                     .pipe(
@@ -679,7 +698,7 @@ export class MeetingController {
                         })),
                     ),
             ),
-            filter(item => !item.isFree),
+            filter(item => item.isFree),
         );
 
         return freeTimeRange$.pipe(

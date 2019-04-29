@@ -19,7 +19,7 @@ export function IsUsername(
             constraints: [],
             options: validationOptions,
             validator: {
-                validate(value: any, args: ValidationArguments) {
+                validate(value: any, _args: ValidationArguments) {
                     const validator = new Validator();
                     const isAlphanumeric = validator.isAlphanumeric.bind(
                         validator,

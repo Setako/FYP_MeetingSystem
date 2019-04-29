@@ -203,6 +203,14 @@ export class NotificationService {
                         length: meeting.length / 600000,
                         plannedDate: meeting.plannedStartTime.toLocaleString(
                             'en-us',
+                            {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                            },
                         ),
                     },
                 })) as string,
@@ -265,6 +273,14 @@ export class NotificationService {
                     length: meeting.length / 600000,
                     plannedDate: meeting.plannedStartTime.toLocaleString(
                         'en-us',
+                        {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            second: 'numeric',
+                        },
                     ),
                     agendaLink: file ? file.webViewLink : null,
                 },
@@ -306,6 +322,14 @@ export class NotificationService {
                         length: meeting.length / 600000,
                         plannedDate: meeting.plannedStartTime.toLocaleString(
                             'en-us',
+                            {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                            },
                         ),
                     },
                 })) as string,
@@ -353,6 +377,14 @@ export class NotificationService {
                         length: meeting.length / 600000,
                         plannedDate: meeting.plannedStartTime.toLocaleString(
                             'en-us',
+                            {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                            },
                         ),
                     },
                 })) as string,
