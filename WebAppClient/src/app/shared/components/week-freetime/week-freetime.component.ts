@@ -14,6 +14,7 @@ import {Subscription} from 'rxjs';
 export class WeekFreetimeComponent implements OnInit {
   @Input() dayStartHour: number;
   @Input() dayEndHour: number;
+  @Input() includeDays: number[];
   @ViewChild('calendar') calendar: CalendarWeekViewComponent;
   busyTimes: CalendarEvent[] = [];
   public view = CalendarView.Week;
@@ -21,14 +22,25 @@ export class WeekFreetimeComponent implements OnInit {
 
   Math: any;
   viewDate = new Date();
-  private selectedDate: Date;
+
+  @Input()
+  selectedDate: Date;
   public CalendarView = CalendarView;
 
   constructor(public meetingService: MeetingService, public snackBar: MatSnackBar) {
     this.Math = Math;
   }
 
-  private _meeting: Meeting;
+  private _meeting: Meeting = null;
+
+  public get excludeDays() {
+    return [0, 1, 2, 3, 4, 5, 6].filter(it => {
+      if (this.includeDays.indexOf(it) < 0) {
+        console.log(it);
+      }
+      return this.includeDays.indexOf(it) < 0;
+    });
+  }
 
   get meeting(): Meeting {
     return this._meeting;
@@ -44,7 +56,7 @@ export class WeekFreetimeComponent implements OnInit {
   }
 
   get events(): CalendarEvent[] {
-    return this.selectedDate == null
+    return (this.selectedDate == null
       ? this.busyTimes
       : this.busyTimes.concat({
         start: this.selectedDate,
@@ -52,7 +64,7 @@ export class WeekFreetimeComponent implements OnInit {
         title: 'Planning time',
         color: {primary: '#ffecb3', secondary: '#ffc107'},
         cssClass: 'selected-time'
-      }).concat({
+      })).concat({
         start: moment().toDate(),
         end: moment().add('5', 'minute').toDate(),
         title: 'Now',

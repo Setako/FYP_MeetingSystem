@@ -176,7 +176,7 @@
         <mat-step>
           <ng-template matStepLabel>Select time</ng-template>
 
-          <app-meeting-edit-time [meeting]="meeting">
+          <app-meeting-edit-time *ngIf="meeting!=null" [meeting]="meeting">
 
           </app-meeting-edit-time>
           <div class="d-flex justify-content-end">
