@@ -152,7 +152,7 @@ async def train(sid, data):
 
         item_save_path.unlink()
 
-    knn_clf = trainer.make_knn_classifier_from_xy(X, Y)
+    knn_clf = trainer.make_knn_classifier_info_from_xy(X, Y)
 
     knn_clf_save_path: Path = cache_clf_root / "{}.clf".format(merge_id)
     cloud_save_path = "models/{}.clf".format(merge_id)
