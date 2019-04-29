@@ -33,9 +33,10 @@ import {
     identity,
     fromEvent,
 } from 'rxjs';
-import { map, flatMap, filter, toArray } from 'rxjs/operators';
+import { map, flatMap, filter, toArray, defaultIfEmpty } from 'rxjs/operators';
 import { FriendService } from '../friend/friend.service';
 import { GoogleDriveService } from '../google/google-drive.service';
+import { skipFalsy } from '@commander/shared/operator/function';
 
 @Injectable()
 export class MeetingService {
@@ -371,7 +372,10 @@ export class MeetingService {
     }
 
     findAll(options = {}) {
-        return this.meetingModel.find(options);
+        return of(options).pipe(
+            flatMap(item => this.meetingModel.find(item).exec()),
+            flatMap(identity),
+        );
     }
 
     async create(createMeetingDto: CreateMeetingDto, owner: User) {
@@ -716,7 +720,7 @@ export class MeetingService {
             .toPromise();
     }
 
-    async findNewInviteeIds(meetingId: string, invitations: InvitationsDto) {
+    async findNewInviteeInfo(meetingId: string, invitations: InvitationsDto) {
         const invitationList = invitations || undefined;
         const emails = new Set(invitationList ? invitationList.emails : []);
         const friends = new Set(invitationList ? invitationList.friends : []);
@@ -725,27 +729,51 @@ export class MeetingService {
             .findById(meetingId)
             .populate('owner invitations.user')
             .exec();
+        const owner = meeting.owner as InstanceType<User>;
 
-        [meeting.owner as InstanceType<User>].map(owner => {
-            emails.delete(owner.email);
-            friends.delete(owner.username);
+        emails.delete(owner.email);
+        friends.delete(owner.username);
+
+        meeting.invitations.forEach(item => {
+            emails.delete(item.email);
+            friends.delete(
+                item.user ? (item.user as InstanceType<User>).username : null,
+            );
         });
 
-        const friendIds$ = from(friends.values()).pipe(
+        const friendInfo$ = from(friends.values()).pipe(
             flatMap(item => this.userService.getByUsername(item)),
-            filter(Boolean.bind(null)),
-            map(({ id }) => id as string),
+            skipFalsy(),
+            map(({ id, email }) => ({
+                userId: id,
+                email,
+            })),
         );
 
-        const emailOnwerId$ = from(emails.values()).pipe(
-            flatMap(email => this.userService.getByEmail(email)),
-            filter(Boolean.bind(null)),
-            map(item => item.id as string),
+        const emailInfo$ = from(emails.values()).pipe(
+            flatMap(item =>
+                this.userService.getByUsername(item).pipe(
+                    skipFalsy(),
+                    map(({ id, email }) => ({
+                        userId: id,
+                        email,
+                    })),
+                    defaultIfEmpty({
+                        userId: null,
+                        email: item,
+                    }),
+                ),
+            ),
         );
 
-        return merge(friendIds$, emailOnwerId$)
+        return merge(friendInfo$, emailInfo$)
             .pipe(toArray())
-            .toPromise();
+            .toPromise() as Promise<
+            Array<{
+                userId?: string;
+                email: string;
+            }>
+        >;
     }
 
     async editInvitations(meetingId: string, invitations: InvitationsDto) {

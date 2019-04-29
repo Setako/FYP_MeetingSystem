@@ -243,41 +243,51 @@ export class MeetingController {
         @Param('id') id: string,
         @Body() editMeetingDto: EditMeetingDto,
     ) {
-        const sendNotification$ = this.meetingService.getById(id).pipe(
-            skipFalsy(),
-            filter(({ status }) =>
-                [MeetingStatus.Planned, MeetingStatus.Confirmed].includes(
-                    status,
-                ),
-            ),
-            flatMap(() =>
-                this.meetingService.findNewInviteeIds(
-                    id,
-                    editMeetingDto.invitations,
-                ),
-            ),
-            flatMap(identity),
-            skipFalsy(),
-            flatMap(inviteeId =>
-                this.notificationService.create({
-                    receiver: Types.ObjectId(inviteeId),
-                    type: NotificationType.MeetingInviteReceived,
-                    time: new Date(),
-                    object: Types.ObjectId(id),
-                    objectModel: NotificationObjectModel.Meeting,
-                }),
-            ),
-        );
+        const meeting = await this.meetingService.getById(id).toPromise();
+
+        if (
+            [MeetingStatus.Planned, MeetingStatus.Confirmed].includes(
+                meeting.status,
+            )
+        ) {
+            const newInviteeInfo = await this.meetingService.findNewInviteeInfo(
+                id,
+                editMeetingDto.invitations,
+            );
+
+            from(newInviteeInfo)
+                .pipe(
+                    flatMap(({ userId, email }) =>
+                        this.notificationService.sendMeetingInvitationEmail(
+                            id,
+                            userId,
+                            email,
+                        ),
+                    ),
+                )
+                .subscribe();
+        }
+
+        if (
+            [
+                MeetingStatus.Confirmed,
+                MeetingStatus.Ended,
+                MeetingStatus.Planned,
+                MeetingStatus.Started,
+            ].includes(meeting.status)
+        ) {
+            this.notificationService.sendMeetingInfoUpdateEmail(meeting.id);
+        }
 
         const meeting$ = from(
             this.meetingService.edit(id, editMeetingDto),
         ).pipe(
-            flatMap(async meeting => {
-                meeting.resources = await this.meetingService.getAccessableResources(
-                    meeting.id,
+            flatMap(async meetingInstance => {
+                meetingInstance.resources = await this.meetingService.getAccessableResources(
+                    meetingInstance.id,
                     user.id,
                 );
-                return meeting;
+                return meetingInstance;
             }),
             populate(
                 'owner',
@@ -288,7 +298,7 @@ export class MeetingController {
             documentToPlain(GetMeetingDto),
         );
 
-        return meeting$.pipe(tap(() => sendNotification$.subscribe()));
+        return meeting$;
     }
 
     @Get(':id/resources/:username')
@@ -451,12 +461,23 @@ export class MeetingController {
                 case MeetingStatus.Planned:
                     return defer(() => {
                         const inviteeInWaiting = updatedMeeting.invitations.filter(
-                            item =>
-                                item.status === InvitationStatus.Waiting &&
-                                item.user,
+                            item => item.status === InvitationStatus.Waiting,
+                        );
+
+                        const sendEmail$ = from(inviteeInWaiting).pipe(
+                            flatMap(invitee =>
+                                this.notificationService.sendMeetingInvitationEmail(
+                                    updatedMeeting.id,
+                                    invitee.user
+                                        ? (invitee.user as Types.ObjectId).toHexString()
+                                        : null,
+                                    invitee.email,
+                                ),
+                            ),
                         );
 
                         const addNotification$ = from(inviteeInWaiting).pipe(
+                            filter(item => Boolean(item.user)),
                             flatMap(invitee =>
                                 this.notificationService.create({
                                     receiver: invitee.user as Types.ObjectId,
@@ -474,9 +495,11 @@ export class MeetingController {
                             this.meetingService.addAttendance(id, owner.id),
                         );
 
-                        return of(addNotification$, addOwnerAttendance$).pipe(
-                            mergeAll(),
-                        );
+                        return of(
+                            sendEmail$,
+                            addNotification$,
+                            addOwnerAttendance$,
+                        ).pipe(mergeAll());
                     });
                 case MeetingStatus.Ended:
                     return defer(() =>
@@ -484,6 +507,31 @@ export class MeetingController {
                             realEndTime: new Date().toISOString(),
                         }),
                     );
+                case MeetingStatus.Cancelled:
+                    return defer(() => {
+                        return from(
+                            updatedMeeting.attendance
+                                .map(item => item.user as Types.ObjectId)
+                                .filter(item => !item.equals(owner.id)),
+                        ).pipe(
+                            flatMap(receiver =>
+                                this.notificationService.create({
+                                    receiver,
+                                    type: NotificationType.MeetingCancelled,
+                                    time: new Date(),
+                                    object: updatedMeeting._id,
+                                    objectModel:
+                                        NotificationObjectModel.Meeting,
+                                }),
+                            ),
+                            toArray(),
+                            flatMap(() =>
+                                this.notificationService.sendMeetingCancelledEmail(
+                                    updatedMeeting.id,
+                                ),
+                            ),
+                        );
+                    });
                 default:
                     return empty();
             }
@@ -564,8 +612,14 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingSuggestTimeQuery,
     ) {
-        const fromTime = query.fromDate.getTime();
-        const toTime = query.toDate.getTime();
+        const fromDate = query.fromDate.setHours(0, 0, 0, 0);
+        const toDate = query.toDate.setHours(24, 0, 0, 0);
+        const [fromHours, fromMinutes] = query.fromTime
+            .split(':')
+            .map(n => parseInt(n, 10));
+        const [toHours, toMinutes] = query.toTime
+            .split(':')
+            .map(n => parseInt(n, 10));
 
         if (query.weekDays.length === 0) {
             throw new BadRequestException(
@@ -573,13 +627,18 @@ export class MeetingController {
             );
         }
 
-        if (fromTime >= toTime) {
+        if (fromDate >= toDate) {
             throw new BadRequestException(
                 'fromDate must be smaller than toDate',
             );
         }
 
-        const busyTime$ = from(this.getBusyTime(user, id, query)).pipe(
+        const busyTime$ = from(
+            this.getBusyTime(user, id, {
+                fromDate: new Date(fromDate),
+                toDate: new Date(toDate),
+            }),
+        ).pipe(
             flatMap(identity),
             flatMap(({ items }) => items),
             shareReplay(),
@@ -596,20 +655,28 @@ export class MeetingController {
             flatMap(time =>
                 meetingLength$.pipe(
                     map(length => [
-                        fromTime + length * time,
-                        fromTime + length * (time + 1),
+                        fromDate + length * time,
+                        fromDate + length * (time + 1),
                     ]),
                 ),
             ),
         );
 
         const freeTimeRange$ = selectedRange$.pipe(
-            takeWhile(([_, toDateTime]) => toDateTime <= toTime),
-            filter(
-                ([fromDateTime, toDateTime]) =>
-                    query.weekDays.includes(new Date(fromDateTime).getDay()) &&
-                    query.weekDays.includes(new Date(toDateTime).getDay()),
-            ),
+            takeWhile(([_, toDateTime]) => toDateTime <= toDate),
+            filter(([fromDateTime, toDateTime]) => {
+                const fromDateIns = new Date(fromDateTime);
+                const toDateIns = new Date(toDateTime);
+
+                return (
+                    query.weekDays.includes(fromDateIns.getDay()) &&
+                    query.weekDays.includes(toDateIns.getDay()) &&
+                    fromDateIns.getHours() >= fromHours &&
+                    fromDateIns.getMinutes() >= fromMinutes &&
+                    toDateIns.getHours() <= toHours &&
+                    toDateIns.getMinutes() <= toMinutes
+                );
+            }),
             flatMap(([fromDateTime, toDateTime]) =>
                 busyTime$
                     .pipe(
@@ -631,7 +698,7 @@ export class MeetingController {
                         })),
                     ),
             ),
-            filter(item => !item.isFree),
+            filter(item => item.isFree),
         );
 
         return freeTimeRange$.pipe(

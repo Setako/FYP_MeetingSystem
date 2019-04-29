@@ -158,6 +158,10 @@ export class FriendRequestController {
             objectModel: NotificationObjectModel.FriendRequest,
         });
 
+        if (target.setting.notification.friendRequest.email) {
+            this.notificationService.sendFirendRequestEmail(created.id);
+        }
+
         return ObjectUtils.DocumentToPlain(created, GetFriendRequestDto);
     }
 
@@ -235,7 +239,7 @@ export class FriendRequestController {
         if (!isRequestExist) {
             throw new NotFoundException('No requests sent');
         }
-        // Todo: [bug] check the user received reqeust sent by itself
+
         const result = (await this.friendRequestService.acceptOrRejectRequest(
             source,
             user.username,
