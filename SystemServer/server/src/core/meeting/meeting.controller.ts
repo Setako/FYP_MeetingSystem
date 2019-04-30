@@ -683,6 +683,10 @@ export class MeetingController {
                     return false;
                 }
 
+                if (searchTimeRangeMax === searchTimeRangeMin) {
+                    return true;
+                }
+
                 if (searchTimeRangeMax > searchTimeRangeMin) {
                     if (checkingTimeStart > checkingTimeEnd) {
                         return false;
