@@ -50,7 +50,6 @@ import {
     mergeAll,
     shareReplay,
     takeWhile,
-    every,
     take,
     pluck,
     defaultIfEmpty,
@@ -612,24 +611,14 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingSuggestTimeQuery,
     ) {
-        // const fromDate = query.fromDate.setHours(0, 0, 0, 0);
-        // const toDate = query.toDate.setHours(24, 0, 0, 0);
-        const [fromHours, fromMinutes] = query.fromTime
-            .split(':')
-            .map(n => parseInt(n, 10));
-        const [toHours, toMinutes] = query.toTime
-            .split(':')
-            .map(n => parseInt(n, 10));
-
-        const fromTimeTotalMinutes = fromHours * 60 + fromMinutes;
-        const toTimeTotalMinutes = toHours * 60 + toMinutes;
-
         const [fromDate, toDate] = [query.fromDate, query.toDate]
-            .map(d => d.toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong' }))
-            .map(s => new Date(s))
-            .map((val, ind) =>
-                val.setHours([fromHours, toHours][ind], 0, 0, 0),
-            );
+            .map(d => new Date(d.getTime()))
+            .map(d => d.setHours(0, 0, 0, 0));
+
+        const fromTimeTotalMinutes =
+            query.fromDate.getHours() * 60 + query.fromDate.getMinutes();
+        const toTimeTotalMinutes =
+            query.toDate.getHours() * 60 + query.toDate.getMinutes();
 
         if (query.weekDays.length === 0) {
             throw new BadRequestException(
@@ -675,16 +664,8 @@ export class MeetingController {
         const freeTimeRange$ = selectedRange$.pipe(
             takeWhile(([_, toDateTime]) => toDateTime <= toDate),
             filter(([fromDateTime, toDateTime]) => {
-                const fromDateIns = new Date(
-                    new Date(fromDateTime).toLocaleString('en-US', {
-                        timeZone: 'Asia/Hong_Kong',
-                    }),
-                );
-                const toDateIns = new Date(
-                    new Date(toDateTime).toLocaleString('en-US', {
-                        timeZone: 'Asia/Hong_Kong',
-                    }),
-                );
+                const fromDateIns = new Date(fromDateTime);
+                const toDateIns = new Date(toDateTime);
 
                 const fromTotal =
                     fromDateIns.getHours() * 60 + fromDateIns.getMinutes();
@@ -701,27 +682,32 @@ export class MeetingController {
                 );
             }),
             flatMap(([fromDateTime, toDateTime]) =>
-                busyTime$
-                    .pipe(
-                        // false if any busy time contained, true mean the time range is free
-                        every(busy => {
+                busyTime$.pipe(
+                    toArray(),
+                    map(items => {
+                        const filted = items.filter(busy => {
                             const inRange = (ms: number) =>
                                 fromDateTime >= ms && ms <= toDateTime;
-                            return !(
+                            return (
                                 inRange(busy.fromDate.getTime()) ||
                                 inRange(busy.toDate.getTime())
                             );
-                        }),
-                    )
-                    .pipe(
-                        map(isFree => ({
-                            fromDateTime,
-                            toDateTime,
-                            isFree,
-                        })),
-                    ),
+                        });
+                        return (
+                            filted.reduce((acc, xs) => acc + xs.busyLevel, 0) /
+                            (filted.length || 1)
+                        );
+                    }),
+                    map(busyLevel => ({
+                        fromDateTime,
+                        toDateTime,
+                        busyLevel,
+                    })),
+                ),
             ),
-            filter(item => item.isFree),
+            toArray(),
+            map(items => items.sort(item => item.busyLevel)),
+            flatMap(identity),
         );
 
         return freeTimeRange$.pipe(
@@ -729,6 +715,7 @@ export class MeetingController {
             map(item => ({
                 fromDate: new Date(item.fromDateTime),
                 toDate: new Date(item.toDateTime),
+                busyLevel: item.busyLevel,
             })),
             map(item => ObjectUtils.ObjectToPlain(item, SuggestTimeDto)),
             toArray(),

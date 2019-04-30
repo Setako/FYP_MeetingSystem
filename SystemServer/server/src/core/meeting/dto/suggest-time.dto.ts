@@ -10,6 +10,9 @@ export class SuggestTimeDto {
     @Type(() => Date)
     toDate: Date;
 
+    @Expose()
+    busyLevel: number;
+
     constructor(partial: Partial<SuggestTimeDto>) {
         Object.assign(this, partial);
     }
