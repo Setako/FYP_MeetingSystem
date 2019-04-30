@@ -89,6 +89,7 @@ import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
 import { skipFalsy } from '@commander/shared/operator/function';
 import { populate, documentToPlain } from '@commander/shared/operator/document';
 import { MeetingResourcesDto } from './dto/meeting-resouces.dto';
+import { DateUtils } from '@commander/shared/utils/date.utils';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -613,12 +614,12 @@ export class MeetingController {
     ) {
         const [fromDate, toDate] = [query.fromDate, query.toDate]
             .map(d => new Date(d.getTime()))
-            .map(d => d.setHours(0, 0, 0, 0));
+            .map((d, i) => d.setHours([0, 24][i], 0, 0, 0));
 
-        const fromTimeTotalMinutes =
-            query.fromDate.getHours() * 60 + query.fromDate.getMinutes();
-        const toTimeTotalMinutes =
-            query.toDate.getHours() * 60 + query.toDate.getMinutes();
+        const [searchTimeRangeMin, searchTimeRangeMax] = [
+            query.fromDate,
+            query.toDate,
+        ].map(d => DateUtils.toHourMinuteString(d));
 
         if (query.weekDays.length === 0) {
             throw new BadRequestException(
@@ -654,32 +655,64 @@ export class MeetingController {
             flatMap(time =>
                 meetingLength$.pipe(
                     map(length => [
-                        fromDate + 1800000 * (time - 1),
-                        fromDate + 1800000 * (time - 1) + length,
+                        fromDate + 1800000 * time,
+                        fromDate + 1800000 * time + length,
                     ]),
                 ),
             ),
         );
 
         const freeTimeRange$ = selectedRange$.pipe(
-            takeWhile(([_, toDateTime]) => toDateTime <= toDate),
+            // filter date in range
+            takeWhile(([_, checkingDateMax]) => checkingDateMax <= toDate),
+            // filter day in weekdays and time in range
             filter(([fromDateTime, toDateTime]) => {
                 const fromDateIns = new Date(fromDateTime);
                 const toDateIns = new Date(toDateTime);
 
-                const fromTotal =
-                    fromDateIns.getHours() * 60 + fromDateIns.getMinutes();
-                const toTotal =
-                    toDateIns.getHours() * 60 + toDateIns.getMinutes();
+                const [checkingTimeStart, checkingTimeEnd] = [
+                    fromDateIns,
+                    toDateIns,
+                ].map(d => DateUtils.toHourMinuteString(d));
 
-                return (
+                const inWeekDays =
                     query.weekDays.includes(fromDateIns.getDay()) &&
-                    query.weekDays.includes(toDateIns.getDay()) &&
-                    fromTotal >= fromTimeTotalMinutes &&
-                    fromTotal <= toTimeTotalMinutes &&
-                    toTotal >= fromTimeTotalMinutes &&
-                    toTotal <= toTimeTotalMinutes
-                );
+                    query.weekDays.includes(toDateIns.getDay());
+
+                if (!inWeekDays) {
+                    return false;
+                }
+
+                if (searchTimeRangeMax > searchTimeRangeMin) {
+                    if (checkingTimeStart > checkingTimeEnd) {
+                        return false;
+                    }
+                    if (
+                        checkingTimeStart < searchTimeRangeMin ||
+                        checkingTimeEnd > searchTimeRangeMax
+                    ) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                if (searchTimeRangeMin > searchTimeRangeMax) {
+                    if (
+                        searchTimeRangeMin < checkingTimeStart &&
+                        checkingTimeStart > searchTimeRangeMax
+                    ) {
+                        return false;
+                    }
+                    if (
+                        searchTimeRangeMin < checkingTimeEnd &&
+                        checkingTimeEnd < searchTimeRangeMax
+                    ) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                return false;
             }),
             flatMap(([fromDateTime, toDateTime]) =>
                 busyTime$.pipe(

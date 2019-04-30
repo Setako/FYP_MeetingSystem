@@ -19,5 +19,6 @@ export class MeetingSuggestTimeQuery extends MeetingBusyTimeQueryDto {
 
     @IsNumber()
     @IsOptional()
+    @Type(() => Number)
     take?: number;
 }
