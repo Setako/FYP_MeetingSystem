@@ -612,14 +612,24 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingSuggestTimeQuery,
     ) {
-        const fromDate = query.fromDate.setHours(0, 0, 0, 0);
-        const toDate = query.toDate.setHours(24, 0, 0, 0);
+        // const fromDate = query.fromDate.setHours(0, 0, 0, 0);
+        // const toDate = query.toDate.setHours(24, 0, 0, 0);
         const [fromHours, fromMinutes] = query.fromTime
             .split(':')
             .map(n => parseInt(n, 10));
         const [toHours, toMinutes] = query.toTime
             .split(':')
             .map(n => parseInt(n, 10));
+
+        const fromTimeTotalMinutes = fromHours * 60 + fromMinutes;
+        const toTimeTotalMinutes = toHours * 60 + toMinutes;
+
+        const [fromDate, toDate] = [query.fromDate, query.toDate]
+            .map(d => d.toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong' }))
+            .map(s => new Date(s))
+            .map((val, ind) =>
+                val.setHours([fromHours, toHours][ind], 0, 0, 0),
+            );
 
         if (query.weekDays.length === 0) {
             throw new BadRequestException(
@@ -655,8 +665,8 @@ export class MeetingController {
             flatMap(time =>
                 meetingLength$.pipe(
                     map(length => [
-                        fromDate + length * time,
-                        fromDate + length * (time + 1),
+                        fromDate + 1800000 * (time - 1),
+                        fromDate + 1800000 * (time - 1) + length,
                     ]),
                 ),
             ),
@@ -665,16 +675,29 @@ export class MeetingController {
         const freeTimeRange$ = selectedRange$.pipe(
             takeWhile(([_, toDateTime]) => toDateTime <= toDate),
             filter(([fromDateTime, toDateTime]) => {
-                const fromDateIns = new Date(fromDateTime);
-                const toDateIns = new Date(toDateTime);
+                const fromDateIns = new Date(
+                    new Date(fromDateTime).toLocaleString('en-US', {
+                        timeZone: 'Asia/Hong_Kong',
+                    }),
+                );
+                const toDateIns = new Date(
+                    new Date(toDateTime).toLocaleString('en-US', {
+                        timeZone: 'Asia/Hong_Kong',
+                    }),
+                );
+
+                const fromTotal =
+                    fromDateIns.getHours() * 60 + fromDateIns.getMinutes();
+                const toTotal =
+                    toDateIns.getHours() * 60 + toDateIns.getMinutes();
 
                 return (
                     query.weekDays.includes(fromDateIns.getDay()) &&
                     query.weekDays.includes(toDateIns.getDay()) &&
-                    fromDateIns.getHours() >= fromHours &&
-                    fromDateIns.getMinutes() >= fromMinutes &&
-                    toDateIns.getHours() <= toHours &&
-                    toDateIns.getMinutes() <= toMinutes
+                    fromTotal >= fromTimeTotalMinutes &&
+                    fromTotal <= toTimeTotalMinutes &&
+                    toTotal >= fromTimeTotalMinutes &&
+                    toTotal <= toTimeTotalMinutes
                 );
             }),
             flatMap(([fromDateTime, toDateTime]) =>
