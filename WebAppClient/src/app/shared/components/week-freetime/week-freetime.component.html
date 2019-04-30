@@ -1,4 +1,7 @@
 <div style="position: relative">
+  <div *ngIf="selectedDate!=null">
+    Selected: {{selectedDate|toDate|date: 'medium'}}
+  </div>
   <div *ngIf="queryingSubscription!=null" style="position: absolute; height: 100%; width: 100%">
     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
   </div>

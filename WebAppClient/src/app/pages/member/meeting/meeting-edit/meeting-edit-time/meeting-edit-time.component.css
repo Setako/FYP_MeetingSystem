@@ -1,0 +1,9 @@
+.suggest-time {
+  cursor: pointer;
+  padding: 16px
+}
+
+
+.suggest-time:hover {
+  background: rgba(0, 0, 0, .87);
+}

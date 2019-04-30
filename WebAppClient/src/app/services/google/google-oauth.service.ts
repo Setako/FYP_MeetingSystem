@@ -162,9 +162,9 @@ export class GoogleOauthService {
   }
 
   private gapiLoad(m: string): Observable<any> {
-    return Observable.create((observer) => {
+    return Observable.create(function (observer) {
       gapi.load(m, {
-        callback: () => {
+        callback: function () {
           observer.complete();
         },
         onerror: observer.error,
@@ -176,7 +176,7 @@ export class GoogleOauthService {
 
   private gapiClientLoad(m: string, v: string): Observable<any> {
     return Observable.create((observer) => {
-      gapi.client.load(m, v, function () {
+      gapi.client.load(m, v, () => {
         observer.complete();
       });
     });

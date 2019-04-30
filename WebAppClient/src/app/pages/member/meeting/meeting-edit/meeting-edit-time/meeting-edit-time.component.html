@@ -1,22 +1,22 @@
-<div class="d-flex flex-wrap">
-  <mat-checkbox class="pr-3"><span style="color: darkred">Sun</span></mat-checkbox>
-  <mat-checkbox class="pr-3">Mon</mat-checkbox>
-  <mat-checkbox class="pr-3">Tue</mat-checkbox>
-  <mat-checkbox class="pr-3">Wed</mat-checkbox>
-  <mat-checkbox class="pr-3">Thur</mat-checkbox>
-  <mat-checkbox class="pr-3">Fri</mat-checkbox>
-  <mat-checkbox class="pr-3">Sat</mat-checkbox>
-</div>
-<div>
+<div *ngIf="meeting!=null">
+  <div class="d-flex flex-wrap">
+    <mat-checkbox [(ngModel)]="_includeDays[0]" class="pr-3"><span style="color: darkred">Sun</span></mat-checkbox>
+    <mat-checkbox [(ngModel)]="_includeDays[1]" class="pr-3">Mon</mat-checkbox>
+    <mat-checkbox [(ngModel)]="_includeDays[2]" class="pr-3">Tue</mat-checkbox>
+    <mat-checkbox [(ngModel)]="_includeDays[3]" class="pr-3">Wed</mat-checkbox>
+    <mat-checkbox [(ngModel)]="_includeDays[4]" class="pr-3">Thur</mat-checkbox>
+    <mat-checkbox [(ngModel)]="_includeDays[5]" class="pr-3">Fri</mat-checkbox>
+    <mat-checkbox [(ngModel)]="_includeDays[6]" class="pr-3">Sat</mat-checkbox>
+  </div>
   <div>
     Pick date from range:
     <mat-form-field class="pr-3">
-      <input matInput [min]="today" [matDatepicker]="fromPicker" placeholder="From">
+      <input [(ngModel)]="fromDate" [matDatepicker]="fromPicker" [min]="today" matInput placeholder="From">
       <mat-datepicker-toggle matSuffix [for]="fromPicker"></mat-datepicker-toggle>
       <mat-datepicker #fromPicker></mat-datepicker>
     </mat-form-field>
     <mat-form-field>
-      <input matInput [min]="today" [matDatepicker]="toPicker" placeholder="To">
+      <input [(ngModel)]="toDate" [matDatepicker]="toPicker" [min]="today" matInput placeholder="To">
       <mat-datepicker-toggle matSuffix [for]="toPicker"></mat-datepicker-toggle>
       <mat-datepicker #toPicker></mat-datepicker>
     </mat-form-field>
@@ -41,12 +41,17 @@
       </mat-autocomplete>
     </mat-form-field>
   </div>
+
+  <button (click)="search()" *ngIf="searchTimeEnabled" color="primary" mat-raised-button>Search</button>
 </div>
 <div class="mb-2">
   <h2>Suggestion time slot</h2>
   <div class="col-12 col-lg-6">
-    <!--<mat-card *ngFor="let timeSlotSuggestion of timeSlotSuggestions" class="mb-1">Start-->
-    <!--at: {{timeSlotSuggestion|date:'short'}}</mat-card>-->
+    <div mat-ripple
+         *ngFor="let timeSlotSuggestion of timeSlotSuggestions" class="mb-1 suggest-time"
+         (click)="selectedDate = isoToDate(timeSlotSuggestion.fromDate)">
+      Start at: {{isoToDate(timeSlotSuggestion.fromDate)|date:'short'}}
+    </div>
   </div>
 </div>
 
@@ -56,6 +61,7 @@
   <h2>Calendar</h2>
 
   <app-week-freetime [meeting]="meeting" [dayStartHour]="searchTimeStartFormated"
-                     [dayEndHour]="searchTimeEndFormated"></app-week-freetime>
+                     [dayEndHour]="searchTimeEndFormated" [includeDays]="includeDays"
+                     [selectedDate]="selectedDate"></app-week-freetime>
 </div>
 

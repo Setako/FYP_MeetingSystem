@@ -7,6 +7,7 @@ import {map} from 'rxjs/operators';
 import {ListResponse} from '../utils/list-response';
 import {AuthService} from './auth.service';
 import {BusyTime} from '../shared/models/busy-time';
+import {SuggestTime} from '../shared/models/suggest-time';
 
 @Injectable({
   providedIn: 'root'
@@ -115,6 +116,16 @@ export class MeetingService {
       `${AppConfig.API_PATH}/meeting/${meeting.id}/busy-time` +
       `?fromDate=${from.toISOString()}` +
       `&toDate=${to.toISOString()}`
+    );
+  }
+
+  public getSuggestTime(meeting: Meeting, fromDate: Date, toDate: Date, fromTime: string, toTime: string, weekDays: number[]) {
+    return this.http.get<ListResponse<SuggestTime>>(
+      `${AppConfig.API_PATH}/meeting/${meeting.id}/suggest-time` +
+      `?fromDate=${fromDate.toISOString()}` +
+      `&toDate=${toDate.toISOString()}` +
+      weekDays.map(weekDay => `&weekDays=${weekDay}`).reduce((sum, next) => sum + next, '') +
+      `&fromTime=${fromTime}&toTime=${toTime}`
     );
   }
 
