@@ -200,7 +200,7 @@ export class NotificationService {
                         ownerDisplayName: owner.displayName,
                         status: meeting.status,
                         location: meeting.location,
-                        length: meeting.length / 600000,
+                        length: meeting.length / 60000 / 60,
                         plannedDate: meeting.plannedStartTime.toLocaleString(
                             'en-us',
                             {
@@ -271,7 +271,7 @@ export class NotificationService {
                     ownerDisplayName: owner.displayName,
                     status: meeting.status,
                     location: meeting.location,
-                    length: meeting.length / 600000,
+                    length: meeting.length / 60000 / 60,
                     plannedDate: meeting.plannedStartTime.toLocaleString(
                         'en-us',
                         {
@@ -321,7 +321,7 @@ export class NotificationService {
                         ownerDisplayName: owner.displayName,
                         status: meeting.status,
                         location: meeting.location,
-                        length: meeting.length / 600000,
+                        length: meeting.length / 60000 / 60,
                         plannedDate: meeting.plannedStartTime.toLocaleString(
                             'en-us',
                             {
@@ -377,7 +377,7 @@ export class NotificationService {
                         ownerDisplayName: owner.displayName,
                         status: meeting.status,
                         location: meeting.location,
-                        length: meeting.length / 600000,
+                        length: meeting.length / 60000 / 60,
                         plannedDate: meeting.plannedStartTime.toLocaleString(
                             'en-us',
                             {

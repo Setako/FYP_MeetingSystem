@@ -416,10 +416,12 @@ export class MeetingService {
             'language',
             'priority',
             'generalPermission',
-            'agendaGoogleResourceId',
+            ,
         ].forEach(
             item => (edited[item] = editMeetingDto[item] || edited[item]),
         );
+
+        edited.agendaGoogleResourceId = editMeetingDto.agendaGoogleResourceId;
 
         if (edited.agendaGoogleResourceId) {
             this.googleDriveService
@@ -736,6 +738,9 @@ export class MeetingService {
 
         meeting.invitations.forEach(item => {
             emails.delete(item.email);
+            emails.delete(
+                item.user ? (item.user as InstanceType<User>).email : null,
+            );
             friends.delete(
                 item.user ? (item.user as InstanceType<User>).username : null,
             );
@@ -767,7 +772,18 @@ export class MeetingService {
         );
 
         return merge(friendInfo$, emailInfo$)
-            .pipe(toArray())
+            .pipe(
+                toArray(),
+                map(items => {
+                    return items.filter(item => {
+                        const sameEmail = items.filter(
+                            ({ email }) => email === item.email,
+                        );
+
+                        return sameEmail.length === 1 || item.userId;
+                    });
+                }),
+            )
             .toPromise() as Promise<
             Array<{
                 userId?: string;
@@ -806,10 +822,10 @@ export class MeetingService {
 
         const friends$ = from(friends.values()).pipe(
             flatMap(item => this.userService.getByUsername(item)),
-            filter(Boolean.bind(null)),
-            map(({ _id }) => ({
+            skipFalsy(),
+            map(item => ({
                 id: uuidv4(),
-                user: _id as Types.ObjectId,
+                user: item,
                 status: InvitationStatus.Waiting,
             })),
         );
@@ -830,6 +846,18 @@ export class MeetingService {
         meeting.invitations = (await merge(kept$, friends$, emails$)
             .pipe(toArray())
             .toPromise()) as Invitation[];
+
+        meeting.invitations = meeting.invitations.filter(invitation => {
+            const invitationEmail = invitation.user
+                ? (invitation.user as any).email
+                : invitation.email;
+            const sameEmail = meeting.invitations.filter(item => {
+                const email = item.user ? (item.user as any).email : item.email;
+                return email === invitationEmail;
+            });
+
+            return sameEmail.length === 1 || !invitation.email;
+        });
 
         return meeting.save();
     }
