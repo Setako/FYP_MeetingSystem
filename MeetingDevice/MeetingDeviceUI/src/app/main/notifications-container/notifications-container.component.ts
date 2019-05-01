@@ -10,14 +10,6 @@ export class NotificationsContainerComponent implements OnInit {
     constructor(public notificationService: NotificationService) {}
 
     ngOnInit() {
-        this.notificationService.addNotification(
-            new IconSysNotification(
-                null,
-                'Attendance recorded',
-                ['Tester123'],
-                'done',
-            ),
-        );
         // this.notificationService.addNotification(
         //   new IconSysNotification(undefined, 'Testing3', ['Testing message'], 'favorite')
         // );

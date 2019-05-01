@@ -38,7 +38,7 @@ export class MeetingStateHolderService {
             console.log('server-exception', data);
         });
 
-        ipc.on('start-recognition', this.startRecog);
+        ipc.on('start-recognition', () => this.startRecog());
         ipc.on('recognised-user', (event, data) => {
             this.userRecog(data.userIds);
         });
@@ -46,16 +46,14 @@ export class MeetingStateHolderService {
     }
 
     private disconnected() {
+        this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Disconnected',
+            [
+                `Device disconnected with the apps`
+            ], 'mobile_off'));
         this.windowStackService.closeAllWindow();
     }
 
     private showToken(accessToken: string) {
-        if (this.currentMeeting != null) {
-            this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Disconnected',
-                [
-                    `Device disconnected with the apps`
-                ], 'mobile_off'));
-        }
         this.currentMeeting = null;
         this.windowStackService.showWindow({
             type: TokenQrcodeWindowComponent,
@@ -73,18 +71,21 @@ export class MeetingStateHolderService {
     }
 
     private userRecog(userIds: string[]) {
+        console.log(userIds);
         this.currentMeeting.attendance
             .map(attendance => attendance.user)
             .filter(user => userIds.indexOf(user.id) > -1)
             .forEach((user) => {
+                console.log('recognized:' + user.id);
                 this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Attendance recorded',
                     [
-                        `Attendee recognized: `
+                        `Attendee recognized: ${user.displayName}`
                     ], 'done'));
             });
     }
 
     private startRecog() {
+        console.log('start recog');
         this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Face recognition initialized',
             [
                 'Face recognition is now available'

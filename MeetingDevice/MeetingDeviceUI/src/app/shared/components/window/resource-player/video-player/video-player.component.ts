@@ -4,6 +4,7 @@ import {WINDOW_DATA} from '../../../../../services/window/window-ref';
 import {WindowData} from '../../../../../services/window/window-data';
 import {NormalKeys, RobotService} from '../../../../../services/robot.service';
 import WebviewTag = Electron.WebviewTag;
+import {interval} from 'rxjs';
 
 @Component({
     selector: 'app-video-player',
@@ -80,9 +81,10 @@ export class VideoPlayerComponent extends ControllableComponent
     }
 
     ngAfterViewInit(): void {
-        // interval(500).subscribe(() => {
-        //     this.webContent.nativeElement.focus();
-        // });
+        interval(500).subscribe(() => {
+            console.log('focus');
+            this.webContent.nativeElement.focus();
+        });
     }
 
     move(distance: number) {

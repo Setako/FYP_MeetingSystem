@@ -67,6 +67,9 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     private move(x: number, y: number) {
+        if (Math.random() < 0.25) { // decrease change rate
+            return;
+        }
         if (this.currentScaleFactor <= 1) {
             this.resetMouse();
             return;
@@ -100,6 +103,10 @@ export class ImagePlayerComponent extends ControllableComponent
     }
 
     ngAfterViewInit(): void {
+        interval(500).subscribe(() => {
+            console.log('focus');
+            this.webContent.nativeElement.focus();
+        });
     }
 
     ngOnDestroy(): void {
