@@ -89,7 +89,10 @@ export class UserInfoComponent implements OnInit {
     }
 
     this.querying = true;
-    this.userService.editUser(newUserInfo, this.userInformationForm.value.currentPassword)
+    this.userService.editUser(newUserInfo,
+      this.userInformationForm.value.changePassword
+        ? this.userInformationForm.value.currentPassword
+        : null)
       .subscribe(() => {
         this.snackBar.open('User profile updated!', 'DISMISS', {duration: 4000});
         this.querying = false;

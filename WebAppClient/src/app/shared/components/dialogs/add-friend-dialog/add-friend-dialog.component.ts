@@ -32,6 +32,8 @@ export class AddFriendDialogComponent implements OnInit {
       this.querying = true;
       this.friendService.sendRequest(this.friendRequestForm.value.username).subscribe(() => {
         this.querying = false;
+        this.snackBar.open('Request sent successfully' +
+          '', 'DISMISS', {duration: 4000});
         this.dialogRef.close(true);
       }, (err: HttpErrorResponse) => {
         this.querying = false;

@@ -28,7 +28,9 @@ export class UserService {
   }
 
   public editUser(user: User | any, currentPassword?: string): Observable<any> {
-    user.currentPassword = currentPassword;
+    if (currentPassword!=null) {
+      user.currentPassword = currentPassword;
+    }
     return this.http.put(`${AppConfig.API_PATH}/user/${user.username}`, user)
       .pipe(mergeMap(() => this.auth.updateUserInfo()));
   }

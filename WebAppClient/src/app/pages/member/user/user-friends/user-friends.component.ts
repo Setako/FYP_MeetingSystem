@@ -7,7 +7,7 @@ import {Friend, FriendRequest, User} from '../../../../shared/models/user';
 import {forkJoin} from 'rxjs';
 import {take, tap} from 'rxjs/operators';
 import {ConfirmationDialogComponent} from '../../../../shared/components/dialogs/confirmation-dialog/confirmation-dialog.component';
-import {MatDialog} from '@angular/material';
+import {MatDialog, MatSnackBar} from '@angular/material';
 
 @Component({
   selector: 'app-user-friends',
@@ -22,7 +22,7 @@ export class UserFriendsComponent implements OnInit {
   friends: Friend[] = [];
 
   constructor(public authService: AuthService, public friendService: FriendService,
-              public userService: UserService, public dialog: MatDialog) {
+              public userService: UserService, public dialog: MatDialog, public snackBar: MatSnackBar) {
   }
 
   ngOnInit() {
@@ -43,6 +43,7 @@ export class UserFriendsComponent implements OnInit {
     this.friendService.responseRequest(friendRequest.user.username, approve).subscribe(() => {
       this.querying = false;
       this.update();
+      this.snackBar.open('Request responsed', 'DISMISS', {duration: 4000});
     }, err => this.querying = false);
   }
 
@@ -55,8 +56,12 @@ export class UserFriendsComponent implements OnInit {
         this.friendService.deleteFriend(user.username).subscribe(() => {
           this.querying = false;
           this.update();
+          this.snackBar.open('Delete friend successfully', 'DISMISS', {duration: 4000});
         });
       }
+    }, () => {
+      this.querying = false;
+      this.snackBar.open('Failed to delete', 'DISMISS', {duration: 4000});
     });
   }
 
@@ -65,6 +70,7 @@ export class UserFriendsComponent implements OnInit {
     this.friendService.deleteSentRequest(friendRequest.targetUser.username).subscribe(() => {
       this.querying = false;
       this.update();
+      this.snackBar.open('Delete request successfully', 'DISMISS', {duration: 4000});
     }, err => this.querying = false);
   }
 
