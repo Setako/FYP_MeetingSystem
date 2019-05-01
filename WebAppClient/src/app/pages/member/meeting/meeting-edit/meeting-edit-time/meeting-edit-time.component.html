@@ -33,7 +33,8 @@
       </mat-autocomplete>
     </mat-form-field>
     <mat-form-field class="pr-3">
-      <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto" [(ngModel)]="searchTimeEnd">
+      <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto"
+             [(ngModel)]="searchTimeEnd == '00:00'?'24:00':searchTimeEnd">
       <mat-autocomplete #toTimeAuto="matAutocomplete">
         <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
           {{time}}

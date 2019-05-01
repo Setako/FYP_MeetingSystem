@@ -68,7 +68,7 @@ export class MeetingEditTimeComponent implements OnInit {
     this.meetingService.getSuggestTime(this.meeting, this.fromDate, this.toDate, this.searchTimeStart, this.searchTimeEnd, this.includeDays)
       .subscribe((res) => {
         this.timeSlotSuggestions = res.items;
-        this.queryingSuggestedTime = true;
+        this.queryingSuggestedTime = false;
       }, () => {
         this.queryingSuggestedTime = false;
       });
