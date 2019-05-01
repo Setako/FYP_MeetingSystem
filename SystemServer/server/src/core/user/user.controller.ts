@@ -232,6 +232,7 @@ export class UsersController {
         const compressed$ = from(images).pipe(
             flatMap(async item => {
                 item.buffer = await sharp(item.buffer)
+                    .withMetadata()
                     .resize(300)
                     .toBuffer();
                 return item;
