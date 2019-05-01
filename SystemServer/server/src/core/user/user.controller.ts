@@ -233,7 +233,7 @@ export class UsersController {
             flatMap(async item => {
                 item.buffer = await sharp(item.buffer)
                     .withMetadata()
-                    .resize(300)
+                    .resize(600)
                     .toBuffer();
                 return item;
             }),
@@ -276,8 +276,8 @@ export class UsersController {
                     imagePath: result[0].name,
                     owner: user,
                     status:
-                        // waiting if size is small than 1MB otherwise invalid
-                        Number((result[1] as any).size) * 0.000001 < 1
+                        // waiting if size is small than 2MB otherwise invalid
+                        Number((result[1] as any).size) * 0.000001 < 2
                             ? FaceStatus.Waiting
                             : FaceStatus.Invalid,
                 }),
