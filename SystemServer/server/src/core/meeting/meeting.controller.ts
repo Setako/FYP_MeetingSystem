@@ -703,7 +703,7 @@ export class MeetingController {
                 if (searchTimeRangeMin > searchTimeRangeMax) {
                     if (
                         searchTimeRangeMin < checkingTimeStart &&
-                        checkingTimeStart > searchTimeRangeMax
+                        checkingTimeStart < searchTimeRangeMax
                     ) {
                         return false;
                     }
