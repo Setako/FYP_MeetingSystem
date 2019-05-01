@@ -66,6 +66,7 @@ export class MeetingStateHolderService {
     }
 
     private takeOver(meeting: any) {
+        this.currentMeeting = meeting;
         this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Connected successfully',
             [
                 `Meeting binded: ${meeting.title}`,
@@ -83,7 +84,7 @@ export class MeetingStateHolderService {
                 console.log('recognized:' + user.id);
                 this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Attendance recorded',
                     [
-                        `Attendee recognized: ${user.displayName}`
+                        `Attendee: ${user.displayName}`
                     ], 'done'));
             });
     }

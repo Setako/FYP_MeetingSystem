@@ -46,7 +46,7 @@ export class DocumentPlayerComponent extends ControllableComponent implements On
             case GestureActionType.SWIPE_UP:
                 this.robot.keyDown('pageup');
                 break;
-            case GestureActionType.SWIPE_RIGHT:
+            case GestureActionType.SWIPE_DOWN:
                 this.robot.keyDown('pagedown');
                 break;
         }
