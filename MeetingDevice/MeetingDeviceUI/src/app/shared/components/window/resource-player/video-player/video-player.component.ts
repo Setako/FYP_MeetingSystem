@@ -68,7 +68,7 @@ export class VideoPlayerComponent extends ControllableComponent
                     setTimeout(() => {
                         this.robot.mouseClick();
                         this.robot.moveMouse(100, 0);
-                    }, 25);
+                    }, 100);
                 }, 1000);
             });
         });
@@ -76,8 +76,10 @@ export class VideoPlayerComponent extends ControllableComponent
 
 
     playPause() {
-        this.robot.setKeyboardDelay(1);
-        this.robot.keyDown(NormalKeys.SPACE);
+        this.robot.setMouseDelay(5);
+        this.robot.moveMouse(50, 50);
+        this.robot.mouseClick();
+        this.robot.moveMouse(100, 0);
     }
 
     ngAfterViewInit(): void {

@@ -1,11 +1,9 @@
-import {AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild, ViewRef} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild} from '@angular/core';
 import {ControllableComponent} from '../../../controllable/controllable.component';
 import {WINDOW_DATA} from '../../../../../services/window/window-ref';
-import {SlideShowPlayerComponent} from '../slide-show-player/slide-show-player.component';
 import {WindowData} from '../../../../../services/window/window-data';
-import {NormalKeys, RobotService} from '../../../../../services/robot.service';
+import {RobotService} from '../../../../../services/robot.service';
 import {GestureActionType} from '../../../../enum/control/gesture-action-type';
-import {interval} from 'rxjs';
 
 @Component({
     selector: 'app-document-player',
@@ -41,6 +39,9 @@ export class DocumentPlayerComponent extends ControllableComponent implements On
 
 
     swipe(direction: string) {
+        this.robot.setMouseDelay(5);
+        this.robot.moveMouse(0, 50);
+        this.robot.mouseClick();
         switch (direction) {
             case GestureActionType.SWIPE_UP:
                 this.robot.keyDown('pageup');

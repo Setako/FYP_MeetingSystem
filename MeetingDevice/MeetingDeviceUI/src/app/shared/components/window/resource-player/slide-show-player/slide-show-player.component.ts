@@ -4,7 +4,6 @@ import {WINDOW_DATA} from '../../../../../services/window/window-ref';
 import {WindowData} from '../../../../../services/window/window-data';
 import {GestureActionType} from '../../../../enum/control/gesture-action-type';
 import {NormalKeys, RobotService} from '../../../../../services/robot.service';
-import {interval} from 'rxjs';
 
 @Component({
     selector: 'app-slide-show-player',
@@ -43,7 +42,10 @@ export class SlideShowPlayerComponent extends ControllableComponent
     swipe(direction: string) {
         switch (direction) {
             case GestureActionType.SWIPE_LEFT:
-                this.robot.keyDown(NormalKeys.RIGHT);
+                this.robot.setMouseDelay(5);
+                this.robot.moveMouse(50, 50);
+                this.robot.mouseClick();
+                this.robot.moveMouse(100, 0);
                 break;
             case GestureActionType.SWIPE_RIGHT:
                 this.robot.keyDown(NormalKeys.LEFT);
@@ -52,9 +54,8 @@ export class SlideShowPlayerComponent extends ControllableComponent
     }
 
     ngAfterViewInit(): void {
-        interval(500).subscribe(() => {
-            console.log('focus');
-            this.webContent.nativeElement.focus();
-        });
+        // interval(500).subscribe(() => {
+        //     this.webContent.nativeElement.focus();
+        // });
     }
 }

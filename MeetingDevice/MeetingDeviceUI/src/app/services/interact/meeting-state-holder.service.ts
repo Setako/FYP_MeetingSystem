@@ -12,6 +12,7 @@ import {NotificationService} from '../notification/notification.service';
 })
 export class MeetingStateHolderService {
     private currentMeeting = null;
+    private lastDcTime = 0;
 
     constructor(
         ipc: IPCService,
@@ -46,10 +47,13 @@ export class MeetingStateHolderService {
     }
 
     private disconnected() {
-        this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Disconnected',
-            [
-                `Device disconnected with the apps`
-            ], 'mobile_off'));
+        if (new Date().getTime() > this.lastDcTime + 1000) {
+            this.notification.addNotification(new IconSysNotification(SysNotificationColor.SUCCESS, 'Disconnected',
+                [
+                    `Device disconnected with the apps`
+                ], 'mobile_off'));
+        }
+        this.lastDcTime = new Date().getTime();
         this.windowStackService.closeAllWindow();
     }
 

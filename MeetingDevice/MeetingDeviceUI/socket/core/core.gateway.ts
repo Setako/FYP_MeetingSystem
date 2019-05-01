@@ -1,23 +1,16 @@
-import { UseFilters, UseGuards, UsePipes, HttpService } from '@nestjs/common';
-import {
-    OnGatewayInit,
-    SubscribeMessage,
-    WebSocketGateway,
-    WebSocketServer,
-    WsException,
-    OnGatewayDisconnect,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import {HttpService, UseFilters, UseGuards, UsePipes} from '@nestjs/common';
+import {OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException,} from '@nestjs/websockets';
+import {Server, Socket} from 'socket.io';
 import * as ip from 'ip';
 import * as io from 'socket.io-client';
-import { spawn, exec } from 'child_process';
-import { IpcService } from './ipc.service';
-import { ConfigService } from './config.service';
-import { WsExceptionFilter } from '../shared/ws-exception.filter';
-import { WsValidationPipe } from '../shared/ws-validation.pipe';
-import { ClientOnlineDto } from '../shared/client-online.dto';
-import { RecognitionOnlineDto } from '../shared/recognition-online.dto';
-import { WsRecognitionGuard } from '../shared/ws-recognition.guard';
+import {exec, spawn} from 'child_process';
+import {IpcService} from './ipc.service';
+import {ConfigService} from './config.service';
+import {WsExceptionFilter} from '../shared/ws-exception.filter';
+import {WsValidationPipe} from '../shared/ws-validation.pipe';
+import {ClientOnlineDto} from '../shared/client-online.dto';
+import {RecognitionOnlineDto} from '../shared/recognition-online.dto';
+import {WsRecognitionGuard} from '../shared/ws-recognition.guard';
 
 const uuidv4 = require('uuid/v4');
 
@@ -41,7 +34,8 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
         private readonly ipcService: IpcService,
         private readonly configService: ConfigService,
         private readonly httpService: HttpService,
-    ) {}
+    ) {
+    }
 
     afterInit(_server: Socket) {
         this.ipcService
@@ -104,7 +98,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                 '--port',
                 this.configService.fromGlobal('socket', 'port'),
             ],
-            { cwd },
+            {cwd},
         );
 
         recognition.stdout.on('data', data =>
@@ -156,7 +150,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             this.ipcService.sendMessage('show-token', data);
         });
 
-        this.socketClient.on('device-take-over', ({ meetingId }) => {
+        this.socketClient.on('device-take-over', ({meetingId}) => {
             this.controlToken = uuidv4();
             this.holdingMeetingId = meetingId;
 
@@ -166,7 +160,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
         this.socketClient.on(
             'device-get-trained-model-reply',
-            ({ link, timeout, fitModelUser }) => {
+            ({link, timeout, fitModelUser}) => {
                 if ((fitModelUser as string[]).length === 0) {
                     this.ipcService.sendMessage('failed-recognition', {
                         reason: 'no one has enough facial data',
@@ -180,7 +174,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                 }
 
                 this.httpService
-                    .get(link, { responseType: 'arraybuffer' })
+                    .get(link, {responseType: 'arraybuffer'})
                     .subscribe(res => {
                         this.server
                             .to('recognition')
@@ -249,7 +243,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
 
     @UseFilters(new WsExceptionFilter('client-online'))
     @SubscribeMessage('client-online')
-    onClientOnline(client: Socket, { controlToken }: ClientOnlineDto) {
+    onClientOnline(client: Socket, {controlToken}: ClientOnlineDto) {
         if (this.controlToken !== controlToken) {
             throw new WsException('Incorrect control token');
         }
@@ -264,7 +258,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     @UseFilters(new WsExceptionFilter('send-action'))
     @SubscribeMessage('send-action')
     onSendAction(client: Socket, data: any) {
-        const { controlToken } = client.request;
+        const {controlToken} = client.request;
 
         if (this.controlToken !== controlToken) {
             throw new WsException('Control token is fake or expired');
@@ -301,7 +295,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
     @UseGuards(WsRecognitionGuard)
     @UseFilters(new WsExceptionFilter('recognised-user'))
     @SubscribeMessage('recognised-user')
-    onRecognisedUser(client: Socket, { userIdList }: { userIdList: string[] }) {
+    onRecognisedUser(client: Socket, {userIdList}: { userIdList: string[] }) {
         if (!userIdList || !userIdList.length) {
             return;
         }
@@ -315,7 +309,7 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
             const notArrivalUserIds = Array.from<any>(
                 this.holdingMeeting.attendance,
             )
-                .filter(item => !item.arrivalTime)
+                .filter(item => item.status != 'present')
                 .map(item => item.user.id);
 
             const data = userIdList
@@ -325,7 +319,9 @@ export class CoreGateway implements OnGatewayInit, OnGatewayDisconnect {
                     time: Date(),
                 }));
 
-            if (data.length === 0) return;
+            if (data.length === 0) {
+                return;
+            }
 
             console.log('recognised-user', data);
 
