@@ -50,7 +50,6 @@ import {
     mergeAll,
     shareReplay,
     takeWhile,
-    every,
     take,
     pluck,
     defaultIfEmpty,
@@ -90,6 +89,7 @@ import { UniqueArrayPipe } from '@commander/shared/pipe/unique-array.pipe';
 import { skipFalsy } from '@commander/shared/operator/function';
 import { populate, documentToPlain } from '@commander/shared/operator/document';
 import { MeetingResourcesDto } from './dto/meeting-resouces.dto';
+import { DateUtils } from '@commander/shared/utils/date.utils';
 
 @Controller('meeting')
 @UseGuards(AuthGuard('jwt'))
@@ -612,14 +612,14 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingSuggestTimeQuery,
     ) {
-        const fromDate = query.fromDate.setHours(0, 0, 0, 0);
-        const toDate = query.toDate.setHours(24, 0, 0, 0);
-        const [fromHours, fromMinutes] = query.fromTime
-            .split(':')
-            .map(n => parseInt(n, 10));
-        const [toHours, toMinutes] = query.toTime
-            .split(':')
-            .map(n => parseInt(n, 10));
+        const [fromDate, toDate] = [query.fromDate, query.toDate].map(d =>
+            d.getTime(),
+        );
+
+        const [searchTimeRangeMin, searchTimeRangeMax] = [
+            query.fromTime,
+            query.toTime,
+        ].map(d => DateUtils.toHourMinuteString(d));
 
         if (query.weekDays.length === 0) {
             throw new BadRequestException(
@@ -655,50 +655,96 @@ export class MeetingController {
             flatMap(time =>
                 meetingLength$.pipe(
                     map(length => [
-                        fromDate + length * time,
-                        fromDate + length * (time + 1),
+                        fromDate + 1800000 * time,
+                        fromDate + 1800000 * time + length,
                     ]),
                 ),
             ),
         );
 
         const freeTimeRange$ = selectedRange$.pipe(
-            takeWhile(([_, toDateTime]) => toDateTime <= toDate),
+            // filter date in range
+            takeWhile(([_, checkingDateMax]) => checkingDateMax <= toDate),
+            // filter day in weekdays and time in range
             filter(([fromDateTime, toDateTime]) => {
                 const fromDateIns = new Date(fromDateTime);
                 const toDateIns = new Date(toDateTime);
 
-                return (
+                const [checkingTimeStart, checkingTimeEnd] = [
+                    fromDateIns,
+                    toDateIns,
+                ].map(d => DateUtils.toHourMinuteString(d));
+
+                const inWeekDays =
                     query.weekDays.includes(fromDateIns.getDay()) &&
-                    query.weekDays.includes(toDateIns.getDay()) &&
-                    fromDateIns.getHours() >= fromHours &&
-                    fromDateIns.getMinutes() >= fromMinutes &&
-                    toDateIns.getHours() <= toHours &&
-                    toDateIns.getMinutes() <= toMinutes
-                );
+                    query.weekDays.includes(toDateIns.getDay());
+
+                if (!inWeekDays) {
+                    return false;
+                }
+
+                if (searchTimeRangeMax === searchTimeRangeMin) {
+                    return true;
+                }
+
+                if (searchTimeRangeMax > searchTimeRangeMin) {
+                    if (checkingTimeStart > checkingTimeEnd) {
+                        return false;
+                    }
+                    if (
+                        checkingTimeStart < searchTimeRangeMin ||
+                        checkingTimeEnd > searchTimeRangeMax
+                    ) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                if (searchTimeRangeMin > searchTimeRangeMax) {
+                    if (
+                        searchTimeRangeMin < checkingTimeStart &&
+                        checkingTimeStart > searchTimeRangeMax
+                    ) {
+                        return false;
+                    }
+                    if (
+                        searchTimeRangeMin < checkingTimeEnd &&
+                        checkingTimeEnd < searchTimeRangeMax
+                    ) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                return false;
             }),
             flatMap(([fromDateTime, toDateTime]) =>
-                busyTime$
-                    .pipe(
-                        // false if any busy time contained, true mean the time range is free
-                        every(busy => {
+                busyTime$.pipe(
+                    toArray(),
+                    map(items => {
+                        const filted = items.filter(busy => {
                             const inRange = (ms: number) =>
-                                fromDateTime >= ms && ms <= toDateTime;
-                            return !(
+                                fromDateTime <= ms && ms <= toDateTime;
+                            return (
                                 inRange(busy.fromDate.getTime()) ||
                                 inRange(busy.toDate.getTime())
                             );
-                        }),
-                    )
-                    .pipe(
-                        map(isFree => ({
-                            fromDateTime,
-                            toDateTime,
-                            isFree,
-                        })),
-                    ),
+                        });
+                        return (
+                            filted.reduce((acc, xs) => acc + xs.busyLevel, 0) /
+                            (filted.length || 1)
+                        );
+                    }),
+                    map(busyLevel => ({
+                        fromDateTime,
+                        toDateTime,
+                        busyLevel,
+                    })),
+                ),
             ),
-            filter(item => item.isFree),
+            toArray(),
+            map(items => items.sort((a, b) => a.busyLevel - b.busyLevel)),
+            flatMap(identity),
         );
 
         return freeTimeRange$.pipe(
@@ -706,6 +752,7 @@ export class MeetingController {
             map(item => ({
                 fromDate: new Date(item.fromDateTime),
                 toDate: new Date(item.toDateTime),
+                busyLevel: item.busyLevel,
             })),
             map(item => ObjectUtils.ObjectToPlain(item, SuggestTimeDto)),
             toArray(),

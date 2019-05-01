@@ -28,7 +28,7 @@ export class BreakChangeService implements OnModuleInit {
                 filter(items => items.length !== 0),
             )
             .subscribe(items =>
-                console.log(
+                console.info(
                     `[Break Change] added privacy setting for ${
                         items.length
                     } users`,
