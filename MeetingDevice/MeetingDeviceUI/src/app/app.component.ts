@@ -45,7 +45,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         private ipcService: IPCService,
         private actionReceiver: ActionReceiverService,
         private meetingStateHolderService: MeetingStateHolderService,
-        private laserHandler: LaserHandlerService,
+        readonly laserHandler: LaserHandlerService,
         private readonly resourceOpener: ResourceOpenerService,
         private ngZone: NgZone
     ) {

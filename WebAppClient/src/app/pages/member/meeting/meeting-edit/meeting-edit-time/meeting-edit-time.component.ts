@@ -51,6 +51,7 @@ export class MeetingEditTimeComponent implements OnInit {
     5: false,
     6: false
   };
+  queryingSuggestedTime: boolean;
 
   public get includeDays(): number[] {
     const result = Object.entries(this._includeDays).filter(entry => entry[1]).map(entry => parseInt(entry[0], 10));
@@ -63,9 +64,13 @@ export class MeetingEditTimeComponent implements OnInit {
   }
 
   public search() {
+    this.queryingSuggestedTime = true;
     this.meetingService.getSuggestTime(this.meeting, this.fromDate, this.toDate, this.searchTimeStart, this.searchTimeEnd, this.includeDays)
       .subscribe((res) => {
         this.timeSlotSuggestions = res.items;
+        this.queryingSuggestedTime = true;
+      }, () => {
+        this.queryingSuggestedTime = false;
       });
   }
 

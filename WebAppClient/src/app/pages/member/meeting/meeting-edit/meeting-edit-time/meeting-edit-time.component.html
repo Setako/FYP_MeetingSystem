@@ -45,14 +45,16 @@
   <button (click)="search()" *ngIf="searchTimeEnabled" color="primary" mat-raised-button>Search</button>
 </div>
 <div class="mb-2">
-  <h2>Suggestion time slot</h2>
-  <div class="col-12 col-lg-6">
-    <div mat-ripple
-         *ngFor="let timeSlotSuggestion of timeSlotSuggestions" class="mb-1 suggest-time"
-         (click)="selectedDate = isoToDate(timeSlotSuggestion.fromDate)">
-      Start at: {{isoToDate(timeSlotSuggestion.fromDate)|date:'short'}}
+  <h2>Suggested time slot</h2>
+  <app-querying-content-hider queryingAction="Geeting suggested time" [querying]="queryingSuggestedTime">
+    <div class="col-12">
+      <div mat-ripple
+           *ngFor="let timeSlotSuggestion of timeSlotSuggestions" class="mb-1 suggest-time"
+           (click)="selectedDate = isoToDate(timeSlotSuggestion.fromDate)">
+        Start at: {{isoToDate(timeSlotSuggestion.fromDate)|date:'short'}}
+      </div>
     </div>
-  </div>
+  </app-querying-content-hider>
 </div>
 
 <mat-divider></mat-divider>
