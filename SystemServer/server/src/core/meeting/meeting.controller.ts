@@ -612,13 +612,13 @@ export class MeetingController {
         @Param('id') id: string,
         @Query() query: MeetingSuggestTimeQuery,
     ) {
-        const [fromDate, toDate] = [query.fromDate, query.toDate]
-            .map(d => new Date(d.getTime()))
-            .map((d, i) => d.setHours([0, 24][i], 0, 0, 0));
+        const [fromDate, toDate] = [query.fromDate, query.toDate].map(d =>
+            d.getTime(),
+        );
 
         const [searchTimeRangeMin, searchTimeRangeMax] = [
-            query.fromDate,
-            query.toDate,
+            query.fromTime,
+            query.toTime,
         ].map(d => DateUtils.toHourMinuteString(d));
 
         if (query.weekDays.length === 0) {
@@ -724,7 +724,7 @@ export class MeetingController {
                     map(items => {
                         const filted = items.filter(busy => {
                             const inRange = (ms: number) =>
-                                fromDateTime >= ms && ms <= toDateTime;
+                                fromDateTime <= ms && ms <= toDateTime;
                             return (
                                 inRange(busy.fromDate.getTime()) ||
                                 inRange(busy.toDate.getTime())
@@ -743,7 +743,7 @@ export class MeetingController {
                 ),
             ),
             toArray(),
-            map(items => items.sort(item => item.busyLevel)),
+            map(items => items.sort((a, b) => a.busyLevel - b.busyLevel)),
             flatMap(identity),
         );
 

@@ -11,6 +11,14 @@ export class MeetingSuggestTimeQuery extends MeetingBusyTimeQueryDto {
     @Type(() => Date)
     toDate: Date;
 
+    @IsDate()
+    @Type(() => Date)
+    fromTime: Date;
+
+    @IsDate()
+    @Type(() => Date)
+    toTime: Date;
+
     @IsIn([0, 1, 2, 3, 4, 5, 6], {
         each: true,
     })
