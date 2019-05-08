@@ -34,7 +34,7 @@
     </mat-form-field>
     <mat-form-field class="pr-3">
       <input matInput placeholder="To" aria-label="State" [matAutocomplete]="toTimeAuto"
-             [(ngModel)]="searchTimeEnd == '00:00'?'24:00':searchTimeEnd">
+             [(ngModel)]="searchTimeEnd">
       <mat-autocomplete #toTimeAuto="matAutocomplete">
         <mat-option *ngFor="let time of timeAutoComplete" [value]="time">
           {{time}}
@@ -64,7 +64,7 @@
   <h2>Calendar</h2>
 
   <app-week-freetime [meeting]="meeting" [dayStartHour]="searchTimeStartFormated"
-                     [dayEndHour]="searchTimeEndFormated" [includeDays]="includeDays"
+                     [dayEndHour]="searchTimeEndFormated == 0?24:searchTimeEndFormated" [includeDays]="includeDays"
                      [selectedDate]="selectedDate"></app-week-freetime>
 </div>
 
